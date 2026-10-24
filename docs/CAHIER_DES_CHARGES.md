@@ -97,8 +97,8 @@ Trois pièces côte à côte : **Équipe ← Camp → Invocation**. On passe de 
 en **balayant** l'écran (ou avec les flèches des coins), avec un glissement par paliers,
 des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
 
-1. **Camp** (accueil, au centre) : feu de camp, l'équipe autour, le cristal à droite,
-   le panneau d'affichage à gauche (le cristal n'est que dans la salle d'invocation). Aucun bouton en bas : **on touche la porte** pour
+1. **Camp** (accueil, au centre) : feu de camp, l'équipe autour, le panneau
+   d'affichage à gauche (le cristal n'est que dans la salle d'invocation). Aucun bouton en bas : **on touche la porte** pour
    partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
    le panneau mène aussi à l'Équipe. En haut : or, rejouer une
    étape, coffre du jour, options.
