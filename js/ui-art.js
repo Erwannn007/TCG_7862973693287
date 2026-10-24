@@ -168,27 +168,3 @@ export function iconSprite(name) {
   ICONS[name](s);
   return s;
 }
-
-// Médaillon d'action (22×22) : anneau doré octogonal, fond sombre, icône au centre.
-export function medallionSprite(name, tone = 'gold') {
-  const s = new Spr(22, 22);
-  const rim = tone === 'gold' ? [C.gold, C.goldHi, '#a87a20'] : tone === 'red' ? ['#c02a3e', '#ff7a8a', '#7a1420'] : ['#8a8088', '#c8c0c8', '#4a4048'];
-  const oct = (inset, c, flat) => {
-    for (let y = inset; y < 22 - inset; y++) {
-      const d = Math.max(0, (inset + 5) - y, y - (16 - inset));
-      s.hl(inset + d, 21 - inset - d, y, c, flat);
-    }
-  };
-  oct(1, rim[0], true);
-  oct(2, rim[2], true);
-  oct(3, '#2a1d2c', true);
-  // reflet en haut à gauche de l'anneau
-  s.hl(6, 15, 1, rim[1], true);
-  s.v(1, 6, 15, rim[1], true);
-  s.sline(2, 5, 5, 2, rim[1], true);
-  // icône déjà ombrée et contourée, posée telle quelle
-  const ic = iconSprite(name).build();
-  ic.data.forEach((c, i) => c && s.p((i % 14) + 4, Math.floor(i / 14) + 4, c, true));
-  for (const f of ic.fx) s.spark(f.x + 4, f.y + 4, f.c);
-  return s;
-}

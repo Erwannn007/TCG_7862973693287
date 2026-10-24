@@ -7,7 +7,7 @@ import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
 import { sceneBackground, sceneAnim, SH, CAMP_W, GATE } from './scene.js';
-import { installUiArt, medallionSprite } from './ui-art.js';
+import { installUiArt, iconSprite } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
 
@@ -30,7 +30,7 @@ const ROOM_NAMES = { team: 'Équipe', camp: 'Camp', summon: 'Invocation' };
 
 const heroCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}`, () => heroSprite(id, rank), k);
 const lockedCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}-lock`, () => heroSprite(id, rank).silhouette(LOCKED), k);
-const medal = (name, tone = 'gold') => spriteCanvas(`med-${name}-${tone}`, () => medallionSprite(name, tone), 2);
+const icon = (name, k = 2) => spriteCanvas('ico-' + name, () => iconSprite(name), k);
 
 function starsRow(rar, k = 1) {
   const d = el('div', 'stars');
@@ -75,9 +75,9 @@ const toArt = (c, w, ev) => {
 };
 
 $$('.coin').forEach((s) => s.appendChild(spriteCanvas('coin', coinSprite, 2)));
-$('#btn-options').appendChild(medal('gear', 'stone'));
-$('#btn-daily').appendChild(medal('chest'));
-$('#go-replay').appendChild(medal('scroll', 'stone'));
+$('#btn-options').appendChild(icon('gear'));
+$('#btn-daily').appendChild(icon('chest'));
+$('#go-replay').appendChild(icon('scroll'));
 
 // ---------------------------------------------------------------- pièces et transitions
 
@@ -232,10 +232,6 @@ setInterval(() => {
 
 function drawCampLife(g) {
   noticeBoard(g);
-  const crystal = bitmap('crystal', crystalSprite);
-  const cy = 66 - (roomStep % 6 < 3 ? 0 : 1);
-  g.drawImage(crystal.canvas, 228, cy);
-  drawFx(g, crystal, 228, cy, roomStep);
   const spots = [[124, 96], [136, 86], [176, 94]];
   state.team.forEach((id, i) => {
     const bm = bitmap(`h-${id}-${state.owned[id].rank}`, () => heroSprite(id, state.owned[id].rank));
@@ -294,7 +290,6 @@ $('#camp-canvas').addEventListener('click', (e) => {
   if (screen !== 'camp' || moving) return;
   const [x, y] = toArt($('#camp-canvas'), CAMP_W, e);
   if (x >= GATE.x0 && x <= GATE.x1 && y >= GATE.y0 && y <= GATE.y1) enterDoor();
-  else if (x >= 216 && x <= 262 && y >= 56 && y <= 104) goRoom(1); // le cristal
   else if (x >= 68 && x <= 104 && y >= 30 && y <= 58) goRoom(-1); // le panneau
 });
 
@@ -633,9 +628,9 @@ function startBattle(n) {
 function setTools() {
   const a = $('#b-auto'), s = $('#b-speed'), f = $('#b-flee');
   if (!a.firstChild) {
-    a.append(medal('auto'), el('span', 'tag', 'Auto'));
-    s.append(medal('speed'), el('span', 'tag', '×1'));
-    f.append(medal('flee', 'stone'), el('span', 'tag', 'Fuir'));
+    a.append(icon('auto'), el('span', 'tag', 'Auto'));
+    s.append(icon('speed'), el('span', 'tag', '×1'));
+    f.append(icon('flee'), el('span', 'tag', 'Fuir'));
   }
   a.classList.toggle('on', !!battle?.auto);
   a.querySelector('.tag').textContent = battle?.auto ? 'Auto : oui' : 'Auto';
@@ -699,7 +694,7 @@ function buildMenu(u, title, items) {
   m.appendChild(el('div', 'm-title', title));
   items.forEach((it) => {
     const row = el('div', 'act' + (it.cd ? ' off' : ''));
-    row.appendChild(medal(it.ico, it.tone || 'gold'));
+    row.appendChild(icon(it.ico));
     row.appendChild(el('span', '', `${it.label}${it.sub ? `<small>${it.sub}</small>` : ''}`));
     if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
     row._it = it;
@@ -759,7 +754,7 @@ function pickTarget(u, type) {
   const foes = battle.alive('e');
   if (foes.length === 1) return battle.submit({ type, target: foes[0] });
   buildMenu(u, 'Touche un ennemi', [
-    { ico: 'cancel', label: 'Annuler', tone: 'stone', go: () => { battle.targeting = null; showMenu(u); } },
+    { ico: 'cancel', label: 'Annuler', go: () => { battle.targeting = null; showMenu(u); } },
   ]);
   battle.log('Choisis une cible.');
   battle.targeting = foes;

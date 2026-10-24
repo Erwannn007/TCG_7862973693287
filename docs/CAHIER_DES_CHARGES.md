@@ -62,7 +62,7 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 - Équipe de 1 à 3 persos contre 1 à 3 ennemis (ou un boss).
 - Ordre des tours par VIT, à chaque manche.
-- Tour d'un héros : un **rectangle d'actions** apparaît à côté de lui (Attaque,
+- Tour d'un héros : des **boutons d'action rectangulaires**, bien séparés, apparaissent à côté de lui (Attaque,
   Compétence avec sa recharge, Garde = dégâts reçus divisés par 2 jusqu'à son prochain
   tour). On **glisse le doigt** dessus : l'action visée grossit et affiche sa description ;
   on relâche pour la choisir. Un simple toucher marche aussi.
@@ -98,9 +98,9 @@ en **balayant** l'écran (ou avec les flèches des coins), avec un glissement pa
 des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
 
 1. **Camp** (accueil, au centre) : feu de camp, l'équipe autour, le cristal à droite,
-   le panneau d'affichage à gauche. Aucun bouton en bas : **on touche la porte** pour
+   le panneau d'affichage à gauche (le cristal n'est que dans la salle d'invocation). Aucun bouton en bas : **on touche la porte** pour
    partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
-   le cristal ou le panneau mène aussi aux pièces voisines. En haut : or, rejouer une
+   le panneau mène aussi à l'Équipe. En haut : or, rejouer une
    étape, coffre du jour, options.
 2. **Équipe** (à gauche) : salle d'armes ; formation et héros à gauche, fiche du héros
    choisi à droite (stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).

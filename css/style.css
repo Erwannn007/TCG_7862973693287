@@ -63,8 +63,11 @@ small { font-size: 12px; }
   border: 8px solid transparent; border-image: var(--f-wood) var(--sl) fill / 8px stretch;
   color: var(--gold-hi); font-weight: 700;
 }
-.icon-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-.icon-btn:active { transform: translateY(2px); }
+.icon-btn {
+  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
+}
+.icon-btn:active { transform: translateY(2px); border-image-source: var(--f-btnDown); }
 
 /* ================================================================ cadres 9-slice */
 .panel { border: 12px solid transparent; border-image: var(--f-wood) var(--sl) fill / 12px stretch; }
@@ -204,40 +207,42 @@ small { font-size: 12px; }
 #b-queue .q.now { box-shadow: inset 0 0 0 2px var(--gold-hi); background: #6a4228; }
 #b-queue .q.foe { background: #4a1a24; }
 .b-tools { display: flex; gap: 6px; }
-.medal { position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-.medal:active { transform: translateY(2px); }
-.medal.on { filter: brightness(1.25) saturate(1.3); }
-.medal .tag {
-  position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 2px;
-  white-space: nowrap; font-size: 12px; font-weight: 700; padding: 0 4px;
-  color: var(--ink); background: var(--cream); box-shadow: 0 0 0 2px var(--line);
+.tool {
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px;
+  font-size: 14px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
+  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
 }
+.tool:active { transform: translateY(2px); border-image-source: var(--f-btnDown); }
+.tool.on { border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
 #b-log {
   position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 58px); z-index: 3;
   min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 0 6px;
 }
 
-/* menu d'actions : un rectangle près du héros ; on glisse le doigt, l'action visée grossit */
-#b-menu {
-  position: absolute; z-index: 4; display: flex; flex-direction: column; gap: 2px; padding: 4px;
-  border: 8px solid transparent; border-image: var(--f-wood) var(--sl) fill / 8px stretch;
-  touch-action: none; animation: bob 1.2s steps(1) infinite;
+/* menu d'actions : des boutons rectangulaires bien séparés, à côté du héros.
+   On glisse le doigt dessus : celui qui est visé grossit ; on relâche pour le choisir. */
+#b-menu { position: absolute; z-index: 4; display: flex; flex-direction: column; gap: 8px; touch-action: none; }
+#b-menu .m-title {
+  align-self: flex-start; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
+  border: 6px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 6px stretch;
 }
-#b-menu::before {
-  content: ''; position: absolute; left: -18px; top: var(--tip, 50%); width: 12px; height: 16px; margin-top: -8px;
-  background: #4a2e1c; clip-path: polygon(100% 0, 0 50%, 100% 100%);
-}
-#b-menu .m-title { font-size: 12px; font-weight: 700; color: var(--gold-hi); padding: 0 4px 2px; text-shadow: 1px 1px 0 var(--line); }
 #b-menu .act {
-  position: relative; display: flex; align-items: center; gap: 8px; min-width: 160px; max-width: 232px; padding: 2px 10px 2px 2px;
-  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line); text-align: left;
+  position: relative; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 0 8px;
+  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
+  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
 }
-#b-menu .act.hot { background: #6a4228; box-shadow: inset 0 0 0 2px var(--gold-hi); font-size: 18px; }
-#b-menu .act.hot canvas { width: 66px !important; height: 66px !important; }
+#b-menu .act.hot {
+  width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
+  border-image-source: var(--f-gold); transform: translateX(6px);
+}
+#b-menu .act.hot canvas { width: 42px !important; height: 42px !important; }
 #b-menu .act.off { filter: grayscale(1) brightness(.6); }
-#b-menu .act small { display: none; font-size: 12px; font-weight: 400; color: #d8c49a; }
-#b-menu .act.hot small { display: block; }
-#b-menu .cd { position: absolute; left: 34px; top: 0; min-width: 18px; padding: 0 3px; font-size: 12px; color: #fff; background: var(--line); box-shadow: 0 0 0 2px #8a8088; text-align: center; }
+#b-menu .act small { display: none; font-size: 12px; font-weight: 400; }
+#b-menu .act.hot small { display: block; color: #5a3a22; }
+#b-menu .cd {
+  position: absolute; right: -6px; top: -10px; padding: 0 4px; font-size: 12px; color: #fff;
+  background: var(--line); box-shadow: 0 0 0 2px #8a8088;
+}
 
 /* ================================================================ surcouches */
 .overlay {
@@ -279,4 +284,9 @@ small { font-size: 12px; }
     background: var(--wall) 0 0 / 64px 32px repeat, #1a1114; text-align: center;
     font: 400 27px/1.2 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line);
   }
+}
+
+/* petits écrans : boutons du haut du combat en icône seule */
+@media (max-width: 760px) {
+  .tool .tag { display: none; }
 }
