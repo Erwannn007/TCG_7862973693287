@@ -2,6 +2,7 @@
 import { HEROES, heroStats } from './data.js';
 import { heroSprite, enemySprite } from './sprites.js';
 import { bitmap, drawFx, drawText, textWidth } from './render.js';
+import { sfx, haptic } from './sfx.js';
 
 // 120×108 : le format 10:9 de l'écran d'une console portable.
 export const W = 120, H = 108;
@@ -262,6 +263,7 @@ export class Battle {
   async useSkill(u) {
     const s = u.skill, foes = this.alive('e');
     this.log(`${u.name} : ${s.name} !`);
+    sfx(s.kind === 'heal' ? 'heal' : 'skill');
     if (s.kind === 'heal') {
       await this.lunge(u);
       for (const h of this.alive('h')) {
@@ -291,6 +293,8 @@ export class Battle {
     const heroes = this.alive('h');
     if (u.boss && this.turns % u.boss.every === 0) {
       this.log(`${u.name} : ${u.boss.name} !`);
+      sfx('boom');
+      haptic(60);
       await this.lunge(u, () => heroes.forEach((h) => this.hit(u, h, u.boss.mult)));
       await this.wait(400);
       return;
@@ -327,9 +331,11 @@ export class Battle {
     d.hp = Math.max(0, d.hp - v);
     d.flashUntil = performance.now() + 320 / this.speed;
     this.float(d, crit ? v + '!' : String(v), crit ? '#fbe08a' : WHITE);
+    sfx(d.side === 'h' ? 'hurt' : crit ? 'crit' : 'hit');
     if (d.hp === 0) {
       d.alive = false;
       d.diedAt = performance.now();
+      setTimeout(() => sfx('die'), 120);
     }
   }
 }

@@ -10,6 +10,8 @@ function fresh() {
     pulls: 0,
     pity: 0,
     lastDaily: '',
+    sound: true,
+    haptics: true,
   };
 }
 

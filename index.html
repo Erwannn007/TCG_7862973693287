@@ -50,16 +50,21 @@
       <div class="gb-logo">Pixel<b>BOY</b></div>
 
       <div class="gb-controls">
-        <div class="dpad">
-          <button class="up" data-d="-1" aria-label="Cible précédente"></button>
-          <button class="left" data-d="-1" aria-label="Cible précédente"></button>
-          <span class="mid"></span>
-          <button class="right" data-d="1" aria-label="Cible suivante"></button>
-          <button class="down" data-d="1" aria-label="Cible suivante"></button>
+        <div class="well dpad-well">
+          <div class="dpad">
+            <button class="up" data-d="-1" aria-label="Cible précédente"></button>
+            <button class="left" data-d="-1" aria-label="Cible précédente"></button>
+            <span class="mid"></span>
+            <button class="right" data-d="1" aria-label="Cible suivante"></button>
+            <button class="down" data-d="1" aria-label="Cible suivante"></button>
+          </div>
         </div>
         <div class="ab">
-          <div class="ab-key b"><button id="b-skill" disabled>B</button><span id="b-skill-name">Compétence</span></div>
-          <div class="ab-key a"><button id="b-attack" disabled>A</button><span>Attaque</span></div>
+          <div class="well ab-well">
+            <span class="cap b"><button id="b-skill" disabled>B</button></span>
+            <span class="cap a"><button id="b-attack" disabled>A</button></span>
+          </div>
+          <div class="ab-labels"><span id="b-skill-name">Compétence</span><span>Attaque</span></div>
         </div>
       </div>
 

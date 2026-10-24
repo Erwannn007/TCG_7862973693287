@@ -68,6 +68,12 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
   écran 120×108 (format 10:9) dans son cadre avec une boîte de dialogue,
   croix directionnelle = changer de cible, **A** = Attaque, **B** = Compétence,
   **SELECT** = Auto, **START** = vitesse, interrupteur **OFF** = fuir.
+- **Sons** 8 bits générés en direct (Web Audio, ondes carrées + bruit) : touches,
+  coups, critiques, soins, mort, victoire, défaite, révélations du gacha, montée de rang.
+- **Vibration** à chaque touche : `navigator.vibrate` sur Android ; sur iPhone, astuce
+  non officielle (interrupteur `<input switch>` caché) qui déclenche le retour haptique
+  du système, et qui peut cesser de marcher si Apple change Safari.
+- Sons et vibrations se coupent séparément depuis l'écran Combat.
 - Dégâts = ATQ × multiplicateur × (1 − DÉF / (DÉF + 60)) × aléa 0,9–1,1, coup critique 10 % (×1,5).
 - Victoire : or gagné (bonus au premier passage). Défaite : on peut réessayer.
 

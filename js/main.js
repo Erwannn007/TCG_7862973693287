@@ -3,6 +3,7 @@ import { heroSprite, coinSprite } from './sprites.js';
 import { spriteCanvas } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
+import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 
 const $ = (sel) => document.querySelector(sel);
 const el = (tag, cls, html) => {
@@ -72,6 +73,7 @@ function renderCombat() {
     b.onclick = () => {
       state.lastDaily = today();
       state.gold += DAILY_GOLD;
+      sfx('coin');
       save();
       refresh();
     };
@@ -94,6 +96,20 @@ function renderCombat() {
     }
     s.appendChild(list);
   }
+
+  const opts = el('div', 'b-opts');
+  const tog = (label, key, apply) => {
+    const b = el('button', 'btn ghost', `${label} : ${state[key] ? 'oui' : 'non'}`);
+    b.onclick = () => {
+      state[key] = !state[key];
+      apply(state[key]);
+      save();
+      refresh();
+    };
+    return b;
+  };
+  opts.append(tog('Sons', 'sound', setSound), tog('Vibrations', 'haptics', setHaptics));
+  s.appendChild(opts);
 
   const reset = el('button', 'btn ghost', 'Effacer la sauvegarde');
   reset.onclick = () => ask('Tout effacer et recommencer ?', () => { resetSave(); refresh(); });
@@ -122,9 +138,12 @@ function startBattle(n) {
 
 // Écran le plus grand possible, à une échelle entière en pixels physiques (net sur Retina).
 function sizeScreen() {
-  const cv = $('#b-canvas'), dpr = window.devicePixelRatio || 1;
+  const cv = $('#b-canvas'), dpr = window.devicePixelRatio || 1, gb = $('.gb');
+  // Hauteur prise par tout le reste de la console (mesurée, donc juste sur chaque iPhone).
+  const pad = parseFloat(getComputedStyle(gb).paddingTop) + parseFloat(getComputedStyle(gb).paddingBottom);
+  const used = [...gb.children].reduce((h, c) => h + c.offsetHeight, 0) - cv.offsetHeight + pad;
   const availW = Math.min(innerWidth, 480) - 30;
-  const availH = innerHeight - 360;
+  const availH = innerHeight - used - 24;
   const s = Math.max(dpr, Math.floor(Math.min(availW / W, availH / H) * dpr));
   cv.style.width = (W * s) / dpr + 'px';
   cv.style.height = (H * s) / dpr + 'px';
@@ -172,9 +191,11 @@ function endBattle(st, res) {
     state.gold += gain;
     if (first) state.best = st.n;
     save();
+    sfx('win');
     html = `<h2 class="win">Victoire !</h2><p>+${gain} or${first ? ' (bonus premier passage)' : ''}</p>`;
     actions = [['Continuer', () => closeBattle()], ['Étape suivante', () => { closeBattle(); startBattle(state.best + 1); }]];
   } else {
+    sfx('lose');
     html = `<h2 class="lose">Défaite…</h2><p>Améliore tes persos ou change d'équipe.</p>`;
     actions = [['Retour', () => closeBattle()], ['Réessayer', () => { closeBattle(); startBattle(st.n); }]];
   }
@@ -256,6 +277,7 @@ async function reveal(results) {
       const blinks = r.rar === 'L' ? 8 : r.rar === 'R' ? 4 : 2;
       for (let b = 0; b < blinks && !skip; b++) {
         back.classList.toggle('blink');
+        sfx('card');
         if (r.rar === 'L' && b === 3) back.className = 'card back b-L blink';
         await wait(110);
       }
@@ -263,6 +285,7 @@ async function reveal(results) {
     const face = card(r.id, { badge: r.isNew ? 'NEW' : '+1', k: results.length > 1 ? 2 : 4 });
     face.classList.add('flash-' + r.rar);
     back.replaceWith(face);
+    sfx(r.rar === 'L' ? 'legend' : r.rar === 'R' ? 'rare' : 'blip');
     if (!skip) await wait(r.rar === 'C' ? 120 : 350);
   }
   done.textContent = 'OK';
@@ -321,6 +344,7 @@ async function upgrade(id) {
   own.frags -= cost.frags;
   state.gold -= cost.gold;
   own.rank++;
+  sfx('levelUp');
   save();
   heroSheet(id);
   const art = $('#modal .sheet-art');
@@ -403,6 +427,21 @@ $('#modal-body').addEventListener('click', (e) => {
 // ---------------------------------------------------------------- démarrage
 
 $('#coin').appendChild(spriteCanvas('coin', coinSprite, 2));
+setSound(state.sound);
+setHaptics(state.haptics);
+
+// Chaque touche : son + vibration. Sur iPhone, l'audio ne démarre qu'après un premier toucher.
+addEventListener('pointerdown', unlock, { capture: true });
+document.addEventListener('click', (e) => {
+  unlock();
+  const b = e.target.closest('button');
+  if (!b || b.disabled) return;
+  if (b.closest('.dpad')) { sfx('move'); haptic(8); }
+  else if (b.closest('.cap')) { sfx('select'); haptic(15); }
+  else if (b.closest('.pill, .gb-power')) { sfx('tick'); haptic(10); }
+  else { sfx('blip'); haptic(8); }
+}, true);
+
 show('combat');
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
