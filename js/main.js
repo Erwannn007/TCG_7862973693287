@@ -1,11 +1,13 @@
-// Interface du jeu (écran horizontal) : camp, équipe, invocation, combat.
+// Interface du jeu (écran horizontal).
+// Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
+// Au camp, on touche la porte pour partir au combat.
 import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
 import { heroSprite, coinSprite, starSprite, crystalSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
-import { sceneBackground, sceneAnim, SH, CAMP_W } from './scene.js';
-import { installUiArt, iconSprite, medallionSprite } from './ui-art.js';
+import { sceneBackground, sceneAnim, SH, CAMP_W, GATE } from './scene.js';
+import { installUiArt, medallionSprite } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
 
@@ -23,10 +25,11 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const DPR = () => window.devicePixelRatio || 1;
 const LOCKED = '#1a1320';
 const RAR_STARS = { C: 1, R: 2, L: 3 };
+const ROOMS = ['team', 'camp', 'summon'];
+const ROOM_NAMES = { team: 'Équipe', camp: 'Camp', summon: 'Invocation' };
 
 const heroCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}`, () => heroSprite(id, rank), k);
 const lockedCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}-lock`, () => heroSprite(id, rank).silhouette(LOCKED), k);
-const icon = (name, k = 2) => spriteCanvas('ico-' + name, () => iconSprite(name), k);
 const medal = (name, tone = 'gold') => spriteCanvas(`med-${name}-${tone}`, () => medallionSprite(name, tone), 2);
 
 function starsRow(rar, k = 1) {
@@ -61,94 +64,192 @@ function fitCanvas(c, w, h, vw, vh, cover) {
   c.style.top = Math.round(((vh - ch) / 2) * dpr) / dpr + 'px';
   c.style.position = 'absolute';
 }
+// Passe d'une position du canvas (pixels d'art) à l'écran (pixels CSS), et inversement.
+const toScreen = (c, w, x, y) => {
+  const k = c.clientWidth / w;
+  return [c.offsetLeft + x * k, c.offsetTop + y * k];
+};
+const toArt = (c, w, ev) => {
+  const r = c.getBoundingClientRect(), k = r.width / w;
+  return [(ev.clientX - r.left) / k, (ev.clientY - r.top) / k];
+};
 
-// Icônes et pièces des barres du haut.
-$$('.ico[data-ico]').forEach((s) => s.appendChild(icon(s.dataset.ico)));
 $$('.coin').forEach((s) => s.appendChild(spriteCanvas('coin', coinSprite, 2)));
 $('#btn-options').appendChild(medal('gear', 'stone'));
 $('#btn-daily').appendChild(medal('chest'));
 $('#go-replay').appendChild(medal('scroll', 'stone'));
-$$('.back').forEach((b) => {
-  b.appendChild(medal('back', 'stone'));
-  b.onclick = () => show('camp');
-});
 
-// ---------------------------------------------------------------- navigation
+// ---------------------------------------------------------------- pièces et transitions
 
 let screen = 'camp';
+
 function show(name) {
   screen = name;
-  for (const s of ['camp', 'team', 'summon', 'battle']) $('#scr-' + s).classList.toggle('hidden', s !== name);
+  for (const s of [...ROOMS, 'battle']) {
+    const e = $('#scr-' + s);
+    e.classList.toggle('hidden', s !== name);
+    e.style.transform = '';
+  }
   refresh();
 }
+
 function refresh() {
   $$('.gold-amt').forEach((g) => (g.textContent = state.gold));
-  if (screen === 'camp') renderCamp();
-  else if (screen === 'team') renderTeam();
-  else if (screen === 'summon') renderSummon();
+  const inRoom = ROOMS.includes(screen);
+  $('#nav-hints').classList.toggle('hidden', !inRoom);
+  if (!inRoom) return;
+  const i = ROOMS.indexOf(screen);
+  const [l, r] = [$('#nav-hints .left'), $('#nav-hints .right')];
+  l.classList.toggle('hidden', i === 0);
+  r.classList.toggle('hidden', i === ROOMS.length - 1);
+  if (i > 0) l.querySelector('span').textContent = ROOM_NAMES[ROOMS[i - 1]];
+  if (i < ROOMS.length - 1) r.querySelector('span').textContent = ROOM_NAMES[ROOMS[i + 1]];
+  $$('#nav-hints .dots i').forEach((d, k) => d.classList.toggle('on', k === i));
+  renderRoom(screen);
+  drawRooms(true);
 }
 
-// ---------------------------------------------------------------- cartes
-
-function card(id, opts = {}) {
-  const h = HEROES[id], own = state.owned[id], k = opts.k || 2;
-  const c = el('button', `card r-${h.rarity}${own ? '' : ' locked'}${opts.sel ? ' sel' : ''}`);
-  const ped = el('div', 'pedestal');
-  ped.appendChild(own ? heroCanvas(id, own.rank, k) : lockedCanvas(id, 1, k));
-  c.appendChild(ped);
-  c.appendChild(el('div', 'name', own ? h.name : '???'));
-  c.appendChild(starsRow(h.rarity));
-  if (own) c.appendChild(rankPips(own.rank));
-  if (opts.badge) c.appendChild(el('div', 'badge ' + (opts.badgeCls || ''), opts.badge));
-  return c;
-}
-const canUpgrade = (id) => {
-  const o = state.owned[id];
-  return o && o.rank < 5 && o.frags >= UPGRADE[o.rank - 1].frags;
-};
-
-// ---------------------------------------------------------------- camp (accueil)
-
-const today = () => new Date().toISOString().slice(0, 10);
-let campTimer = null;
-
-function renderCamp() {
-  const next = stage(state.best + 1);
-  $('#fight-info').textContent = `Étape ${next.n} · ${next.chapter.name}${next.boss ? ' · BOSS' : ''}`;
-  $('#go-replay').classList.toggle('hidden', state.best === 0);
-  $('#btn-daily').classList.toggle('hidden', state.lastDaily === today());
-  drawCamp();
+function renderRoom(name) {
+  if (name === 'camp') renderCamp();
+  else if (name === 'team') renderTeam();
+  else renderSummon();
 }
 
-// Le camp : feu de camp dans le donjon, l'équipe autour, le cristal d'invocation à droite.
-function drawCamp() {
-  const c = $('#camp-canvas');
-  c.width = CAMP_W;
-  c.height = SH;
-  fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
+// Balayage d'une pièce à l'autre : glissement par paliers + bourrasque de vent.
+let moving = false;
+async function goRoom(dir) {
+  const i = ROOMS.indexOf(screen), j = i + dir;
+  if (moving || i < 0 || j < 0 || j >= ROOMS.length) return;
+  moving = true;
+  const from = $('#scr-' + screen), name = ROOMS[j], to = $('#scr-' + name);
+  renderRoom(name);
+  to.classList.remove('hidden');
+  sfx('wind');
+  haptic(20);
+  windGust(dir);
+  for (const p of [0.25, 0.5, 0.75, 1]) {
+    from.style.transform = `translateX(${-dir * p * 100}%)`;
+    to.style.transform = `translateX(${dir * (1 - p) * 100}%)`;
+    drawRooms(true, name);
+    await wait(55);
+  }
+  moving = false;
+  show(name);
+}
+
+// Traits de vent en pixels, qui traversent l'écran par sauts.
+async function windGust(dir) {
+  const c = $('#wind'), dpr = DPR(), k = 3;
+  c.width = Math.ceil(innerWidth / k);
+  c.height = Math.ceil(innerHeight / k);
+  c.style.imageRendering = 'pixelated';
   const g = c.getContext('2d');
+  const streaks = Array.from({ length: 14 }, (_, i) => ({
+    y: Math.floor(Math.random() * c.height), len: 8 + Math.floor(Math.random() * 20),
+    x: dir > 0 ? c.width + Math.random() * c.width * 0.6 : -Math.random() * c.width * 0.6, v: 14 + (i % 4) * 5,
+  }));
+  for (let f = 0; f < 10; f++) {
+    g.clearRect(0, 0, c.width, c.height);
+    for (const s of streaks) {
+      s.x -= dir * s.v;
+      g.fillStyle = f % 2 ? '#f2e2b8' : '#ffffff';
+      g.globalAlpha = 0.75;
+      g.fillRect(Math.round(s.x), s.y, s.len, 1);
+      g.globalAlpha = 0.4;
+      g.fillRect(Math.round(s.x) + dir * 4, s.y + 1, Math.floor(s.len / 2), 1);
+    }
+    await wait(45);
+  }
+  g.clearRect(0, 0, c.width, c.height);
+  void dpr;
+}
+
+// Fondu au noir par paliers (aucune transition douce).
+async function fade(to) {
+  const f = $('#fader');
+  f.classList.add('on');
+  const steps = to ? [0.25, 0.5, 0.75, 1] : [0.75, 0.5, 0.25, 0];
+  for (const o of steps) {
+    f.style.opacity = o;
+    await wait(70);
+  }
+  if (!to) f.classList.remove('on');
+}
+
+// Balayage au doigt (ou à la souris) sur les pièces.
+let swipe = null, swallowClick = false;
+addEventListener('pointerdown', (e) => {
+  if (!ROOMS.includes(screen) || moving || overlayOpen()) return;
+  swipe = { x: e.clientX, y: e.clientY, t: performance.now() };
+}, { passive: true });
+addEventListener('pointerup', (e) => {
+  if (!swipe) return;
+  const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y, dt = performance.now() - swipe.t;
+  swipe = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && dt < 800) {
+    swallowClick = true;
+    setTimeout(() => (swallowClick = false), 350);
+    goRoom(dx < 0 ? 1 : -1);
+  }
+}, { passive: true });
+addEventListener('click', (e) => {
+  if (swallowClick) {
+    e.stopPropagation();
+    e.preventDefault();
+  }
+}, true);
+$$('#nav-hints .edge').forEach((b) => (b.onclick = () => goRoom(+b.dataset.go)));
+
+const overlayOpen = () => !$('#modal').classList.contains('hidden') || !$('#reveal').classList.contains('hidden');
+
+// ---------------------------------------------------------------- décors animés des pièces
+
+const ROOM_SCENES = { camp: 'camp', team: 'teamRoom', summon: 'summonRoom' };
+let roomStep = 0;
+
+function drawRooms(fit, only) {
+  for (const name of ROOMS) {
+    const sec = $('#scr-' + name);
+    if (sec.classList.contains('hidden') && name !== only) continue;
+    const c = $(`#${name}-canvas`);
+    if (fit || c.width !== CAMP_W) {
+      c.width = CAMP_W;
+      c.height = SH;
+      fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
+    }
+    const g = c.getContext('2d');
+    g.drawImage(sceneBackground(ROOM_SCENES[name]), 0, 0);
+    sceneAnim(ROOM_SCENES[name], g, roomStep);
+    if (name === 'camp') drawCampLife(g);
+    if (name === 'summon') drawAltar(g);
+  }
+}
+setInterval(() => {
+  if (!ROOMS.includes(screen)) return;
+  roomStep++;
+  drawRooms(false);
+}, 140);
+
+function drawCampLife(g) {
+  noticeBoard(g);
   const crystal = bitmap('crystal', crystalSprite);
+  const cy = 66 - (roomStep % 6 < 3 ? 0 : 1);
+  g.drawImage(crystal.canvas, 228, cy);
+  drawFx(g, crystal, 228, cy, roomStep);
   const spots = [[124, 96], [136, 86], [176, 94]];
-  const party = state.team.map((id, i) => ({ bm: bitmap(`h-${id}-${state.owned[id].rank}`, () => heroSprite(id, state.owned[id].rank)), at: spots[i] }));
-  let step = 0;
-  clearTimeout(campTimer);
-  const frame = () => {
-    if (screen !== 'camp') return;
-    g.drawImage(sceneBackground('camp'), 0, 0);
-    noticeBoard(g);
-    sceneAnim('camp', g, step);
-    const cy = 66 - (step % 6 < 3 ? 0 : 1);
-    g.drawImage(crystal.canvas, 228, cy);
-    drawFx(g, crystal, 228, cy, step);
-    party.forEach((p, i) => {
-      const x = p.at[0] - (p.bm.w >> 1), y = p.at[1] - p.bm.h - ((Math.floor(step / 2) + i) % 2);
-      g.drawImage(p.bm.canvas, x, y);
-      drawFx(g, p.bm, x, y, step);
-    });
-    step++;
-    campTimer = setTimeout(frame, 140);
-  };
-  frame();
+  state.team.forEach((id, i) => {
+    const bm = bitmap(`h-${id}-${state.owned[id].rank}`, () => heroSprite(id, state.owned[id].rank));
+    const x = spots[i][0] - (bm.w >> 1), y = spots[i][1] - bm.h - ((Math.floor(roomStep / 2) + i) % 2);
+    g.drawImage(bm.canvas, x, y);
+    drawFx(g, bm, x, y, roomStep);
+  });
+}
+
+function drawAltar(g) {
+  const crystal = bitmap('crystal', crystalSprite);
+  const cy = 56 - (roomStep % 8 < 4 ? 0 : 1);
+  g.drawImage(crystal.canvas, 96, cy);
+  drawFx(g, crystal, 96, cy, roomStep);
 }
 
 // Panneau d'affichage en bois sur le mur de gauche.
@@ -170,9 +271,57 @@ function noticeBoard(g) {
   }
 }
 
-$('#go-team').onclick = () => show('team');
-$('#go-summon').onclick = () => show('summon');
-$('#go-fight').onclick = () => startBattle(state.best + 1);
+// ---------------------------------------------------------------- camp
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+function renderCamp() {
+  const next = stage(state.best + 1);
+  $('#fight-info').textContent = `Étape ${next.n} · ${next.chapter.name}${next.boss ? ' · Boss' : ''}`;
+  $('#go-replay').classList.toggle('hidden', state.best === 0);
+  $('#btn-daily').classList.toggle('hidden', state.lastDaily === today());
+  requestAnimationFrame(placeDoorSign);
+}
+
+function placeDoorSign() {
+  const c = $('#camp-canvas'), [x, y] = toScreen(c, CAMP_W, 150, 40), s = $('#door-sign');
+  s.style.left = x + 'px';
+  s.style.top = y + 'px';
+}
+
+// Toucher la porte : zoom vers la porte, son, fondu au noir, combat.
+$('#camp-canvas').addEventListener('click', (e) => {
+  if (screen !== 'camp' || moving) return;
+  const [x, y] = toArt($('#camp-canvas'), CAMP_W, e);
+  if (x >= GATE.x0 && x <= GATE.x1 && y >= GATE.y0 && y <= GATE.y1) enterDoor();
+  else if (x >= 216 && x <= 262 && y >= 56 && y <= 104) goRoom(1); // le cristal
+  else if (x >= 68 && x <= 104 && y >= 30 && y <= 58) goRoom(-1); // le panneau
+});
+
+async function enterDoor() {
+  if (moving) return;
+  moving = true;
+  const c = $('#camp-canvas'), [ox, oy] = toScreen(c, CAMP_W, 150, 48);
+  sfx('zoom');
+  haptic(30);
+  c.style.transformOrigin = `${ox - c.offsetLeft}px ${oy - c.offsetTop}px`;
+  $('#door-sign').classList.add('hidden');
+  const f = $('#fader');
+  f.classList.add('on');
+  const steps = [[1.2, 0], [1.5, 0.1], [1.9, 0.3], [2.4, 0.55], [3, 0.8], [3.8, 1]];
+  for (const [z, o] of steps) {
+    c.style.transform = `scale(${z})`;
+    f.style.opacity = o;
+    await wait(75);
+  }
+  c.style.transform = '';
+  $('#door-sign').classList.remove('hidden');
+  moving = false;
+  startBattle(state.best + 1);
+  await wait(120);
+  await fade(false);
+}
+
 $('#go-replay').onclick = () => {
   const box = el('div');
   box.appendChild(el('div', 'big-title', 'Rejouer'));
@@ -180,7 +329,12 @@ $('#go-replay').onclick = () => {
   for (let n = state.best; n >= 1; n--) {
     const st = stage(n);
     const b = el('button', 'btn' + (st.boss ? ' red' : ''), `${n}${st.boss ? ' boss' : ''}`);
-    b.onclick = () => { closeModal(); startBattle(n); };
+    b.onclick = async () => {
+      closeModal(false);
+      await fade(true);
+      startBattle(n);
+      await fade(false);
+    };
     list.appendChild(b);
   }
   box.appendChild(list);
@@ -211,6 +365,25 @@ $('#btn-options').onclick = () => {
   box.appendChild(row);
   box.appendChild(el('p', 'muted', 'La vibration ne marche pas sur iPhone depuis iOS 26.5 (bloquée par Apple pour les sites web).'));
   modal(box, [['Effacer la partie', () => ask('Tout effacer et recommencer ?', () => { resetSave(); show('camp'); }), 'red'], ['Fermer', closeModal]]);
+};
+
+// ---------------------------------------------------------------- cartes
+
+function card(id, opts = {}) {
+  const h = HEROES[id], own = state.owned[id], k = opts.k || 2;
+  const c = el('button', `card r-${h.rarity}${own ? '' : ' locked'}${opts.sel ? ' sel' : ''}`);
+  const ped = el('div', 'pedestal');
+  ped.appendChild(own ? heroCanvas(id, own.rank, k) : lockedCanvas(id, 1, k));
+  c.appendChild(ped);
+  c.appendChild(el('div', 'name', own ? h.name : '???'));
+  c.appendChild(starsRow(h.rarity));
+  if (own) c.appendChild(rankPips(own.rank));
+  if (opts.badge) c.appendChild(el('div', 'badge ' + (opts.badgeCls || ''), opts.badge));
+  return c;
+}
+const canUpgrade = (id) => {
+  const o = state.owned[id];
+  return o && o.rank < 5 && o.frags >= UPGRADE[o.rank - 1].frags;
 };
 
 // ---------------------------------------------------------------- équipe
@@ -274,8 +447,8 @@ function renderDetail(id) {
   d.appendChild(info);
 
   d.appendChild(el('div', 'skill-box', `<b>${h.skill.name}</b> · recharge ${h.skill.cd} tours<br>${h.skill.desc}`));
-  const actSlot = el('div', 'd-actions');
-  d.appendChild(actSlot);
+  const act = el('div', 'd-actions');
+  d.appendChild(act);
   const ranks = el('div', 'ranks');
   for (let r = 1; r <= 5; r++) {
     const rd = el('div');
@@ -285,7 +458,6 @@ function renderDetail(id) {
   }
   d.appendChild(ranks);
 
-  const act = actSlot;
   if (!own) {
     act.appendChild(el('p', 'muted', 'À obtenir à l’autel d’invocation.'));
   } else {
@@ -332,17 +504,12 @@ async function upgrade(id) {
 // ---------------------------------------------------------------- invocation
 
 function renderSummon() {
-  const altar = $('#summon-altar');
-  altar.innerHTML = '';
-  altar.appendChild(spriteCanvas('crystal', crystalSprite, 4));
-  const line = el('div', 'lineup');
-  HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 2) : lockedCanvas(id, 1, 2)));
-  altar.appendChild(line);
-
   const info = $('#summon-info');
   info.innerHTML = '';
   info.appendChild(el('div', 'h', 'Autel d’invocation'));
-  info.appendChild(el('p', 'muted', 'Chaque invocation donne un héros. Un doublon donne un éclat pour monter de rang.'));
+  const line = el('div', 'lineup');
+  HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 2) : lockedCanvas(id, 1, 2)));
+  info.appendChild(line);
   for (const [k, r] of Object.entries(RARITY)) {
     const row = el('div', 'rate');
     row.appendChild(starsRow(k, 2));
@@ -361,6 +528,7 @@ function renderSummon() {
   b10.onclick = () => pull(10);
   row.append(b1, b10);
   info.appendChild(row);
+  info.appendChild(el('p', 'muted', 'Un doublon donne un éclat pour monter de rang.'));
 }
 
 function rollRarity(forceRare) {
@@ -452,7 +620,7 @@ function startBattle(n) {
   $('#b-stage').textContent = `Étape ${n} · ${st.chapter.name}`;
   battle = new Battle({
     canvas: cv, width, team: state.team, stage: st, owned: state.owned,
-    ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showArc, endChoice: hideArc },
+    ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
   });
   setTools();
@@ -505,85 +673,94 @@ function updateQueue() {
   });
 }
 
-// Menu d'actions qui flotte en arc autour du héros actif.
-function showArc(u) {
-  const arc = $('#b-arc'), cv = $('#b-canvas');
-  arc.innerHTML = '';
-  const p = battle.screenPos(u);
-  arc.style.left = cv.offsetLeft + p.x + 'px';
-  arc.style.top = cv.offsetTop + p.y + 'px';
+// Menu d'actions : un rectangle à côté du héros. On glisse le doigt dessus,
+// l'action visée grossit, et on la choisit en relâchant (un simple toucher marche aussi).
+function showMenu(u) {
   const single = u.skill.kind === 'single';
-  const items = [
-    { ico: 'attack', label: 'Attaque', go: () => pickTarget(u, 'attack') },
-    { ico: u.id, label: u.skill.name, cd: u.cd, go: () => (single ? pickTarget(u, 'skill') : battle.submit({ type: 'skill' })) },
-    { ico: 'guard', label: 'Garde', go: () => battle.submit({ type: 'guard' }) },
-  ];
-  placeArc(arc, items, cv.offsetTop + p.y);
+  buildMenu(u, u.name, [
+    { ico: 'attack', label: 'Attaque', sub: 'Frappe un ennemi', go: () => pickTarget(u, 'attack') },
+    {
+      ico: u.id, label: u.skill.name, sub: u.cd ? `Prête dans ${u.cd} tour${u.cd > 1 ? 's' : ''}` : u.skill.desc,
+      cd: u.cd, go: () => (single ? pickTarget(u, 'skill') : battle.submit({ type: 'skill' })),
+    },
+    { ico: 'guard', label: 'Garde', sub: 'Dégâts reçus ÷ 2', go: () => battle.submit({ type: 'guard' }) },
+  ]);
 }
 
-// Cherche l'arc (rayon + rotation) qui reste à l'écran sans recouvrir les autres combattants.
-function placeArc(arc, items, cy) {
-  const cv = $('#b-canvas'), k = cv.clientWidth / battle.W, cx = parseFloat(arc.style.left);
-  const others = [...battle.heroes, ...battle.enemies].filter((u) => u.alive && u !== battle.active).map((u) => ({
-    x0: cv.offsetLeft + u.sx * k, y0: cv.offsetTop + u.sy * k, x1: cv.offsetLeft + (u.sx + u.bm.w) * k, y1: cv.offsetTop + (u.by + 6) * k,
-  }));
-  let best = null;
-  for (const gap of items.length === 3 ? [44, 38, 34] : [24])
-  for (const R of [100, 116, 132])
-    for (let shift = -70; shift <= 70; shift += 5) {
-      const spread = items.length === 3 ? [-gap, 0, gap] : [-gap, gap];
-      let pen = Math.abs(shift) / 100 + R / 1000 + (46 - gap) / 50;
-      const pts = spread.map((a) => {
-        const r = ((a + shift) * Math.PI) / 180;
-        return [Math.round(R * Math.cos(r)), Math.round(R * Math.sin(r))];
-      });
-      for (const [x, y] of pts) {
-        const ax = cx + x, ay = cy + y; // médaillon 48×48 + étiquette dessous
-        if (ay - 26 < 64 || ay + 26 > innerHeight - 4 || ax + 140 > innerWidth) pen += 100;
-        for (const o of others) if (ax + 120 > o.x0 && ax - 26 < o.x1 && ay + 24 > o.y0 && ay - 24 < o.y1) pen += 10;
-      }
-      if (!best || pen < best.pen) best = { pen, pts };
-    }
-  items.forEach((it, i) => {
-    const [x, y] = best.pts[i];
-    it.x = x;
-    it.y = y;
-  });
-  items.forEach((it, i) => {
-    const b = el('button', 'medal float');
-    b.appendChild(medal(it.ico, it.tone || 'gold'));
-    b.appendChild(el('span', 'tag', it.label));
-    if (it.cd) {
-      b.disabled = true;
-      b.appendChild(el('span', 'cd', String(it.cd)));
-    }
-    b.onclick = it.go;
-    const { x, y } = it;
-    // apparition en 3 sauts depuis le héros (pas de glissement doux)
-    [0.35, 0.7, 1].forEach((f, j) => setTimeout(() => {
-      b.style.left = Math.round(x * f) + 'px';
-      b.style.top = Math.round(y * f) + 'px';
-    }, j * 45));
-    b.style.left = '0px';
-    b.style.top = '0px';
-    arc.appendChild(b);
-  });
+function hideMenu() {
+  const m = $('#b-menu');
+  m.classList.add('hidden');
+  m.innerHTML = '';
 }
 
-function hideArc() {
-  $('#b-arc').innerHTML = '';
+function buildMenu(u, title, items) {
+  const m = $('#b-menu'), cv = $('#b-canvas');
+  m.innerHTML = '';
+  m.appendChild(el('div', 'm-title', title));
+  items.forEach((it) => {
+    const row = el('div', 'act' + (it.cd ? ' off' : ''));
+    row.appendChild(medal(it.ico, it.tone || 'gold'));
+    row.appendChild(el('span', '', `${it.label}${it.sub ? `<small>${it.sub}</small>` : ''}`));
+    if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
+    row._it = it;
+    m.appendChild(row);
+  });
+  m.classList.remove('hidden');
+  // à droite du héros, centré sur lui, sans sortir de l'écran
+  const k = cv.clientWidth / battle.W;
+  const [hx, hy] = toScreen(cv, battle.W, u.cx + u.bm.w / 2, u.by - u.bm.h / 2);
+  const h = m.offsetHeight + 24;
+  const top = Math.max(64, Math.min(innerHeight - h - 8, hy - h / 2));
+  m.style.left = Math.round(hx + 6 * k + 12) + 'px';
+  m.style.top = Math.round(top) + 'px';
+  m.style.setProperty('--tip', Math.round(hy - top) + 'px');
 }
+
+// Glisser sur le menu : la ligne sous le doigt grossit ; relâcher = choisir.
+(() => {
+  const m = $('#b-menu');
+  let hot = null, dragging = false;
+  const rowAt = (e) => document.elementFromPoint(e.clientX, e.clientY)?.closest('#b-menu .act') || null;
+  const setHot = (r) => {
+    if (r === hot) return;
+    hot?.classList.remove('hot');
+    hot = r;
+    if (r) {
+      r.classList.add('hot');
+      sfx('hover');
+      haptic(5);
+    }
+  };
+  m.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    m.setPointerCapture(e.pointerId);
+    unlock();
+    setHot(rowAt(e));
+  });
+  m.addEventListener('pointermove', (e) => dragging && setHot(rowAt(e)));
+  m.addEventListener('pointerup', (e) => {
+    dragging = false;
+    const r = rowAt(e);
+    setHot(null);
+    if (!r) return;
+    if (r.classList.contains('off')) {
+      sfx('denied');
+      return;
+    }
+    sfx('select');
+    haptic(15);
+    r._it.go();
+  });
+  m.addEventListener('pointercancel', () => { dragging = false; setHot(null); });
+})();
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {
   const foes = battle.alive('e');
   if (foes.length === 1) return battle.submit({ type, target: foes[0] });
-  const arc = $('#b-arc');
-  arc.innerHTML = '';
-  placeArc(arc, [
-    { ico: type === 'attack' ? 'attack' : u.id, label: 'Touche un ennemi', go: () => {} },
-    { ico: 'cancel', label: 'Annuler', tone: 'stone', go: () => { battle.targeting = null; showArc(u); } },
-  ], parseFloat(arc.style.top));
+  buildMenu(u, 'Touche un ennemi', [
+    { ico: 'cancel', label: 'Annuler', tone: 'stone', go: () => { battle.targeting = null; showMenu(u); } },
+  ]);
   battle.log('Choisis une cible.');
   battle.targeting = foes;
   battle.onTargetTap = (t) => {
@@ -594,13 +771,15 @@ function pickTarget(u, type) {
   };
 }
 
-function closeBattle() {
+async function closeBattle() {
+  closeModal(false);
+  await fade(true);
   battle?.stop();
   battle = null;
   clearInterval(queueTimer);
-  hideArc();
-  closeModal(false);
+  hideMenu();
   show('camp');
+  await fade(false);
 }
 
 function endBattle(st, res) {
@@ -613,19 +792,28 @@ function endBattle(st, res) {
     save();
     sfx('win');
     box.innerHTML = `<div class="big-title">Victoire !</div><p style="text-align:center"><b>+${gain} or</b>${first ? '<br><span class="muted">bonus du premier passage</span>' : ''}</p>`;
-    modal(box, [['Camp', closeBattle], ['Étape suivante', () => { closeBattle(); startBattle(state.best + 1); }, 'gold']]);
+    modal(box, [['Camp', closeBattle], ['Étape suivante', () => nextBattle(state.best + 1), 'gold']]);
   } else {
     sfx('lose');
     box.innerHTML = `<div class="big-title lose">Défaite…</div><p style="text-align:center">Améliore tes héros ou change d’équipe.</p>`;
-    modal(box, [['Camp', closeBattle], ['Réessayer', () => { closeBattle(); startBattle(st.n); }, 'gold']]);
+    modal(box, [['Camp', closeBattle], ['Réessayer', () => nextBattle(st.n), 'gold']]);
   }
+}
+
+async function nextBattle(n) {
+  closeModal(false);
+  await fade(true);
+  battle?.stop();
+  hideMenu();
+  startBattle(n);
+  await fade(false);
 }
 
 addEventListener('resize', () => {
   if (screen === 'battle' && battle) {
     fitCanvas($('#b-canvas'), battle.W, H, innerWidth, innerHeight, false);
-    if ($('#b-arc').firstChild && battle.active) showArc(battle.active);
-  } else if (screen === 'camp') drawCamp();
+    if (!$('#b-menu').classList.contains('hidden') && battle.active) showMenu(battle.active);
+  } else if (ROOMS.includes(screen)) refresh();
 });
 
 // ---------------------------------------------------------------- fenêtres
@@ -686,18 +874,23 @@ document.addEventListener('click', (e) => {
   if (!e.isTrusted) return;
   const b = e.target.closest('button');
   if (!b || b.disabled) return;
-  if (b.closest('#b-arc')) { sfx('select'); haptic(15); } else { sfx('blip'); haptic(8); }
+  sfx('blip');
+  haptic(8);
 }, true);
 addEventListener('touchend', unlock, { passive: true });
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) closeModal(screen !== 'battle');
+  if (ROOMS.includes(screen) && !overlayOpen()) {
+    if (e.key === 'ArrowLeft') goRoom(-1);
+    if (e.key === 'ArrowRight') goRoom(1);
+  }
 });
 
 // ---------------------------------------------------------------- démarrage
 
 setSound(state.sound);
 setHaptics(state.haptics);
-document.fonts?.ready.then(() => show(screen));
+document.fonts?.ready.then(() => refresh());
 show('camp');
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

@@ -51,6 +51,24 @@ function tone(freq, dur, at = 0, type = 'square', vol = 1, slide = null) {
   o.stop(t + dur + 0.01);
 }
 
+// Souffle filtré qui glisse d'une fréquence à l'autre (vent, zoom).
+function whoosh(dur, f0, f1, vol = 1, at = 0) {
+  const t = ctx.currentTime + at;
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noiseBuf;
+  s.loop = true;
+  f.type = 'bandpass';
+  f.Q.value = 1.4;
+  f.frequency.setValueAtTime(f0, t);
+  f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(vol, t + dur * 0.35);
+  g.gain.linearRampToValueAtTime(0.001, t + dur);
+  s.connect(f).connect(g).connect(master);
+  s.start(t);
+  s.stop(t + dur + 0.02);
+}
+
 function noise(dur, at = 0, vol = 0.8) {
   const t = ctx.currentTime + at;
   const s = ctx.createBufferSource(), g = ctx.createGain();
@@ -85,6 +103,9 @@ const SOUNDS = {
   legend: () => [N.C5, N.E5, N.G5, N.C6, N.E6, N.C6, N.E6].forEach((f, i) => tone(f, 0.07, i * 0.07)),
   levelUp: () => [N.C5, N.D5, N.E5, N.G5, N.C6].forEach((f, i) => tone(f, 0.06, i * 0.06)),
   coin: () => { tone(N.E6 * 0.75, 0.05); tone(N.E6, 0.12, 0.05); },
+  wind: () => { whoosh(0.55, 300, 1400, 1.6); whoosh(0.45, 700, 2400, 0.7, 0.08); },
+  zoom: () => { whoosh(0.5, 200, 3000, 1.4); tone(110, 0.5, 0, 'square', 0.35, 440); noise(0.15, 0.45, 0.6); },
+  hover: () => tone(N.G5, 0.025, 0, 'square', 0.45),
 };
 
 export function sfx(name) {

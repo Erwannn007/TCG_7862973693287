@@ -62,10 +62,10 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 - Équipe de 1 à 3 persos contre 1 à 3 ennemis (ou un boss).
 - Ordre des tours par VIT, à chaque manche.
-- Tour d'un héros : les actions **flottent en arc** autour de lui (médaillons, comme le
-  menu en anneau de Secret of Mana) : **Attaque**, **Compétence** (avec sa recharge) et
-  **Garde** (dégâts reçus divisés par 2 jusqu'à son prochain tour). L'arc se place tout
-  seul pour ne recouvrir aucun personnage et rester dans l'écran.
+- Tour d'un héros : un **rectangle d'actions** apparaît à côté de lui (Attaque,
+  Compétence avec sa recharge, Garde = dégâts reçus divisés par 2 jusqu'à son prochain
+  tour). On **glisse le doigt** dessus : l'action visée grossit et affiche sa description ;
+  on relâche pour la choisir. Un simple toucher marche aussi.
 - Pour une attaque ciblée, des coins de visée apparaissent sur les ennemis : on touche
   celui qu'on veut (ou Annuler). S'il ne reste qu'un ennemi, la cible est automatique.
 - En haut : nom de l'étape, **ordre des tours** (portraits), boutons Auto / ×2 / Fuir.
@@ -93,16 +93,20 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 ## 8. Écrans
 
 Ambiance : donjon en pixel art, chaleureux (pierre, bois, torches, parchemin).
+Trois pièces côte à côte : **Équipe ← Camp → Invocation**. On passe de l'une à l'autre
+en **balayant** l'écran (ou avec les flèches des coins), avec un glissement par paliers,
+des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
 
-1. **Camp** (accueil) : un feu de camp dans le donjon, l'équipe autour, le cristal
-   d'invocation à droite. Boutons sous les pouces : **Équipe** en bas à gauche,
-   **Combattre** au centre, **Invoquer** en bas à droite. En haut : or, rejouer une étape,
-   coffre du jour, options.
-2. **Équipe** : à gauche la formation (3 places) et tous les héros ; à droite la fiche
-   du héros choisi (stats en barres à segments, compétence, Améliorer, Dans l'équipe /
-   Retirer, aperçu des 5 rangs).
-3. **Invocation** : à gauche l'autel au cristal, à droite les taux, la jauge de pitié
-   et les boutons ×1 / ×10.
+1. **Camp** (accueil, au centre) : feu de camp, l'équipe autour, le cristal à droite,
+   le panneau d'affichage à gauche. Aucun bouton en bas : **on touche la porte** pour
+   partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
+   le cristal ou le panneau mène aussi aux pièces voisines. En haut : or, rejouer une
+   étape, coffre du jour, options.
+2. **Équipe** (à gauche) : salle d'armes ; formation et héros à gauche, fiche du héros
+   choisi à droite (stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).
+3. **Invocation** (à droite) : salle sans porte, le cristal posé sur une estrade au-dessus
+   d'un cercle de runes qui s'illuminent, bougies, bannières violettes ; le parchemin à
+   droite donne les taux, la jauge de pitié et les boutons ×1 / ×10.
 
 ## 9. Hors périmètre (plus tard)
 
