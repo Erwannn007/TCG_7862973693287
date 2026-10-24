@@ -89,13 +89,19 @@ Direction artistique : pixel art « chibi » dessiné entièrement en code, **sa
 
 ## 6. Interface
 
-- Police pixel **Press Start 2P** (licence OFL, `fonts/`), en 8 px ou 16 px uniquement.
-  Elle n'a pas de capitales accentuées : les textes en majuscules s'écrivent sans accent
-  (ETAPE, EQUIPE).
-- Fenêtres façon RPG Game Boy : fond crème `#f2ead6`, double bordure encre `#21182a`,
-  ombre portée dure. Variante sombre `#3a2f52` pour les panneaux.
-- Curseur ▸ doré qui clignote par paliers sur l'élément choisi à la croix.
-- Icônes (onglets, étoiles de rareté, cristal d'invocation) dessinées avec `Spr`,
-  comme les personnages.
-- La coque de la console est grise `#cfc9bf`, avec un cadre d'écran `#5b5d70`, des
-  boutons A/B magenta `#9a2a5a` et des textes bleu marine `#2a2e7a`.
+- Ambiance **donjon chaleureux** : pierre brun-violet, bois, parchemin, or, lumière de
+  torche. Les décors (camp, prairie, crypte, volcan) sont dessinés en code
+  (`js/scene.js`) avec un éclairage « par paliers » : 4 teintes par surface selon la
+  distance aux torches ou au feu, tramage aux frontières, jamais de dégradé doux.
+- Cadres **9-slice** dessinés en code (`js/ui-art.js`) : bois, parchemin, pierre,
+  boutons bois / or / rouge, ruban. Les coins ne sont jamais étirés et les images sont
+  générées directement à la taille des pixels de l'écran (aucun flou).
+- Polices pixel (licence OFL, `fonts/`) : **Pixelify Sans** pour le texte, et
+  **Jacquarda Bastarda 9** (gothique) pour les titres d'écran uniquement, car elle est
+  moins lisible.
+- Icônes 14×14 et **médaillons** d'action 22×22 (anneau doré octogonal) dessinés avec `Spr`.
+- Barres de vie et de stats **en segments** (plus lisibles qu'un remplissage continu).
+- Repères de combat bien visibles : chevron doré contouré qui rebondit au-dessus du
+  héros actif, anneau doré à ses pieds, coins de visée clignotants sur les cibles.
+- Zones tactiles d'au moins 44 px ; actions fréquentes en bas, sous les pouces ;
+  boutons dans la zone sûre (encoche et barre d'accueil de l'iPhone).

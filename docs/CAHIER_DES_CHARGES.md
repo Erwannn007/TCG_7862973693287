@@ -11,6 +11,7 @@ on les améliore avec les doublons, on monte une équipe de 3 et on enchaîne le
 - Site statique publié sur **GitHub Pages** (aucun serveur, aucun build).
 - Pensé pour **Safari iPhone**, ajouté à l'écran d'accueil (PWA) :
   plein écran, icône dédiée, fonctionne hors ligne (service worker).
+- Se joue **à l'horizontale** (paysage). En portrait, un écran demande de tourner le téléphone.
 - HTML + CSS + JavaScript natif (modules ES). Aucune dépendance externe.
 - Or de départ : 1000 (une invocation ×10 possible dès le début).
 - Sauvegarde locale dans le navigateur (`localStorage`).
@@ -61,13 +62,14 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 - Équipe de 1 à 3 persos contre 1 à 3 ennemis (ou un boss).
 - Ordre des tours par VIT, à chaque manche.
-- Tour d'un héros : **Attaque** ou **Compétence** (si rechargée) ; on touche un ennemi
-  pour le cibler.
+- Tour d'un héros : les actions **flottent en arc** autour de lui (médaillons, comme le
+  menu en anneau de Secret of Mana) : **Attaque**, **Compétence** (avec sa recharge) et
+  **Garde** (dégâts reçus divisés par 2 jusqu'à son prochain tour). L'arc se place tout
+  seul pour ne recouvrir aucun personnage et rester dans l'écran.
+- Pour une attaque ciblée, des coins de visée apparaissent sur les ennemis : on touche
+  celui qu'on veut (ou Annuler). S'il ne reste qu'un ennemi, la cible est automatique.
+- En haut : nom de l'étape, **ordre des tours** (portraits), boutons Auto / ×2 / Fuir.
 - Options : **Auto** (l'IA joue les héros) et **×2** (vitesse).
-- L'écran de combat est habillé en **console portable** (style Game Boy) :
-  écran 120×108 (format 10:9) dans son cadre avec une boîte de dialogue,
-  croix directionnelle = changer de cible, **A** = Attaque, **B** = Compétence,
-  **SELECT** = Auto, **START** = vitesse, interrupteur **OFF** = fuir.
 - **Sons** 8 bits générés en direct (Web Audio, ondes carrées + bruit) : touches,
   coups, critiques, soins, mort, victoire, défaite, révélations du gacha, montée de rang.
 - **Vibration** à chaque touche : `navigator.vibrate` sur Android ; sur iPhone, astuce
@@ -90,32 +92,17 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 ## 8. Écrans
 
-Tout le jeu se joue **dans la console « Pixel Boy »** : l'écran de la console affiche
-les menus comme le combat. En bas de l'écran, trois onglets à icônes pixel :
+Ambiance : donjon en pixel art, chaleureux (pierre, bois, torches, parchemin).
 
-| ← gauche | centre | droite → |
-|---|---|---|
-| **ÉQUIPE** | **COMBAT** | **INVOQUER** |
-
-1. **Équipe** : les 3 places de l'équipe, puis tous les héros (silhouette si non
-   débloqué). Toucher un héros ouvre sa fiche : stats en barres, compétence, aperçu
-   des 5 rangs, boutons Améliorer et Équipe +/Retirer.
-2. **Combat** : aperçu animé de l'étape suivante (ton équipe face aux ennemis),
-   bouton Étape, bonus du jour, liste « Rejouer », options (sons, vibration, effacer).
-3. **Invoquer** : autel au cristal, boutons ×1 / ×10, taux et jauge de pitié.
-
-### Commandes de la console (en plus du toucher)
-
-| Touche | Menus | Combat |
-|---|---|---|
-| Croix | déplacer le curseur ▸ | changer de cible |
-| A | valider | Attaque |
-| B | retour | Compétence |
-| SELECT | onglet suivant | Auto |
-| START | lancer l'étape suivante | vitesse ×1 / ×2 |
-| Interrupteur | — | fuir |
-
-Sur ordinateur : flèches, X/Entrée = A, Z/Échap = B, Maj = SELECT, Espace = START.
+1. **Camp** (accueil) : un feu de camp dans le donjon, l'équipe autour, le cristal
+   d'invocation à droite. Boutons sous les pouces : **Équipe** en bas à gauche,
+   **Combattre** au centre, **Invoquer** en bas à droite. En haut : or, rejouer une étape,
+   coffre du jour, options.
+2. **Équipe** : à gauche la formation (3 places) et tous les héros ; à droite la fiche
+   du héros choisi (stats en barres à segments, compétence, Améliorer, Dans l'équipe /
+   Retirer, aperçu des 5 rangs).
+3. **Invocation** : à gauche l'autel au cristal, à droite les taux, la jauge de pitié
+   et les boutons ×1 / ×10.
 
 ## 9. Hors périmètre (plus tard)
 

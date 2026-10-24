@@ -8,83 +8,93 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pixel Gacha">
-  <meta name="theme-color" content="#cfc9bf">
+  <meta name="theme-color" content="#1a1114">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="preload" href="fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/pixelify-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/jacquarda-bastarda-9.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Tout le jeu se joue dans la console « Pixel Boy ». -->
-  <div class="gb">
-    <div class="gb-top">
-      <button id="power" class="gb-power" aria-label="Interrupteur"><i></i><span id="power-label">ON</span></button>
-      <span class="gb-top-brand">PIXEL GACHA</span>
-    </div>
-
-    <div class="gb-bezel">
-      <div class="gb-bezel-label"><span class="gb-led"></span><i></i><span>PIXEL MATRIX</span><i></i></div>
-
-      <div id="lcd" class="lcd">
-        <header id="hud">
-          <span id="hud-title">COMBAT</span>
-          <span class="hud-gold"><span id="coin"></span><span id="gold">0</span></span>
-        </header>
-
-        <section id="v-team" class="view hidden"></section>
-        <section id="v-home" class="view hidden"></section>
-        <section id="v-gacha" class="view hidden"></section>
-
-        <section id="v-battle" class="hidden">
-          <canvas id="b-canvas" class="px"></canvas>
-          <div id="b-log" class="win dialog"></div>
-        </section>
-
-        <nav id="tabs">
-          <button data-tab="team"><span class="ico"></span><b>EQUIPE</b></button>
-          <button data-tab="home"><span class="ico"></span><b>COMBAT</b></button>
-          <button data-tab="gacha"><span class="ico"></span><b>INVOQUER</b></button>
-        </nav>
-
-        <div id="reveal" class="layer hidden">
-          <div id="reveal-grid"></div>
-          <button id="reveal-ok" class="pbtn gold">OK</button>
+  <div id="app">
+    <!-- Camp : l'accueil, un feu de camp dans le donjon -->
+    <section id="scr-camp" class="screen">
+      <canvas id="camp-canvas" class="px scene-bg"></canvas>
+      <header class="topbar">
+        <h1 class="title">Pixel Gacha</h1>
+        <div class="tb-right">
+          <button id="go-replay" class="icon-btn" aria-label="Rejouer une étape"></button>
+          <button id="btn-daily" class="icon-btn hidden" aria-label="Bonus du jour"></button>
+          <div class="gold-pill"><span class="coin"></span><b class="gold-amt">0</b></div>
+          <button id="btn-options" class="icon-btn" aria-label="Options"></button>
         </div>
+      </header>
+      <div class="camp-actions">
+        <button id="go-team" class="btn side"><span class="ico" data-ico="team"></span><span>Équipe</span></button>
+        <button id="go-fight" class="btn gold big"><span class="ico" data-ico="fight"></span><span><b>Combattre</b><small id="fight-info"></small></span></button>
+        <button id="go-summon" class="btn side"><span>Invoquer</span><span class="ico" data-ico="summon"></span></button>
+      </div>
+    </section>
 
-        <div id="modal" class="layer hidden">
-          <div id="modal-body" class="win"></div>
+    <!-- Équipe : liste à gauche, fiche détaillée à droite -->
+    <section id="scr-team" class="screen menu hidden">
+      <header class="topbar">
+        <button class="icon-btn back" aria-label="Retour"></button>
+        <h1 class="title">Équipe</h1>
+        <div class="tb-right"><div class="gold-pill"><span class="coin"></span><b class="gold-amt">0</b></div></div>
+      </header>
+      <div class="split">
+        <div id="team-left" class="panel wood"></div>
+        <div id="team-detail" class="panel parch"></div>
+      </div>
+    </section>
+
+    <!-- Invoquer : l'autel à gauche, les taux et boutons à droite -->
+    <section id="scr-summon" class="screen menu hidden">
+      <header class="topbar">
+        <button class="icon-btn back" aria-label="Retour"></button>
+        <h1 class="title">Invocation</h1>
+        <div class="tb-right"><div class="gold-pill"><span class="coin"></span><b class="gold-amt">0</b></div></div>
+      </header>
+      <div class="split">
+        <div id="summon-altar" class="panel stone"></div>
+        <div id="summon-info" class="panel parch"></div>
+      </div>
+    </section>
+
+    <!-- Combat -->
+    <section id="scr-battle" class="screen hidden">
+      <canvas id="b-canvas" class="px"></canvas>
+      <div id="b-top">
+        <div id="b-stage" class="ribbon"></div>
+        <div id="b-queue" class="panel wood thin"></div>
+        <div class="b-tools">
+          <button id="b-auto" class="medal" aria-label="Auto"></button>
+          <button id="b-speed" class="medal" aria-label="Vitesse"></button>
+          <button id="b-flee" class="medal" aria-label="Fuir"></button>
         </div>
       </div>
+      <div id="b-log" class="panel parch thin"></div>
+      <div id="b-arc"></div>
+    </section>
+
+    <!-- Révélation des cartes -->
+    <div id="reveal" class="overlay hidden">
+      <div id="reveal-grid"></div>
+      <button id="reveal-ok" class="btn gold">OK</button>
     </div>
 
-    <div class="gb-logo">Pixel<b>BOY</b></div>
-
-    <div class="gb-controls">
-      <div class="well dpad-well">
-        <div class="dpad">
-          <button class="up" data-dir="up" aria-label="Haut"></button>
-          <button class="left" data-dir="left" aria-label="Gauche"></button>
-          <span class="mid"></span>
-          <button class="right" data-dir="right" aria-label="Droite"></button>
-          <button class="down" data-dir="down" aria-label="Bas"></button>
-        </div>
-      </div>
-      <div class="ab">
-        <div class="well ab-well">
-          <span class="cap b"><button id="key-b" aria-label="B">B</button></span>
-          <span class="cap a"><button id="key-a" aria-label="A">A</button></span>
-        </div>
-        <div class="ab-labels"><span id="label-b">RETOUR</span><span id="label-a">VALIDER</span></div>
-      </div>
+    <!-- Fenêtre générique -->
+    <div id="modal" class="overlay hidden">
+      <div id="modal-box" class="panel parch"></div>
     </div>
+  </div>
 
-    <div class="gb-pills">
-      <span></span>
-      <div class="pill"><button id="key-select" aria-label="Select"></button><span id="label-select">SELECT</span></div>
-      <div class="pill"><button id="key-start" aria-label="Start"></button><span id="label-start">START</span></div>
-      <div class="gb-speaker"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    </div>
+  <!-- En portrait : demander de tourner le téléphone -->
+  <div id="rotate">
+    <canvas id="rotate-canvas" class="px"></canvas>
+    <p>Tourne ton téléphone<br>pour jouer</p>
   </div>
 
   <script type="module" src="js/main.js"></script>

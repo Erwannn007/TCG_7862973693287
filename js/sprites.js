@@ -515,37 +515,6 @@ export function gemSprite() {
   return s;
 }
 
-// Icônes d'onglets (16×16).
-export function iconSprite(name) {
-  const s = new Spr(16, 16);
-  if (name === 'team') {
-    // bouclier rouge bordé d'or
-    s.hl(3, 12, 2, C.gold);
-    s.r(3, 3, 10, 6, C.gold);
-    s.r(4, 3, 8, 6, '#c8323c');
-    s.hl(4, 11, 9, C.gold); s.hl(5, 10, 10, C.gold); s.hl(6, 9, 11, C.gold); s.hl(7, 8, 12, C.gold);
-    s.hl(5, 10, 9, '#c8323c'); s.hl(6, 9, 10, '#c8323c'); s.hl(7, 8, 11, '#c8323c');
-    s.v(7, 4, 10, C.goldHi, true); s.hl(5, 10, 6, C.goldHi, true);
-  } else if (name === 'combat') {
-    // deux épées croisées
-    s.sline(3, 2, 11, 10, '#b9c6d2');
-    s.sline(12, 2, 4, 10, '#b9c6d2');
-    s.p(3, 2, '#e4ecf3', true); s.p(12, 2, '#e4ecf3', true);
-    s.sline(9, 11, 12, 8, C.gold); s.sline(3, 8, 6, 11, C.gold);
-    s.p(12, 12, C.grip); s.p(13, 13, C.gem, true);
-    s.p(3, 12, C.grip); s.p(2, 13, C.gem, true);
-  } else {
-    // carte magique avec étoile
-    s.r(3, 1, 10, 14, '#f2ead6');
-    s.r(4, 2, 8, 12, '#7a3cc8');
-    s.p(7, 4, C.goldHi, true); s.p(8, 4, C.goldHi, true);
-    s.hl(5, 10, 6, C.goldHi, true); s.hl(6, 9, 7, C.goldHi, true);
-    s.r(6, 8, 4, 1, C.goldHi, true); s.p(5, 9, C.goldHi, true); s.p(10, 9, C.goldHi, true);
-    s.spark(1, 3, '#ffffff'); s.spark(14, 12, C.goldHi);
-  }
-  return s;
-}
-
 // Étoile de rareté (7×7).
 export function starSprite() {
   const s = new Spr(9, 9);

@@ -1,46 +1,24 @@
-// Combat au tour par tour, rendu dans un canvas de 120×96 pixels de jeu.
+// Combat au tour par tour, rendu dans un canvas de 240×120 pixels d'art (écran horizontal).
 import { HEROES, heroStats } from './data.js';
 import { heroSprite, enemySprite } from './sprites.js';
 import { bitmap, drawFx, drawText, textWidth } from './render.js';
+import { sceneBackground, sceneAnim, SW, SH } from './scene.js';
+import { OUTLINE } from './spr.js';
 import { sfx, haptic } from './sfx.js';
 
-// 120×108 : le format 10:9 de l'écran d'une console portable.
-export const W = 120, H = 108;
-const HERO_SLOTS = [[24, 36], [40, 69], [24, 102]];
-const ENEMY_SLOTS = [[96, 36], [80, 69], [96, 102]];
+// Largeur variable (240 à 320) selon l'écran ; les positions sont données pour 240 et recentrées.
+export const W = SW, H = SH;
+// Formation en chevron : le héros du milieu est en retrait, l'arc d'actions tombe dans le vide.
+const HERO_SLOTS = [[54, 80], [36, 96], [54, 112]];
+const ENEMY_SLOTS = [[186, 80], [204, 96], [186, 112]];
+const BOSS_SLOT = [182, 110];
 const SLOT_ORDER = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const WHITE = '#ffffff';
-
-const BG = {
-  prairie: { sky: ['#6a9ae0', '#7aaae8', '#8abaf0'], ground: '#4a8a3a', dots: '#5aa04a', line: '#3a7030' },
-  crypte: { sky: ['#2a2238', '#322a42', '#3a3048'], ground: '#4a4058', dots: '#5a5068', line: '#3a3048' },
-  volcan: { sky: ['#5a2a2a', '#6a322a', '#7a3a2a'], ground: '#3a2a2a', dots: '#ff6a1f', line: '#2a1e22' },
-};
-
-export function drawBackground(name, w = W, h = H) {
-  const p = BG[name], c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
-  const g = c.getContext('2d');
-  p.sky.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 5, w, 5); });
-  g.fillStyle = p.ground;
-  g.fillRect(0, 15, w, h - 15);
-  g.fillStyle = p.line;
-  g.fillRect(0, 15, w, 1);
-  // touffes / pierres placées de façon fixe
-  g.fillStyle = p.dots;
-  for (let i = 0; i < 40; i++) {
-    const x = (i * 37 + 11) % w, y = 18 + ((i * 53) % (h - 20));
-    g.fillRect(x, y, 2, 1);
-    if (i % 3 === 0) g.fillRect(x + 1, y - 1, 1, 1);
-  }
-  return c;
-}
 
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 export class Battle {
-  constructor({ canvas, ui, team, stage, owned, onEnd }) {
+  constructor({ canvas, ui, team, stage, owned, onEnd, width = W }) {
     this.g = canvas.getContext('2d');
     this.canvas = canvas;
     this.ui = ui;
@@ -51,42 +29,69 @@ export class Battle {
     this.over = false;
     this.floats = [];
     this.active = null;
-    this.bg = drawBackground(stage.chapter.bg);
+    this.targeting = null; // ennemis ciblables pendant le choix d'une cible
+    this.onTargetTap = null;
+    this.queue = [];
+    this.scene = stage.chapter.bg;
+    this.W = width;
+    this.ox = Math.round((width - W) / 2);
 
     const hs = SLOT_ORDER[team.length];
     this.heroes = team.map((id, i) => {
       const rank = owned[id].rank, st = heroStats(id, rank);
-      return this.unit('h', { id, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]],
+      return this.unit('h', { id, rank, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]],
         `h-${id}-${rank}`, () => heroSprite(id, rank));
     });
     const big = stage.enemies.length === 1 && stage.boss;
     const es = SLOT_ORDER[stage.enemies.length];
     this.enemies = stage.enemies.map((e, i) =>
-      this.unit('e', { ...e }, big ? [92, 82] : ENEMY_SLOTS[es[i]],
-        `e-${e.kind}-${e.variant}`, () => enemySprite(e.kind, e.variant)));
-    this.target = this.enemies[0];
+      this.unit('e', { ...e }, big ? BOSS_SLOT : ENEMY_SLOTS[es[i]], `e-${e.kind}-${e.variant}`, () => enemySprite(e.kind, e.variant)));
     this.turns = 0;
 
     canvas.onpointerdown = (ev) => this.tap(ev);
     this.raf = requestAnimationFrame((t) => this.draw(t));
   }
 
-  unit(side, data, [cx, by], key, make) {
-    const bm = bitmap(key, make);
+  unit(side, data, [cx0, by], key, make) {
+    const bm = bitmap(key, make), cx = cx0 + this.ox;
     const flash = bitmap(key + '-w', () => make().silhouette(WHITE));
     return {
-      side, ...data, max: data.hp, cd: 0, stun: 0, alive: true,
+      side, key, ...data, max: data.hp, cd: 0, stun: 0, guard: false, alive: true,
       bm, flash, cx, by, sx: cx - (bm.w >> 1), sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
     };
+  }
+
+  // Position d'une unité en pixels CSS, relative au canvas.
+  screenPos(u) {
+    const k = this.canvas.clientWidth / this.W;
+    return { x: u.cx * k, y: (u.by - u.bm.h / 2) * k, top: u.sy * k, k };
   }
 
   // ------------------------------------------------------------ rendu
 
   draw(t) {
     if (this.stopped) return;
-    const g = this.g, step = Math.floor(t / 250);
-    g.drawImage(this.bg, 0, 0);
-    [...this.heroes, ...this.enemies].forEach((u, i) => {
+    const g = this.g, step = Math.floor(t / 250), fstep = Math.floor(t / 140);
+    g.drawImage(sceneBackground(this.scene, this.W), 0, 0);
+    sceneAnim(this.scene, g, fstep, this.W);
+    const all = [...this.heroes, ...this.enemies];
+
+    // ombres au sol
+    g.globalAlpha = 0.35;
+    g.fillStyle = OUTLINE;
+    for (const u of all) {
+      if (!u.alive) continue;
+      const w = Math.max(8, u.bm.w - 6);
+      g.fillRect(u.cx - (w >> 1) + u.dx, u.by - 1, w, 2);
+      g.fillRect(u.cx - (w >> 1) + 2 + u.dx, u.by + 1, w - 4, 1);
+    }
+    g.globalAlpha = 1;
+
+    // anneau doré sous le héros actif
+    const a = this.active;
+    if (a && a.alive && a.side === 'h' && !this.over) this.ring(a, step % 2 ? '#fbe08a' : '#e0a93a');
+
+    all.forEach((u, i) => {
       if (!u.alive && (t - u.diedAt > 700 || Math.floor(t / 90) % 2)) return;
       const bob = u.alive && !u.stun && (step + i) % 2 ? -1 : 0;
       const x = u.sx + u.dx, y = u.sy + bob;
@@ -94,47 +99,103 @@ export class Battle {
       g.drawImage(white ? u.flash.canvas : u.bm.canvas, x, y);
       if (u.alive) drawFx(g, u.bm, x, y, step);
       if (!u.alive) return;
-      // barre de PV
-      const bx = u.cx - 10, ratio = u.hp / u.max;
-      g.fillStyle = '#1a1320';
-      g.fillRect(bx - 1, u.by + 1, 22, 4);
-      g.fillStyle = ratio > 0.5 ? '#5cc85a' : ratio > 0.25 ? '#e0a93a' : '#e2334a';
-      g.fillRect(bx, u.by + 2, Math.max(1, Math.round(20 * ratio)), 2);
+      this.bar(u);
       if (u.stun && step % 2) {
         g.fillStyle = '#fbe08a';
-        g.fillRect(u.cx - 3, u.sy - 3, 1, 1);
-        g.fillRect(u.cx + 3, u.sy - 2, 1, 1);
+        g.fillRect(u.cx - 4, u.sy - 3, 1, 1);
+        g.fillRect(u.cx + 4, u.sy - 2, 1, 1);
+        g.fillRect(u.cx, u.sy - 4, 1, 1);
       }
+      if (u.guard) this.shieldMark(u);
     });
-    if (this.active && this.active.alive && step % 2 === 0) this.arrow(this.active, '#fbe08a');
-    if (!this.over && this.target && this.target.alive && this.active?.side === 'h' && step % 2 === 1) this.arrow(this.target, '#e2334a');
-    this.floats = this.floats.filter((f) => t - f.t0 < 720);
+
+    if (a && a.alive && !this.over) this.chevron(a, step, a.side === 'h' ? '#fbe08a' : '#e2334a');
+    if (this.targeting) for (const u of this.targeting) if (u.alive) this.reticle(u, step);
+
+    this.floats = this.floats.filter((f) => t - f.t0 < 760);
     for (const f of this.floats) {
-      const rise = Math.max(0, Math.min(6, Math.floor((t - f.t0) / 80)));
+      const rise = Math.max(0, Math.min(7, Math.floor((t - f.t0) / 80)));
       drawText(g, f.txt, f.x - (textWidth(f.txt) >> 1), f.y - rise, f.color);
     }
     this.raf = requestAnimationFrame((tt) => this.draw(tt));
   }
 
-  arrow(u, col) {
-    const g = this.g, x = u.cx, y = u.sy - 5;
-    g.fillStyle = '#1a1320';
-    g.fillRect(x - 3, y - 1, 7, 4);
+  // Barre de PV en segments : on compte les morceaux d'un coup d'œil.
+  bar(u) {
+    const g = this.g, w = u.boss ? 40 : 24, seg = u.boss ? 10 : 6, x = u.cx - (w >> 1), y = u.by + 3;
+    const ratio = u.hp / u.max, lit = Math.ceil(ratio * seg);
+    g.fillStyle = OUTLINE;
+    g.fillRect(x - 1, y - 1, w + 2, 5);
+    const col = ratio > 0.5 ? ['#5cc85a', '#9af098'] : ratio > 0.25 ? ['#e0a93a', '#fbe08a'] : ['#e2334a', '#ff8a9a'];
+    const sw = w / seg;
+    for (let i = 0; i < seg; i++) {
+      const sx = x + Math.round(i * sw);
+      g.fillStyle = i < lit ? col[0] : '#3a2a34';
+      g.fillRect(sx, y, Math.round(sw) - 1, 3);
+      if (i < lit) {
+        g.fillStyle = col[1];
+        g.fillRect(sx, y, Math.round(sw) - 1, 1);
+      }
+    }
+  }
+
+  ring(u, col) {
+    const g = this.g, w = Math.max(12, u.bm.w - 2), x = u.cx - (w >> 1), y = u.by - 2;
     g.fillStyle = col;
-    g.fillRect(x - 2, y, 5, 1);
-    g.fillRect(x - 1, y + 1, 3, 1);
-    g.fillRect(x, y + 2, 1, 1);
+    g.fillRect(x + 2, y - 1, w - 4, 1);
+    g.fillRect(x + 2, y + 3, w - 4, 1);
+    g.fillRect(x, y, 2, 3);
+    g.fillRect(x + w - 2, y, 2, 3);
+  }
+
+  // Chevron au-dessus de la tête, avec contour, qui rebondit d'1 px.
+  chevron(u, step, col) {
+    const g = this.g, x = u.cx, y = u.sy - 9 + (step % 2);
+    const rows = [[-4, 9], [-3, 7], [-2, 5], [-1, 3], [0, 1]];
+    g.fillStyle = OUTLINE;
+    rows.forEach(([o, w], j) => g.fillRect(x + o - 1, y + j - 1, w + 2, 3));
+    g.fillStyle = col;
+    rows.forEach(([o, w], j) => g.fillRect(x + o, y + j, w, 1));
+    g.fillStyle = '#ffffff';
+    g.fillRect(x - 3, y, 2, 1);
+  }
+
+  // Coins de visée rouges autour d'un ennemi ciblable (clignotent par paliers).
+  reticle(u, step) {
+    const g = this.g, pad = 3, x0 = u.sx - pad, y0 = u.sy - pad, x1 = u.sx + u.bm.w + pad - 1, y1 = u.by + pad;
+    const col = step % 2 ? '#ff5a6a' : '#fbe08a', L = 4;
+    for (const [cx, cy, sx, sy] of [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]]) {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.min(cx, cx + sx * L) - 1, cy - 1, L + 2, 3);
+      g.fillRect(cx - 1, Math.min(cy, cy + sy * L) - 1, 3, L + 2);
+      g.fillStyle = col;
+      g.fillRect(Math.min(cx, cx + sx * (L - 1)), cy, L, 1);
+      g.fillRect(cx, Math.min(cy, cy + sy * (L - 1)), 1, L);
+    }
+  }
+
+  shieldMark(u) {
+    const g = this.g, x = u.cx + (u.bm.w >> 1) - 2, y = u.sy + 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(x - 1, y - 1, 7, 8);
+    g.fillStyle = '#3a64c8';
+    g.fillRect(x, y, 5, 4);
+    g.fillRect(x + 1, y + 4, 3, 1);
+    g.fillRect(x + 2, y + 5, 1, 1);
+    g.fillStyle = '#e4ecf3';
+    g.fillRect(x + 2, y, 1, 5);
   }
 
   float(u, txt, color) {
-    this.floats.push({ txt, x: u.cx, y: u.sy - 2, color, t0: performance.now() });
+    this.floats.push({ txt, x: u.cx, y: u.sy - 4, color, t0: performance.now() });
   }
 
   tap(ev) {
+    if (!this.targeting || !this.onTargetTap) return;
     const r = this.canvas.getBoundingClientRect();
-    const x = ((ev.clientX - r.left) / r.width) * W, y = ((ev.clientY - r.top) / r.height) * H;
-    const hit = this.enemies.find((u) => u.alive && x >= u.sx - 3 && x <= u.sx + u.bm.w + 3 && y >= u.sy - 3 && y <= u.by + 4);
-    if (hit) this.target = hit;
+    const x = ((ev.clientX - r.left) / r.width) * this.W, y = ((ev.clientY - r.top) / r.height) * H;
+    const hit = this.targeting.find((u) => u.alive && x >= u.sx - 6 && x <= u.sx + u.bm.w + 6 && y >= u.sy - 8 && y <= u.by + 8);
+    if (hit) this.onTargetTap(hit);
   }
 
   stop() {
@@ -151,7 +212,7 @@ export class Battle {
   }
 
   log(txt) {
-    this.ui.log.textContent = txt;
+    this.ui.log(txt);
   }
 
   alive(side) {
@@ -159,25 +220,30 @@ export class Battle {
   }
 
   async run() {
-    this.log(`Etape ${this.stage.n} — ${this.stage.chapter.name}`);
-    await this.wait(600);
+    this.log(`Étape ${this.stage.n} — ${this.stage.chapter.name}`);
+    await this.wait(700);
     while (!this.over) {
       this.turns++;
       const order = [...this.heroes, ...this.enemies]
         .filter((u) => u.alive)
         .sort((a, b) => b.spd - a.spd || Math.random() - 0.5);
+      this.queue = order.slice();
       for (const u of order) {
+        this.queue = this.queue.filter((q) => q !== u && q.alive);
         if (this.over) return;
         if (!u.alive) continue;
         this.active = u;
+        this.queue.unshift(u);
         if (u.stun) {
           u.stun--;
           this.log(`${u.name} est étourdi !`);
-          await this.wait(600);
+          await this.wait(650);
+          this.queue.shift();
           continue;
         }
         if (u.side === 'h') await this.heroTurn(u);
         else await this.enemyTurn(u);
+        this.queue.shift();
         if (this.checkEnd()) return;
       }
     }
@@ -191,76 +257,67 @@ export class Battle {
     if (!res) return false;
     this.over = true;
     this.active = null;
-    this.updateButtons();
-    setTimeout(() => !this.stopped && this.onEnd(res), 700 / this.speed);
+    setTimeout(() => !this.stopped && this.onEnd(res), 800 / this.speed);
     return true;
   }
 
-  updateButtons() {
-    const u = this.active, mine = !this.over && u && u.side === 'h' && !this.auto;
-    const { attack, skill, skillName, log } = this.ui;
-    attack.disabled = !mine;
-    skill.disabled = !mine || u.cd > 0;
-    skillName.textContent = u && u.side === 'h' ? (u.cd > 0 ? `${u.skill.name} (${u.cd})` : u.skill.name) : 'Compétence';
-    log.classList.toggle('wait', !!mine);
-  }
-
-  // Croix directionnelle : passe à l'ennemi vivant suivant / précédent.
-  cycleTarget(d) {
-    const live = this.alive('e');
-    if (!live.length) return;
-    const i = live.indexOf(this.target);
-    this.target = live[(i + d + live.length) % live.length];
-  }
-
-  choose(type) {
+  // Le joueur (ou le mode Auto) répond par {type: 'attack'|'skill'|'guard', target}.
+  submit(choice) {
     if (this.resolveChoice) {
       const r = this.resolveChoice;
       this.resolveChoice = null;
-      r(type);
+      r(choice);
     }
   }
 
   setAuto(on) {
     this.auto = on;
-    if (on && this.resolveChoice) this.choose(this.autoChoice(this.active));
-    this.updateButtons();
+    if (on && this.resolveChoice && this.active) {
+      this.ui.endChoice();
+      this.submit(this.autoChoice(this.active));
+    }
   }
 
   autoChoice(u) {
-    if (u.cd > 0) return 'attack';
-    if (u.skill.kind === 'heal') return this.alive('h').some((h) => h.hp / h.max < 0.6) ? 'skill' : 'attack';
-    return 'skill';
+    const foes = this.alive('e');
+    const target = [...foes].sort((a, b) => a.hp - b.hp)[0];
+    if (u.cd > 0) return { type: 'attack', target };
+    if (u.skill.kind === 'heal') return this.alive('h').some((h) => h.hp / h.max < 0.6) ? { type: 'skill' } : { type: 'attack', target };
+    return { type: 'skill', target };
   }
 
   async heroTurn(u) {
-    if (!this.target || !this.target.alive) this.target = this.alive('e')[0];
+    u.guard = false;
     let choice;
     if (this.auto) {
-      this.target = this.alive('e').sort((a, b) => a.hp - b.hp)[0];
-      choice = this.autoChoice(u);
       this.log(`${u.name} agit…`);
-      this.updateButtons();
       await this.wait(250);
+      choice = this.autoChoice(u);
     } else {
-      this.log(`A ${u.name} de jouer !\nA : attaque  B : compétence\nCroix : changer de cible`);
-      this.updateButtons();
+      this.log(`À ${u.name} de jouer !`);
+      this.ui.beginChoice(u);
       choice = await new Promise((res) => { this.resolveChoice = res; });
+      this.ui.endChoice();
     }
     if (!choice || this.over) return;
-    this.ui.attack.disabled = this.ui.skill.disabled = true;
-    this.ui.log.classList.remove('wait');
-    if (choice === 'skill' && u.cd === 0) {
-      await this.useSkill(u);
+    if (choice.type === 'guard') {
+      u.guard = true;
+      if (u.cd > 0) u.cd--;
+      this.log(`${u.name} se met en garde.`);
+      sfx('tick');
+      await this.wait(450);
+    } else if (choice.type === 'skill' && u.cd === 0) {
+      await this.useSkill(u, choice.target);
       u.cd = u.skill.cd;
     } else {
       if (u.cd > 0) u.cd--;
-      await this.strike(u, this.target, 1);
-      if (!this.target.alive) this.target = this.alive('e')[0];
+      const t = choice.target && choice.target.alive ? choice.target : this.alive('e')[0];
+      this.log(`${u.name} attaque ${t.name}.`);
+      await this.strike(u, t, 1);
     }
   }
 
-  async useSkill(u) {
+  async useSkill(u, target) {
     const s = u.skill, foes = this.alive('e');
     this.log(`${u.name} : ${s.name} !`);
     sfx(s.kind === 'heal' ? 'heal' : 'skill');
@@ -282,11 +339,10 @@ export class Battle {
         await this.strike(u, rand(live), s.mult);
       }
     } else {
-      const t = this.target;
+      const t = target && target.alive ? target : foes[0];
       await this.strike(u, t, s.mult);
       if (s.stun && t.alive) t.stun = s.stun;
     }
-    if (this.target && !this.target.alive) this.target = this.alive('e')[0];
   }
 
   async enemyTurn(u) {
@@ -307,12 +363,12 @@ export class Battle {
   // Avance par sauts de pixels, frappe, recule.
   async lunge(u, onHit) {
     const dir = u.side === 'h' ? 1 : -1;
-    u.dx = 3 * dir;
+    u.dx = 4 * dir;
     await this.wait(70);
-    u.dx = 6 * dir;
+    u.dx = 8 * dir;
     if (onHit) onHit();
     await this.wait(160);
-    u.dx = 3 * dir;
+    u.dx = 4 * dir;
     await this.wait(70);
     u.dx = 0;
   }
@@ -327,6 +383,7 @@ export class Battle {
     let v = a.atk * mult * (1 - d.def / (d.def + 60)) * (0.9 + Math.random() * 0.2);
     const crit = Math.random() < 0.1;
     if (crit) v *= 1.5;
+    if (d.guard) v *= 0.5;
     v = Math.max(1, Math.round(v));
     d.hp = Math.max(0, d.hp - v);
     d.flashUntil = performance.now() + 320 / this.speed;
