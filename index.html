@@ -34,17 +34,41 @@
     <button data-scr="team">Équipe</button>
   </nav>
 
-  <div id="battle" class="overlay hidden">
-    <canvas id="b-canvas" class="px"></canvas>
-    <div id="b-log" class="panel"></div>
-    <div class="b-actions">
-      <button id="b-attack" class="btn big" disabled>Attaque</button>
-      <button id="b-skill" class="btn big" disabled>Compétence</button>
-    </div>
-    <div class="b-tools">
-      <button id="b-auto" class="btn">Auto</button>
-      <button id="b-speed" class="btn">×1</button>
-      <button id="b-flee" class="btn ghost">Fuir</button>
+  <!-- Combat : habillé comme une console portable -->
+  <div id="battle" class="hidden">
+    <div class="gb">
+      <div class="gb-top">
+        <button id="b-flee" class="gb-power" aria-label="Fuir le combat"><i></i>OFF · FUIR</button>
+      </div>
+      <div class="gb-bezel">
+        <div class="gb-bezel-label"><span class="gb-led"></span><i></i><span>PIXEL MATRIX · TOUR PAR TOUR</span><i></i></div>
+        <div class="gb-screen">
+          <canvas id="b-canvas" class="px"></canvas>
+          <div id="b-log" class="gb-dialog"></div>
+        </div>
+      </div>
+      <div class="gb-logo">Pixel<b>BOY</b></div>
+
+      <div class="gb-controls">
+        <div class="dpad">
+          <button class="up" data-d="-1" aria-label="Cible précédente"></button>
+          <button class="left" data-d="-1" aria-label="Cible précédente"></button>
+          <span class="mid"></span>
+          <button class="right" data-d="1" aria-label="Cible suivante"></button>
+          <button class="down" data-d="1" aria-label="Cible suivante"></button>
+        </div>
+        <div class="ab">
+          <div class="ab-key b"><button id="b-skill" disabled>B</button><span id="b-skill-name">Compétence</span></div>
+          <div class="ab-key a"><button id="b-attack" disabled>A</button><span>Attaque</span></div>
+        </div>
+      </div>
+
+      <div class="gb-pills">
+        <span></span>
+        <div class="pill"><button id="b-auto" aria-label="Combat automatique"></button><span id="b-auto-label">SELECT · AUTO</span></div>
+        <div class="pill"><button id="b-speed" aria-label="Vitesse"></button><span id="b-speed-label">START · ×1</span></div>
+        <div class="gb-speaker"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
     </div>
   </div>
 

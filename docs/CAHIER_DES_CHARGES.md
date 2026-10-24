@@ -64,6 +64,10 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Tour d'un héros : **Attaque** ou **Compétence** (si rechargée) ; on touche un ennemi
   pour le cibler.
 - Options : **Auto** (l'IA joue les héros) et **×2** (vitesse).
+- L'écran de combat est habillé en **console portable** (style Game Boy) :
+  écran 120×108 (format 10:9) dans son cadre avec une boîte de dialogue,
+  croix directionnelle = changer de cible, **A** = Attaque, **B** = Compétence,
+  **SELECT** = Auto, **START** = vitesse, interrupteur **OFF** = fuir.
 - Dégâts = ATQ × multiplicateur × (1 − DÉF / (DÉF + 60)) × aléa 0,9–1,1, coup critique 10 % (×1,5).
 - Victoire : or gagné (bonus au premier passage). Défaite : on peut réessayer.
 

@@ -108,12 +108,11 @@ function startBattle(n) {
   const cv = $('#b-canvas');
   cv.width = W;
   cv.height = H;
-  const k = Math.max(1, Math.min(Math.floor((innerWidth - 16) / W), Math.floor((innerHeight - 260) / H)));
-  cv.style.width = W * k + 'px';
-  cv.style.height = H * k + 'px';
-  const ui = { log: $('#b-log'), attack: $('#b-attack'), skill: $('#b-skill') };
-  $('#b-auto').classList.toggle('on', false);
-  $('#b-speed').textContent = '×1';
+  sizeScreen();
+  const ui = { log: $('#b-log'), attack: $('#b-attack'), skill: $('#b-skill'), skillName: $('#b-skill-name') };
+  $('#b-auto').classList.remove('on');
+  $('#b-auto-label').textContent = 'SELECT · AUTO';
+  $('#b-speed-label').textContent = 'START · ×1';
   battle = new Battle({
     canvas: cv, ui, team: state.team, stage: st, owned: state.owned,
     onEnd: (res) => endBattle(st, res),
@@ -121,17 +120,42 @@ function startBattle(n) {
   battle.run();
 }
 
-$('#b-attack').onclick = () => battle?.choose('attack');
-$('#b-skill').onclick = () => battle?.choose('skill');
-$('#b-auto').onclick = (e) => {
-  battle.setAuto(!battle.auto);
-  e.currentTarget.classList.toggle('on', battle.auto);
-};
-$('#b-speed').onclick = (e) => {
-  battle.speed = battle.speed === 1 ? 2 : 1;
-  e.currentTarget.textContent = '×' + battle.speed;
-};
-$('#b-flee').onclick = () => ask('Abandonner le combat ?', () => closeBattle());
+// Écran le plus grand possible, à une échelle entière en pixels physiques (net sur Retina).
+function sizeScreen() {
+  const cv = $('#b-canvas'), dpr = window.devicePixelRatio || 1;
+  const availW = Math.min(innerWidth, 480) - 30;
+  const availH = innerHeight - 360;
+  const s = Math.max(dpr, Math.floor(Math.min(availW / W, availH / H) * dpr));
+  cv.style.width = (W * s) / dpr + 'px';
+  cv.style.height = (H * s) / dpr + 'px';
+  $('#b-log').style.width = cv.style.width;
+}
+addEventListener('resize', () => battle && sizeScreen());
+
+const press = (fn) => () => battle && !battle.over && fn(battle);
+$('#b-attack').onclick = press((b) => b.choose('attack'));
+$('#b-skill').onclick = press((b) => b.choose('skill'));
+document.querySelectorAll('.dpad button').forEach((d) => (d.onclick = press((b) => b.cycleTarget(+d.dataset.d))));
+$('#b-auto').onclick = press((b) => {
+  b.setAuto(!b.auto);
+  $('#b-auto').classList.toggle('on', b.auto);
+  $('#b-auto-label').textContent = b.auto ? 'SELECT · AUTO ON' : 'SELECT · AUTO';
+});
+$('#b-speed').onclick = press((b) => {
+  b.speed = b.speed === 1 ? 2 : 1;
+  $('#b-speed-label').textContent = 'START · ×' + b.speed;
+});
+$('#b-flee').onclick = () => battle && ask('Éteindre la console et fuir le combat ?', () => closeBattle());
+
+// Clavier (ordinateur) : flèches = cible, X/Entrée = A, Z = B.
+addEventListener('keydown', (e) => {
+  if (!battle || !$('#modal').classList.contains('hidden')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'arrowleft' || k === 'arrowup') $('.dpad .left').click();
+  else if (k === 'arrowright' || k === 'arrowdown') $('.dpad .right').click();
+  else if (k === 'x' || k === 'enter') $('#b-attack').click();
+  else if (k === 'z') $('#b-skill').click();
+});
 
 function closeBattle() {
   battle?.stop();

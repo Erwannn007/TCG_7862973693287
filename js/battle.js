@@ -3,9 +3,10 @@ import { HEROES, heroStats } from './data.js';
 import { heroSprite, enemySprite } from './sprites.js';
 import { bitmap, drawFx, drawText, textWidth } from './render.js';
 
-export const W = 120, H = 96;
-const HERO_SLOTS = [[24, 32], [40, 60], [24, 88]];
-const ENEMY_SLOTS = [[96, 32], [80, 60], [96, 88]];
+// 120×108 : le format 10:9 de l'écran d'une console portable.
+export const W = 120, H = 108;
+const HERO_SLOTS = [[24, 36], [40, 69], [24, 102]];
+const ENEMY_SLOTS = [[96, 36], [80, 69], [96, 102]];
 const SLOT_ORDER = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const WHITE = '#ffffff';
 
@@ -60,7 +61,7 @@ export class Battle {
     const big = stage.enemies.length === 1 && stage.boss;
     const es = SLOT_ORDER[stage.enemies.length];
     this.enemies = stage.enemies.map((e, i) =>
-      this.unit('e', { ...e }, big ? [92, 74] : ENEMY_SLOTS[es[i]],
+      this.unit('e', { ...e }, big ? [92, 82] : ENEMY_SLOTS[es[i]],
         `e-${e.kind}-${e.variant}`, () => enemySprite(e.kind, e.variant)));
     this.target = this.enemies[0];
     this.turns = 0;
@@ -196,10 +197,19 @@ export class Battle {
 
   updateButtons() {
     const u = this.active, mine = !this.over && u && u.side === 'h' && !this.auto;
-    const { attack, skill } = this.ui;
+    const { attack, skill, skillName, log } = this.ui;
     attack.disabled = !mine;
     skill.disabled = !mine || u.cd > 0;
-    skill.textContent = u && u.side === 'h' ? (u.cd > 0 ? `${u.skill.name} (${u.cd})` : u.skill.name) : 'Compétence';
+    skillName.textContent = u && u.side === 'h' ? (u.cd > 0 ? `${u.skill.name} (${u.cd})` : u.skill.name) : 'Compétence';
+    log.classList.toggle('wait', !!mine);
+  }
+
+  // Croix directionnelle : passe à l'ennemi vivant suivant / précédent.
+  cycleTarget(d) {
+    const live = this.alive('e');
+    if (!live.length) return;
+    const i = live.indexOf(this.target);
+    this.target = live[(i + d + live.length) % live.length];
   }
 
   choose(type) {
@@ -232,12 +242,13 @@ export class Battle {
       this.updateButtons();
       await this.wait(250);
     } else {
-      this.log(`À ${u.name} de jouer — touche un ennemi pour le cibler.`);
+      this.log(`À ${u.name} ! A : attaque · B : ${u.skill.name}. Croix : changer de cible.`);
       this.updateButtons();
       choice = await new Promise((res) => { this.resolveChoice = res; });
     }
     if (!choice || this.over) return;
     this.ui.attack.disabled = this.ui.skill.disabled = true;
+    this.ui.log.classList.remove('wait');
     if (choice === 'skill' && u.cd === 0) {
       await this.useSkill(u);
       u.cd = u.skill.cd;
