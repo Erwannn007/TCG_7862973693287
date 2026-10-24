@@ -73,6 +73,8 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - **Vibration** à chaque touche : `navigator.vibrate` sur Android ; sur iPhone, astuce
   non officielle (interrupteur `<input switch>` caché) qui déclenche le retour haptique
   du système, et qui peut cesser de marcher si Apple change Safari.
+- Le son utilise `navigator.audioSession.type = 'playback'` pour ne pas être coupé
+  par le bouton silencieux de l'iPhone.
 - Sons et vibrations se coupent séparément depuis l'écran Combat.
 - Dégâts = ATQ × multiplicateur × (1 − DÉF / (DÉF + 60)) × aléa 0,9–1,1, coup critique 10 % (×1,5).
 - Victoire : or gagné (bonus au premier passage). Défaite : on peut réessayer.
@@ -88,11 +90,32 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 ## 8. Écrans
 
-1. **Combat** : liste des étapes, aperçu de l'équipe, bonus quotidien (+300 or).
-2. **Invoquer** : boutons ×1 / ×10, taux, compteur de pitié.
-3. **Collection** : les 5 cartes (silhouette si non débloqué), fiche détaillée,
-   aperçu des 5 rangs, bouton Améliorer.
-4. **Équipe** : choisir jusqu'à 3 persos.
+Tout le jeu se joue **dans la console « Pixel Boy »** : l'écran de la console affiche
+les menus comme le combat. En bas de l'écran, trois onglets à icônes pixel :
+
+| ← gauche | centre | droite → |
+|---|---|---|
+| **ÉQUIPE** | **COMBAT** | **INVOQUER** |
+
+1. **Équipe** : les 3 places de l'équipe, puis tous les héros (silhouette si non
+   débloqué). Toucher un héros ouvre sa fiche : stats en barres, compétence, aperçu
+   des 5 rangs, boutons Améliorer et Équipe +/Retirer.
+2. **Combat** : aperçu animé de l'étape suivante (ton équipe face aux ennemis),
+   bouton Étape, bonus du jour, liste « Rejouer », options (sons, vibration, effacer).
+3. **Invoquer** : autel au cristal, boutons ×1 / ×10, taux et jauge de pitié.
+
+### Commandes de la console (en plus du toucher)
+
+| Touche | Menus | Combat |
+|---|---|---|
+| Croix | déplacer le curseur ▸ | changer de cible |
+| A | valider | Attaque |
+| B | retour | Compétence |
+| SELECT | onglet suivant | Auto |
+| START | lancer l'étape suivante | vitesse ×1 / ×2 |
+| Interrupteur | — | fuir |
+
+Sur ordinateur : flèches, X/Entrée = A, Z/Échap = B, Maj = SELECT, Espace = START.
 
 ## 9. Hors périmètre (plus tard)
 

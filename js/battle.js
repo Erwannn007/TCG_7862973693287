@@ -17,20 +17,20 @@ const BG = {
   volcan: { sky: ['#5a2a2a', '#6a322a', '#7a3a2a'], ground: '#3a2a2a', dots: '#ff6a1f', line: '#2a1e22' },
 };
 
-function drawBackground(name) {
+export function drawBackground(name, w = W, h = H) {
   const p = BG[name], c = document.createElement('canvas');
-  c.width = W;
-  c.height = H;
+  c.width = w;
+  c.height = h;
   const g = c.getContext('2d');
-  p.sky.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 5, W, 5); });
+  p.sky.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 5, w, 5); });
   g.fillStyle = p.ground;
-  g.fillRect(0, 15, W, H - 15);
+  g.fillRect(0, 15, w, h - 15);
   g.fillStyle = p.line;
-  g.fillRect(0, 15, W, 1);
+  g.fillRect(0, 15, w, 1);
   // touffes / pierres placées de façon fixe
   g.fillStyle = p.dots;
   for (let i = 0; i < 40; i++) {
-    const x = (i * 37 + 11) % W, y = 18 + ((i * 53) % (H - 20));
+    const x = (i * 37 + 11) % w, y = 18 + ((i * 53) % (h - 20));
     g.fillRect(x, y, 2, 1);
     if (i % 3 === 0) g.fillRect(x + 1, y - 1, 1, 1);
   }
@@ -159,7 +159,7 @@ export class Battle {
   }
 
   async run() {
-    this.log(`Étape ${this.stage.n} — ${this.stage.chapter.name}`);
+    this.log(`Etape ${this.stage.n} — ${this.stage.chapter.name}`);
     await this.wait(600);
     while (!this.over) {
       this.turns++;
@@ -243,7 +243,7 @@ export class Battle {
       this.updateButtons();
       await this.wait(250);
     } else {
-      this.log(`À ${u.name} ! A : attaque · B : ${u.skill.name}. Croix : changer de cible.`);
+      this.log(`A ${u.name} de jouer !\nA : attaque  B : compétence\nCroix : changer de cible`);
       this.updateButtons();
       choice = await new Promise((res) => { this.resolveChoice = res; });
     }

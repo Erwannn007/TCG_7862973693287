@@ -9,8 +9,13 @@ export function setHaptics(on) {
   hapticOn = on;
 }
 
-// iOS n'autorise l'audio qu'après un geste de l'utilisateur.
+// iOS n'autorise l'audio qu'après un geste de l'utilisateur (touchend / click).
+// Par défaut Safari range le Web Audio en son « ambiant », coupé par le bouton silencieux :
+// le type « playback » le fait jouer comme un vrai jeu.
 export function unlock() {
+  try {
+    if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
+  } catch (e) { /* non supporté */ }
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
@@ -83,30 +88,29 @@ const SOUNDS = {
 };
 
 export function sfx(name) {
-  if (!soundOn || !ctx || ctx.state !== 'running' || !SOUNDS[name]) return;
+  if (!soundOn || !ctx || !SOUNDS[name]) return;
+  if (ctx.state !== 'running') ctx.resume();
   SOUNDS[name]();
 }
 
 // Vibration. Android : navigator.vibrate. iPhone : Safari n'a pas d'API officielle ;
 // on clique un interrupteur <input switch> caché, ce qui déclenche le retour haptique
 // du système (iOS 17.4+, non officiel : Apple peut le supprimer).
-let hapticLabel = null;
+// Apple semble avoir fermé cette astuce dans iOS 26.5 : elle ne marche alors plus du tout.
 export function haptic(ms = 12) {
   if (!hapticOn) return;
   if (navigator.vibrate) {
     navigator.vibrate(ms);
     return;
   }
-  if (!hapticLabel) {
-    hapticLabel = document.createElement('label');
-    hapticLabel.setAttribute('aria-hidden', 'true');
-    hapticLabel.style.cssText = 'position:fixed;left:-100px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;';
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.setAttribute('switch', '');
-    input.tabIndex = -1;
-    hapticLabel.appendChild(input);
-    document.body.appendChild(hapticLabel);
-  }
-  hapticLabel.click();
+  const label = document.createElement('label');
+  label.ariaHidden = 'true';
+  label.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.setAttribute('switch', '');
+  label.appendChild(input);
+  document.head.appendChild(label);
+  label.click();
+  label.remove();
 }

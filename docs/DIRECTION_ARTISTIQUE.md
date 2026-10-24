@@ -86,3 +86,16 @@ Direction artistique : pixel art « chibi » dessiné entièrement en code, **sa
 - Animations « pixel » uniquement : rebond d'1 px, clignotements par paliers.
 - **Jamais** d'interpolation douce ni de rotation (pas de `transition` CSS,
   pas de `ease`, pas de `rotate`). Les déplacements se font par sauts de pixels entiers.
+
+## 6. Interface
+
+- Police pixel **Press Start 2P** (licence OFL, `fonts/`), en 8 px ou 16 px uniquement.
+  Elle n'a pas de capitales accentuées : les textes en majuscules s'écrivent sans accent
+  (ETAPE, EQUIPE).
+- Fenêtres façon RPG Game Boy : fond crème `#f2ead6`, double bordure encre `#21182a`,
+  ombre portée dure. Variante sombre `#3a2f52` pour les panneaux.
+- Curseur ▸ doré qui clignote par paliers sur l'élément choisi à la croix.
+- Icônes (onglets, étoiles de rareté, cristal d'invocation) dessinées avec `Spr`,
+  comme les personnages.
+- La coque de la console est grise `#cfc9bf`, avec un cadre d'écran `#5b5d70`, des
+  boutons A/B magenta `#9a2a5a` et des textes bleu marine `#2a2e7a`.

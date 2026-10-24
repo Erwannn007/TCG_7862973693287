@@ -514,3 +514,63 @@ export function gemSprite() {
   s.p(3, 2, '#ff9aa8', true);
   return s;
 }
+
+// Icônes d'onglets (16×16).
+export function iconSprite(name) {
+  const s = new Spr(16, 16);
+  if (name === 'team') {
+    // bouclier rouge bordé d'or
+    s.hl(3, 12, 2, C.gold);
+    s.r(3, 3, 10, 6, C.gold);
+    s.r(4, 3, 8, 6, '#c8323c');
+    s.hl(4, 11, 9, C.gold); s.hl(5, 10, 10, C.gold); s.hl(6, 9, 11, C.gold); s.hl(7, 8, 12, C.gold);
+    s.hl(5, 10, 9, '#c8323c'); s.hl(6, 9, 10, '#c8323c'); s.hl(7, 8, 11, '#c8323c');
+    s.v(7, 4, 10, C.goldHi, true); s.hl(5, 10, 6, C.goldHi, true);
+  } else if (name === 'combat') {
+    // deux épées croisées
+    s.sline(3, 2, 11, 10, '#b9c6d2');
+    s.sline(12, 2, 4, 10, '#b9c6d2');
+    s.p(3, 2, '#e4ecf3', true); s.p(12, 2, '#e4ecf3', true);
+    s.sline(9, 11, 12, 8, C.gold); s.sline(3, 8, 6, 11, C.gold);
+    s.p(12, 12, C.grip); s.p(13, 13, C.gem, true);
+    s.p(3, 12, C.grip); s.p(2, 13, C.gem, true);
+  } else {
+    // carte magique avec étoile
+    s.r(3, 1, 10, 14, '#f2ead6');
+    s.r(4, 2, 8, 12, '#7a3cc8');
+    s.p(7, 4, C.goldHi, true); s.p(8, 4, C.goldHi, true);
+    s.hl(5, 10, 6, C.goldHi, true); s.hl(6, 9, 7, C.goldHi, true);
+    s.r(6, 8, 4, 1, C.goldHi, true); s.p(5, 9, C.goldHi, true); s.p(10, 9, C.goldHi, true);
+    s.spark(1, 3, '#ffffff'); s.spark(14, 12, C.goldHi);
+  }
+  return s;
+}
+
+// Étoile de rareté (7×7).
+export function starSprite() {
+  const s = new Spr(9, 9);
+  s.p(4, 1, C.gold); s.hl(3, 5, 2, C.gold); s.hl(1, 7, 3, C.gold); s.hl(2, 6, 4, C.gold);
+  s.hl(2, 6, 5, C.gold); s.p(2, 6, C.gold); s.p(6, 6, C.gold); s.p(4, 2, C.goldHi, true);
+  return s;
+}
+
+// Cristal d'invocation sur son socle (28×32).
+export function crystalSprite() {
+  const s = new Spr(28, 32), a = '#9a5ad8', d = '#62349a', l = '#c89af0', st = '#8a8478', sd = '#5e584e';
+  // socle
+  s.r(7, 25, 14, 3, st); s.r(5, 28, 18, 2, sd); s.hl(8, 19, 24, sd);
+  s.p(9, 26, C.gem, true); s.p(14, 26, C.gold, true); s.p(18, 26, C.gem, true);
+  // cristal (losange)
+  const rows = [[2, 13, 14], [3, 12, 15], [4, 11, 16], [5, 10, 17], [6, 10, 17], [7, 9, 18], [8, 9, 18], [9, 8, 19], [10, 8, 19],
+    [11, 8, 19], [12, 8, 19], [13, 9, 18], [14, 9, 18], [15, 10, 17], [16, 10, 17], [17, 11, 16], [18, 11, 16], [19, 12, 15], [20, 12, 15], [21, 13, 14]];
+  for (const [y, x0, x1] of rows) s.hl(x0, x1, y, a, true);
+  for (const [y, x0, x1] of rows) { s.p(x0, y, l, true); s.p(x1, y, d, true); }
+  s.v(13, 3, 20, l, true);
+  s.v(11, 7, 12, '#ffffff', true);
+  s.p(12, 5, '#ffffff', true);
+  s.r(14, 9, 3, 8, d, true);
+  // rayons
+  s.v(13, 22, 23, l, true); s.v(14, 22, 23, a, true);
+  for (const [x, y] of [[3, 6], [24, 4], [2, 16], [25, 14], [6, 1], [21, 20], [1, 22], [26, 23]]) s.spark(x, y, (x + y) % 2 ? '#ffffff' : C.goldHi);
+  return s;
+}

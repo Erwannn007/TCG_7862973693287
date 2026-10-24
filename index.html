@@ -8,82 +8,83 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pixel Gacha">
-  <meta name="theme-color" content="#1f1830">
+  <meta name="theme-color" content="#cfc9bf">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preload" href="fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header id="top">
-    <div class="brand">PIXEL GACHA</div>
-    <div class="money"><span id="coin"></span><span id="gold">0</span></div>
-  </header>
+  <!-- Tout le jeu se joue dans la console « Pixel Boy ». -->
+  <div class="gb">
+    <div class="gb-top">
+      <button id="power" class="gb-power" aria-label="Interrupteur"><i></i><span id="power-label">ON</span></button>
+      <span class="gb-top-brand">PIXEL GACHA</span>
+    </div>
 
-  <main>
-    <section id="scr-combat" class="screen"></section>
-    <section id="scr-gacha" class="screen hidden"></section>
-    <section id="scr-collection" class="screen hidden"></section>
-    <section id="scr-team" class="screen hidden"></section>
-  </main>
+    <div class="gb-bezel">
+      <div class="gb-bezel-label"><span class="gb-led"></span><i></i><span>PIXEL MATRIX</span><i></i></div>
 
-  <nav id="tabs">
-    <button data-scr="combat">Combat</button>
-    <button data-scr="gacha">Invoquer</button>
-    <button data-scr="collection">Collection</button>
-    <button data-scr="team">Équipe</button>
-  </nav>
+      <div id="lcd" class="lcd">
+        <header id="hud">
+          <span id="hud-title">COMBAT</span>
+          <span class="hud-gold"><span id="coin"></span><span id="gold">0</span></span>
+        </header>
 
-  <!-- Combat : habillé comme une console portable -->
-  <div id="battle" class="hidden">
-    <div class="gb">
-      <div class="gb-top">
-        <button id="b-flee" class="gb-power" aria-label="Fuir le combat"><i></i>OFF · FUIR</button>
-      </div>
-      <div class="gb-bezel">
-        <div class="gb-bezel-label"><span class="gb-led"></span><i></i><span>PIXEL MATRIX · TOUR PAR TOUR</span><i></i></div>
-        <div class="gb-screen">
+        <section id="v-team" class="view hidden"></section>
+        <section id="v-home" class="view hidden"></section>
+        <section id="v-gacha" class="view hidden"></section>
+
+        <section id="v-battle" class="hidden">
           <canvas id="b-canvas" class="px"></canvas>
-          <div id="b-log" class="gb-dialog"></div>
-        </div>
-      </div>
-      <div class="gb-logo">Pixel<b>BOY</b></div>
+          <div id="b-log" class="win dialog"></div>
+        </section>
 
-      <div class="gb-controls">
-        <div class="well dpad-well">
-          <div class="dpad">
-            <button class="up" data-d="-1" aria-label="Cible précédente"></button>
-            <button class="left" data-d="-1" aria-label="Cible précédente"></button>
-            <span class="mid"></span>
-            <button class="right" data-d="1" aria-label="Cible suivante"></button>
-            <button class="down" data-d="1" aria-label="Cible suivante"></button>
-          </div>
-        </div>
-        <div class="ab">
-          <div class="well ab-well">
-            <span class="cap b"><button id="b-skill" disabled>B</button></span>
-            <span class="cap a"><button id="b-attack" disabled>A</button></span>
-          </div>
-          <div class="ab-labels"><span id="b-skill-name">Compétence</span><span>Attaque</span></div>
-        </div>
-      </div>
+        <nav id="tabs">
+          <button data-tab="team"><span class="ico"></span><b>EQUIPE</b></button>
+          <button data-tab="home"><span class="ico"></span><b>COMBAT</b></button>
+          <button data-tab="gacha"><span class="ico"></span><b>INVOQUER</b></button>
+        </nav>
 
-      <div class="gb-pills">
-        <span></span>
-        <div class="pill"><button id="b-auto" aria-label="Combat automatique"></button><span id="b-auto-label">SELECT · AUTO</span></div>
-        <div class="pill"><button id="b-speed" aria-label="Vitesse"></button><span id="b-speed-label">START · ×1</span></div>
-        <div class="gb-speaker"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div id="reveal" class="layer hidden">
+          <div id="reveal-grid"></div>
+          <button id="reveal-ok" class="pbtn gold">OK</button>
+        </div>
+
+        <div id="modal" class="layer hidden">
+          <div id="modal-body" class="win"></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div id="reveal" class="overlay hidden">
-    <div id="reveal-grid"></div>
-    <button id="reveal-ok" class="btn big">OK</button>
-  </div>
+    <div class="gb-logo">Pixel<b>BOY</b></div>
 
-  <div id="modal" class="overlay hidden">
-    <div id="modal-body" class="panel"></div>
+    <div class="gb-controls">
+      <div class="well dpad-well">
+        <div class="dpad">
+          <button class="up" data-dir="up" aria-label="Haut"></button>
+          <button class="left" data-dir="left" aria-label="Gauche"></button>
+          <span class="mid"></span>
+          <button class="right" data-dir="right" aria-label="Droite"></button>
+          <button class="down" data-dir="down" aria-label="Bas"></button>
+        </div>
+      </div>
+      <div class="ab">
+        <div class="well ab-well">
+          <span class="cap b"><button id="key-b" aria-label="B">B</button></span>
+          <span class="cap a"><button id="key-a" aria-label="A">A</button></span>
+        </div>
+        <div class="ab-labels"><span id="label-b">RETOUR</span><span id="label-a">VALIDER</span></div>
+      </div>
+    </div>
+
+    <div class="gb-pills">
+      <span></span>
+      <div class="pill"><button id="key-select" aria-label="Select"></button><span id="label-select">SELECT</span></div>
+      <div class="pill"><button id="key-start" aria-label="Start"></button><span id="label-start">START</span></div>
+      <div class="gb-speaker"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
   </div>
 
   <script type="module" src="js/main.js"></script>
