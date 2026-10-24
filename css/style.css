@@ -39,6 +39,14 @@ small { font-size: 12px; }
 
 @keyframes blink { 50% { visibility: hidden; } }
 @keyframes bob { 50% { transform: translateY(-2px); } }
+/* flottement par paliers d'1 px : 0, -1, -2, -3, -2, -1 (aucune interpolation) */
+@keyframes levitate {
+  0% { transform: translateY(0); } 16% { transform: translateY(-1px); } 33% { transform: translateY(-2px); }
+  50% { transform: translateY(-3px); } 66% { transform: translateY(-2px); } 83% { transform: translateY(-1px); }
+}
+@keyframes levitate-shadow {
+  0% { left: 14%; right: 14%; } 33% { left: 18%; right: 18%; } 50% { left: 22%; right: 22%; } 66% { left: 18%; right: 18%; }
+}
 
 /* ================================================================ structure */
 #app { position: fixed; inset: 0; }
@@ -131,45 +139,45 @@ small { font-size: 12px; }
 
 /* ================================================================ écrans à deux volets */
 .split {
-  position: absolute; left: 0; right: 0; top: 60px; bottom: 30px; z-index: 1; display: grid; grid-template-columns: 1fr 1.15fr; gap: 10px;
+  position: absolute; left: 0; right: 0; top: 60px; bottom: 30px; z-index: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px;
   padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
 }
 .split > .panel { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
 /* cartes */
-.cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 14px 6px; padding-top: 6px; }
 .slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
 .card {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0;
-  padding: 4px 2px 6px; background: #3a2618;
-  box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--C), 0 3px 0 var(--line);
-  color: var(--cream); font-size: 12px; font-weight: 700;
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
+  padding: 2px 0 4px; color: var(--cream); font-size: 13px; font-weight: 700; text-shadow: 1px 1px 0 var(--line);
+  border: 8px solid transparent; border-image: var(--f-cardC) var(--sl) fill / 8px stretch;
 }
-.card.r-R { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--R), 0 3px 0 var(--line); }
-.card.r-L { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--L), 0 3px 0 var(--line); background: #4a2e1c; }
-.card.sel { background: #6a4228; }
-.card.locked { filter: brightness(.75); }
+.card.r-R { border-image-source: var(--f-cardR); }
+.card.r-L { border-image-source: var(--f-cardL); }
+.card canvas { box-shadow: 0 0 0 2px var(--line); }
+.card.sel { border-image-source: var(--f-sel); }
+.card.locked { filter: brightness(.7) saturate(.6); }
 .card:active { transform: translateY(2px); }
-.card .pedestal { width: 100%; display: flex; justify-content: center; align-items: flex-end; min-height: 52px; padding-bottom: 2px;
-  background: linear-gradient(transparent 70%, #24160e 70%); }
 .card .name { white-space: nowrap; overflow: hidden; max-width: 100%; }
-.stars { display: flex; gap: 1px; justify-content: center; }
-.pips { display: flex; gap: 2px; }
-.pips i { width: 6px; height: 6px; background: var(--line); box-shadow: inset 0 0 0 1px #6a4a3a; }
-.pips i.on { background: var(--gold); box-shadow: inset 2px 2px 0 var(--gold-hi); }
-.badge { position: absolute; top: -6px; right: -4px; z-index: 2; padding: 0 4px; font-size: 12px; color: #fff; background: var(--gem); box-shadow: 0 0 0 2px var(--line); }
+.card .rank { font-size: 11px; font-weight: 400; color: var(--gold-hi); }
+.stars { display: flex; gap: 2px; justify-content: center; }
+.gems { display: flex; gap: 2px; }
+.badge { position: absolute; top: -12px; right: -10px; z-index: 2; padding: 0 4px; font-size: 12px; color: #fff; background: var(--gem); box-shadow: 0 0 0 2px var(--line); }
 .badge.up { animation: blink 1s steps(1) infinite; }
-.badge.team { background: var(--gold); color: var(--ink); }
-.slot { min-height: 74px; justify-content: flex-end; }
-.slot.empty { background: #24160e; color: #8a6a4a; justify-content: center; box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px #4a2e1c; }
+.badge.team { right: auto; left: -10px; background: var(--gold); color: var(--ink); text-shadow: none; }
+.team-line { margin: 10px 0 4px; font-size: 14px; }
+.team-line b { color: var(--gold-hi); margin-right: 6px; }
+.slot { justify-content: flex-start; }
+.slot.empty { min-height: 110px; justify-content: center; color: #8a6a4a; border-image-source: var(--f-stone); }
 
 /* fiche héros */
 .detail { display: grid; grid-template-columns: auto 1fr; gap: 10px 14px; }
 .detail .stage {
   grid-row: span 2; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px;
-  padding: 8px; min-width: 128px; background: #2a2026; box-shadow: inset 0 0 0 2px var(--line), inset 0 -18px 0 #4a3a3a;
+  padding: 0; min-width: 0;
 }
-.detail .stage.flash { background: var(--gold-hi); }
+.detail .stage canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px #c8a870; }
+.detail .stage.flash canvas { filter: brightness(1.8); }
 .d-name { font: 400 27px/1 'Jacquarda', serif; color: #8a1a28; }
 .d-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .stat { display: grid; grid-template-columns: 36px 1fr 34px; align-items: center; gap: 6px; font-size: 14px; }
@@ -231,9 +239,16 @@ small { font-size: 12px; }
   font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
   border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
 }
+#b-menu .act { animation: levitate 1.6s steps(1) infinite; }
+#b-menu .act:nth-of-type(2) { animation-delay: -.53s; }
+#b-menu .act:nth-of-type(3) { animation-delay: -1.06s; }
+#b-menu .act::after {
+  content: ''; position: absolute; left: 14%; right: 14%; bottom: -14px; height: 3px;
+  background: rgba(14, 8, 11, .45); animation: levitate-shadow 1.6s steps(1) infinite; animation-delay: inherit;
+}
 #b-menu .act.hot {
   width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
-  border-image-source: var(--f-gold); transform: translateX(6px);
+  border-image-source: var(--f-gold); translate: 6px 0;
 }
 #b-menu .act.hot canvas { width: 42px !important; height: 42px !important; }
 #b-menu .act.off { filter: grayscale(1) brightness(.6); }

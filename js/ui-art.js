@@ -55,6 +55,11 @@ const FRAMES = {
   goldDown: { rings: [OUTLINE, '#7a4a12', '#a87a20', '#c08628'], center: '#c08628' },
   red: { rings: [OUTLINE, '#5a1018', '#ff7a8a', '#e2334a'], center: '#c02a3e', hi: { i: 2, c: '#ffb0b8' }, lo: { i: 2, c: '#8a1a28' } },
   redDown: { rings: [OUTLINE, '#5a1018', '#8a1a28', '#a82434'], center: '#a82434' },
+  // cadres de cartes selon la rareté
+  cardC: { rings: [OUTLINE, '#3a3a44', '#a8b0b8', '#6a7480'], center: '#2a1d1a', hi: { i: 2, c: '#d0d6dc' }, lo: { i: 2, c: '#5a6270' } },
+  cardR: { rings: [OUTLINE, '#1e3a6a', '#7ab0f0', '#4a8ee0'], center: '#2a1d1a', hi: { i: 2, c: '#b0d4ff' }, lo: { i: 2, c: '#2e5aa8' } },
+  cardL: { rings: [OUTLINE, '#7a4a12', '#fbe08a', '#e0a93a'], center: '#2a1d1a', hi: { i: 2, c: '#fff4c0' }, lo: { i: 2, c: '#a87a20' }, rivet: true },
+  sel: { rings: [OUTLINE, '#8a5a1a', '#fff8dc', '#fbe08a'], center: '#3a2818', hi: { i: 2, c: '#ffffff' }, lo: { i: 2, c: '#e0a93a' } },
   // ruban de titre
   ribbon: { rings: [OUTLINE, '#6a1420', '#c8323c'], center: '#a82434', hi: { i: 1, c: '#e2554a' }, lo: { i: 1, c: '#6a1420' } },
 };

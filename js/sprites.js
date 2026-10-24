@@ -518,8 +518,21 @@ export function gemSprite() {
 // Étoile de rareté (7×7).
 export function starSprite() {
   const s = new Spr(9, 9);
-  s.p(4, 1, C.gold); s.hl(3, 5, 2, C.gold); s.hl(1, 7, 3, C.gold); s.hl(2, 6, 4, C.gold);
-  s.hl(2, 6, 5, C.gold); s.p(2, 6, C.gold); s.p(6, 6, C.gold); s.p(4, 2, C.goldHi, true);
+  s.v(4, 1, 2, C.gold);
+  s.hl(1, 7, 3, C.gold);
+  s.hl(2, 6, 4, C.gold);
+  s.hl(3, 5, 5, C.gold);
+  s.hl(2, 3, 6, C.gold); s.hl(5, 6, 6, C.gold);
+  s.p(2, 7, C.gold); s.p(6, 7, C.gold);
+  s.p(4, 2, C.goldHi, true); s.p(3, 3, C.goldHi, true); s.p(4, 3, C.goldHi, true);
+  return s;
+}
+
+// Gemme de rang en losange (7×7) : dorée si le rang est atteint, sombre sinon.
+export function rankGemSprite(on) {
+  const s = new Spr(7, 7), a = on ? C.gold : '#4a3a3a', hi = on ? C.goldHi : '#6a5a5a';
+  s.p(3, 1, a); s.hl(2, 4, 2, a); s.hl(1, 5, 3, a); s.hl(2, 4, 4, a); s.p(3, 5, a);
+  s.p(3, 2, hi, true); s.p(2, 3, hi, true);
   return s;
 }
 

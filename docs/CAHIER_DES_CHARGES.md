@@ -65,7 +65,8 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Tour d'un héros : des **boutons d'action rectangulaires**, bien séparés, apparaissent à côté de lui (Attaque,
   Compétence avec sa recharge, Garde = dégâts reçus divisés par 2 jusqu'à son prochain
   tour). On **glisse le doigt** dessus : l'action visée grossit et affiche sa description ;
-  on relâche pour la choisir. Un simple toucher marche aussi.
+  on relâche pour la choisir. Un simple toucher marche aussi. Les boutons lévitent
+  doucement (sauts d'1 px, décalés), avec leur ombre au sol.
 - Pour une attaque ciblée, des coins de visée apparaissent sur les ennemis : on touche
   celui qu'on veut (ou Annuler). S'il ne reste qu'un ennemi, la cible est automatique.
 - En haut : nom de l'étape, **ordre des tours** (portraits), boutons Auto / ×2 / Fuir.
@@ -102,8 +103,10 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
    le panneau mène aussi à l'Équipe. En haut : or, rejouer une
    étape, coffre du jour, options.
-2. **Équipe** (à gauche) : salle d'armes ; formation et héros à gauche, fiche du héros
-   choisi à droite (stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).
+2. **Équipe** (à gauche) : salle d'armes ; à gauche une rangée de cartes (portrait du
+   héros dans la salle d'armes, cadre pierre / bleu / or selon la rareté, badge 1-2-3 pour
+   l'équipe, « UP » s'il peut monter de rang) ; à droite la fiche du héros choisi (gemmes de
+   rang, stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).
 3. **Invocation** (à droite) : salle sans porte, le cristal posé sur une estrade au-dessus
    d'un cercle de runes qui s'illuminent, bougies, bannières violettes ; le parchemin à
    droite donne les taux, la jauge de pitié et les boutons ×1 / ×10.

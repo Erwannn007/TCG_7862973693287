@@ -2,7 +2,7 @@
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
 import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
-import { heroSprite, coinSprite, starSprite, crystalSprite } from './sprites.js';
+import { heroSprite, coinSprite, starSprite, rankGemSprite, crystalSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
@@ -37,10 +37,33 @@ function starsRow(rar, k = 1) {
   for (let i = 0; i < RAR_STARS[rar]; i++) d.appendChild(spriteCanvas('star', starSprite, k));
   return d;
 }
-function rankPips(rank) {
-  const d = el('div', 'pips');
-  for (let i = 1; i <= 5; i++) d.appendChild(el('i', i <= rank ? 'on' : ''));
+function rankGems(rank, k = 2) {
+  const d = el('div', 'gems');
+  for (let i = 1; i <= 5; i++) d.appendChild(spriteCanvas('gem-' + (i <= rank), () => rankGemSprite(i <= rank), k));
   return d;
+}
+
+// Portrait : le héros debout dans un coin de la salle d'armes (mur + dalles), avec son ombre.
+function portrait(id, rank, k, w = 28, h = 30, locked = false) {
+  const c = el('canvas', 'px');
+  c.width = w;
+  c.height = h;
+  c.style.width = w * k + 'px';
+  c.style.height = h * k + 'px';
+  const g = c.getContext('2d');
+  g.drawImage(sceneBackground('teamRoom'), 216 - (w >> 1), 92 - h, w, h, 0, 0, w, h);
+  const bm = locked
+    ? bitmap(`h-${id}-1-lock`, () => heroSprite(id, 1).silhouette(LOCKED))
+    : bitmap(`h-${id}-${rank}`, () => heroSprite(id, rank));
+  g.globalAlpha = 0.45;
+  g.fillStyle = OUTLINE;
+  g.fillRect((w >> 1) - 6, h - 4, 12, 2);
+  g.fillRect((w >> 1) - 4, h - 2, 8, 1);
+  g.globalAlpha = 1;
+  const x = (w - bm.w) >> 1, y = h - 3 - bm.h;
+  g.drawImage(bm.canvas, x, y);
+  if (!locked) drawFx(g, bm, x, y, 1);
+  return c;
 }
 // Barre en segments (on compte les morceaux d'un coup d'œil).
 function segBar(ratio, cls = '', n = 10) {
@@ -367,12 +390,10 @@ $('#btn-options').onclick = () => {
 function card(id, opts = {}) {
   const h = HEROES[id], own = state.owned[id], k = opts.k || 2;
   const c = el('button', `card r-${h.rarity}${own ? '' : ' locked'}${opts.sel ? ' sel' : ''}`);
-  const ped = el('div', 'pedestal');
-  ped.appendChild(own ? heroCanvas(id, own.rank, k) : lockedCanvas(id, 1, k));
-  c.appendChild(ped);
+  c.appendChild(portrait(id, own ? own.rank : 1, k, 28, 30, !own));
   c.appendChild(el('div', 'name', own ? h.name : '???'));
   c.appendChild(starsRow(h.rarity));
-  if (own) c.appendChild(rankPips(own.rank));
+  c.appendChild(el('div', 'rank', own ? `Rang ${own.rank}` : 'Inconnu'));
   if (opts.badge) c.appendChild(el('div', 'badge ' + (opts.badgeCls || ''), opts.badge));
   return c;
 }
@@ -389,29 +410,20 @@ function renderTeam() {
   if (!selected || !HEROES[selected]) selected = state.team[0];
   const left = $('#team-left');
   left.innerHTML = '';
-  left.appendChild(el('div', 'h', 'Formation'));
-  const slots = el('div', 'slots');
-  for (let i = 0; i < 3; i++) {
-    const id = state.team[i];
-    if (!id) {
-      slots.appendChild(el('div', 'card slot empty', 'vide'));
-      continue;
-    }
-    const c = card(id, { sel: id === selected, badge: String(i + 1), badgeCls: 'team' });
-    c.classList.add('slot');
-    c.onclick = () => { selected = id; renderTeam(); };
-    slots.appendChild(c);
-  }
-  left.appendChild(slots);
   const owned = HERO_IDS.filter((id) => state.owned[id]).length;
   left.appendChild(el('div', 'h', `Héros ${owned}/${HERO_IDS.length}`));
   const g = el('div', 'cards');
   for (const id of HERO_IDS) {
-    const c = card(id, { sel: id === selected, ...(canUpgrade(id) ? { badge: '▲', badgeCls: 'up' } : {}) });
+    const c = card(id, { sel: id === selected, ...(canUpgrade(id) ? { badge: 'UP', badgeCls: 'up' } : {}) });
+    const pos = state.team.indexOf(id);
+    if (pos >= 0) c.appendChild(el('div', 'badge team', String(pos + 1)));
     c.onclick = () => { selected = id; renderTeam(); };
     g.appendChild(c);
   }
   left.appendChild(g);
+  const names = state.team.map((id) => HEROES[id].name).join(' · ');
+  left.appendChild(el('p', 'team-line', `<b>Formation</b> ${names}`));
+  left.appendChild(el('p', 'muted', 'Touche un héros pour voir sa fiche, l’améliorer ou le mettre dans l’équipe (3 max).'));
   renderDetail(selected);
 }
 
@@ -421,7 +433,7 @@ function renderDetail(id) {
   const h = HEROES[id], own = state.owned[id], rank = own ? own.rank : 1, st = heroStats(id, rank);
   const d = el('div', 'detail');
   const stageEl = el('div', 'stage');
-  stageEl.appendChild(own ? heroCanvas(id, rank, 4) : lockedCanvas(id, 1, 4));
+  stageEl.appendChild(portrait(id, rank, 3, 34, 40, !own));
   d.appendChild(stageEl);
 
   const info = el('div');
@@ -431,7 +443,7 @@ function renderDetail(id) {
   info.appendChild(l1);
   if (own) {
     const l2 = el('div', 'd-line', `Rang ${rank} · ${RANK_NAMES[rank - 1]}`);
-    l2.appendChild(rankPips(rank));
+    l2.appendChild(rankGems(rank));
     info.appendChild(l2);
   }
   for (const [label, val, max, cls] of [['PV', st.hp, 260, 'hp'], ['ATQ', st.atk, 75, ''], ['DÉF', st.def, 25, ''], ['VIT', st.spd, 25, '']]) {
