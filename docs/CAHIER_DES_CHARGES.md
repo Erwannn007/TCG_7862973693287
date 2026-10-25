@@ -120,8 +120,10 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    toucher choisit le héros : sa fiche s'affiche à droite sur une plaque de bois (rang, place,
    stats, compétence, aperçu des 5 rangs) et ses pancartes jaillissent de lui en arc comme en
    combat : « Améliorer » et « Skin ». Skin ouvre le vestiaire : les autres héros sortent de la
-   salle, la fiche tombe et une plaque « Vestiaire » prend sa place pour faire défiler les skins
-   du héros (aucun pour l'instant, seulement la tenue d'origine) ; pour un héros hors de l'équipe, elles
+   salle, les socles éclatent, le héros se place au centre, la fiche tombe et une plaque
+   « Vestiaire » prend sa place : une liste de skins qu'on fait défiler de haut en bas ; toucher
+   un skin l'essaie sur le héros (aucun skin pour l'instant, seulement la tenue d'origine et des
+   emplacements « Bientôt » ; un skin = une table de recoloration dans `SKINS`) ; pour un héros hors de l'équipe, elles
    sortent de sa plaque. Monter de rang : la magie dorée converge vers le héros, il
    s'illumine, la salle tremble.
 3. **Invocation** (à droite) : salle sans porte, bannières violettes. L'autel : un grand

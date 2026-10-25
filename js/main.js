@@ -580,16 +580,69 @@ function layoutTeam() {
 
 // ---- vestiaire (skins)
 
-// Skins de chaque héros : [{ name, recolor }] (aucun pour l'instant ; la tenue d'origine est toujours là).
+// Skins de chaque héros : [{ name, recolor: { ancienne couleur: nouvelle } }]. Aucun pour l'instant ;
+// la tenue d'origine est toujours en tête de liste, et des emplacements « Bientôt » suivent.
 const SKINS = {};
-let teamMode = null, skinT0 = 0, skinOut = false, skinIndex = 0;
-const SKIN_RUN = 700; // durée de la sortie (et du retour) des héros du fond
+const SKIN_SOON = 3;
+let teamMode = null, skinT0 = 0, skinOut = false, skinPreview = 0;
+let skinBoom = [false, false, false], skinLanded = false;
+const SKIN_IN = 800, SKIN_BACK = 1000; // durées de l'ouverture et du retour
 
-// 0 : tout le monde en place, 1 : les héros du fond sont sortis et celui de devant a reculé.
-function skinProgress(now) {
-  if (!teamMode) return 0;
-  const q = Math.min(1, (now - skinT0) / SKIN_RUN);
-  return skinOut ? 1 - q : q;
+const skinList = (id) => [{ name: 'Tenue d’origine' }, ...(SKINS[id] || [])];
+const skinnedSprite = (id, rank, i) => {
+  const sk = skinList(id)[i];
+  return sk?.recolor ? heroSprite(id, rank).recolor(sk.recolor) : heroSprite(id, rank);
+};
+
+// x (pixels d'art) où se place le héros pendant le vestiaire : au milieu entre la colonne des
+// héros et la plaque du vestiaire.
+function skinCenterX() {
+  const c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
+  const left = $('#t-roster').getBoundingClientRect().right, right = $('#t-info').getBoundingClientRect().left;
+  return ((left + right) / 2 - c.offsetLeft) / k;
+}
+
+// État de l'animation du vestiaire à l'instant now :
+// hero : 0 en place → 1 (ceux du fond sortis, celui de devant au centre) ;
+// padGone[i] : le socle i a volé en éclats ; padLift : hauteur des socles qui retombent au retour.
+function skinState(now) {
+  const st = { on: !!teamMode, back: skinOut, hero: 0, padGone: [false, false, false], padLift: 0 };
+  if (!teamMode) return st;
+  if (!skinOut) {
+    const q = Math.min(1, (now - skinT0) / SKIN_IN);
+    st.hero = q;
+    teamSlots.forEach((sl, i) => {
+      // le socle éclate quand son héros le quitte (vite pour celui de devant, au départ en courant pour les autres)
+      const at = sl.depth > 0.9 ? 0.12 : 0.4;
+      if (q < at) return;
+      st.padGone[i] = true;
+      if (!skinBoom[i]) {
+        skinBoom[i] = true;
+        padBurst(sl);
+      }
+    });
+  } else {
+    // d'abord les socles retombent du ciel, puis les héros reviennent
+    const q = Math.min(1, (now - skinT0) / SKIN_BACK), d = Math.min(1, q / 0.35);
+    st.padLift = Math.round((1 - Math.floor(d * 6) / 6) * 120); // chute par paliers
+    if (d >= 1 && !skinLanded) {
+      skinLanded = true;
+      teamSlots.forEach((sl) => fx(Array.from({ length: 6 }, () => ({ x: sl.sx + rr(-40, 40), y: sl.sy + 6, vx: rr(-1, 1), vy: rr(-1, -0.2), g: 0.03, life: rr(16, 26) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 }))));
+      sfx('wood');
+      haptic(15);
+    }
+    st.hero = 1 - Math.max(0, Math.min(1, (q - 0.35) / 0.65));
+  }
+  return st;
+}
+
+// Un socle vole en éclats : morceaux de pierre et poussière, comme une pancarte qu'on choisit.
+function padBurst(sl) {
+  const STONES = ['#8a8088', '#6a6068', '#4a4048', '#a8a0a8'];
+  fx(Array.from({ length: 18 }, () => ({ x: sl.sx + rr(-45, 45), y: sl.sy + rr(-6, 8), vx: rr(-2.5, 2.5), vy: rr(-4, -1), g: 0.28, life: rr(22, 36) | 0, c: STONES[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+  sparks(sl.sx, sl.sy, '#ffd86a', 8, 1.2);
+  sfx('wood');
+  haptic(10);
 }
 
 // Redessine la salle à chaque image pendant ms (les trajets du vestiaire).
@@ -602,16 +655,19 @@ function teamAnimFor(ms) {
   requestAnimationFrame(tick);
 }
 
-// Ouvre le vestiaire : les autres sortent, la fiche tombe en copeaux, la plaque des skins tombe du ciel.
+// Ouvre le vestiaire : les autres sortent, les socles éclatent, le héros va au centre,
+// la fiche tombe en copeaux, la plaque des skins tombe du ciel.
 function enterSkins(id) {
   teamMode = 'skins';
   skinOut = false;
   skinT0 = performance.now();
-  skinIndex = 0;
+  skinPreview = 0;
+  skinBoom = [false, false, false];
+  skinLanded = false;
   $('#scr-team').classList.add('skins');
   $('#t-menu').classList.add('hidden');
   sfx('focus');
-  teamAnimFor(SKIN_RUN + 100);
+  teamAnimFor(SKIN_IN + 100);
   const info = $('#t-info'), r = info.getBoundingClientRect();
   const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
   fx(Array.from({ length: 22 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2, 2), vy: rr(-3, -0.5), g: 0.25, life: rr(24, 40) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
@@ -636,55 +692,57 @@ function dropSkins(id) {
   }, 380);
 }
 
-// La plaque des skins : nom du skin, aperçu du héros dans sa tenue, flèches et points pour défiler.
+// La plaque des skins : une liste qu'on fait défiler de haut en bas ; toucher un skin
+// l'essaie sur le héros, au centre de la salle.
 function renderSkins(id) {
-  const box = $('#t-skins'), own = state.owned[id], list = [{ name: 'Tenue d’origine' }, ...(SKINS[id] || [])];
-  skinIndex = Math.max(0, Math.min(list.length - 1, skinIndex));
-  const sk = list[skinIndex];
+  const box = $('#t-skins'), own = state.owned[id], list = skinList(id);
   box.innerHTML = '';
   box.appendChild(el('div', 'd-name', 'Vestiaire'));
-  box.appendChild(el('div', 'd-line', `${HEROES[id].name} · ${list.length} skin${list.length > 1 ? 's' : ''}`));
-  const view = el('div', 'sk-view');
-  const prev = el('button', 'sk-arrow', '◂'), next = el('button', 'sk-arrow', '▸');
-  prev.disabled = skinIndex === 0;
-  next.disabled = skinIndex === list.length - 1;
-  const win = el('div', 'sk-win');
-  win.appendChild(portrait(id, own.rank, 3, 28, 30));
-  view.append(prev, win, next);
-  box.appendChild(view);
-  box.appendChild(el('div', 'sk-name', sk.name));
-  const dots = el('div', 'sk-dots');
-  list.forEach((_, i) => dots.appendChild(el('i', i === skinIndex ? 'on' : '')));
-  box.appendChild(dots);
-  box.appendChild(el('div', 'muted', list.length > 1 ? 'Glisse ou touche les flèches pour défiler.' : 'Aucun autre skin pour l’instant.'));
+  box.appendChild(el('div', 'd-line', `${HEROES[id].name} · touche un skin pour l’essayer`));
+  const ul = el('div', 'sk-list');
+  list.forEach((sk, i) => {
+    const row = el('button', 'sk-row' + (i === skinPreview ? ' on' : ''));
+    row.appendChild(spriteCanvas(`h-${id}-${own.rank}-s${i}`, () => skinnedSprite(id, own.rank, i), 2));
+    row.appendChild(el('div', 'sk-txt', `<b>${sk.name}</b><small>${i === 0 ? 'Porté' : i === skinPreview ? 'Essayé' : 'Disponible'}</small>`));
+    row.onclick = () => {
+      if (i === skinPreview) return;
+      skinPreview = i;
+      const c = $('#team-canvas'), k = c.clientWidth / CAMP_W, f = teamSlots.find((sl) => sl.depth > 0.9);
+      const px = c.offsetLeft + skinCenterX() * k, py = f ? f.sy - 40 : innerHeight / 2;
+      sparks(px, py, '#ff8ad8', 20, 1.6);
+      slotFlash[teamSlots.indexOf(f)] = performance.now() + 240;
+      teamAnimFor(300);
+      sfx('select');
+      haptic(10);
+      const top = ul.scrollTop;
+      renderSkins(id);
+      paintSign(box);
+      $('#t-skins .sk-list').scrollTop = top;
+    };
+    ul.appendChild(row);
+  });
+  for (let i = 0; i < SKIN_SOON; i++) {
+    const row = el('div', 'sk-row soon');
+    row.appendChild(lockedCanvas(id, own.rank, 2));
+    row.appendChild(el('div', 'sk-txt', '<b>???</b><small>Bientôt</small>'));
+    ul.appendChild(row);
+  }
+  // le doigt fait défiler la liste sans changer de pièce
+  ul.addEventListener('pointerdown', (e) => e.stopPropagation());
+  ul.addEventListener('pointerup', (e) => e.stopPropagation());
+  box.appendChild(ul);
   const back = el('button', 'btn', 'Retour');
   back.onclick = exitSkins;
   box.appendChild(back);
-  const go = (d) => {
-    const n = skinIndex + d;
-    if (n < 0 || n >= list.length) return sfx('denied');
-    skinIndex = n;
-    sfx('hover');
-    renderSkins(id);
-    paintSign(box);
-  };
-  prev.onclick = () => go(-1);
-  next.onclick = () => go(1);
-  // glisser sur l'aperçu pour défiler (sans changer de pièce)
-  let sx = null;
-  win.addEventListener('pointerdown', (e) => { e.stopPropagation(); sx = e.clientX; });
-  win.addEventListener('pointerup', (e) => {
-    e.stopPropagation();
-    if (sx !== null && Math.abs(e.clientX - sx) > 30) go(e.clientX < sx ? 1 : -1);
-    sx = null;
-  });
 }
 
-// Referme le vestiaire : la plaque des skins tombe, la fiche revient du ciel, les héros reviennent.
+// Referme le vestiaire : la plaque tombe, la fiche revient du ciel, les socles retombent à leur
+// place, puis les héros reviennent.
 function exitSkins() {
   if (teamMode !== 'skins' || skinOut) return;
   skinOut = true;
   skinT0 = performance.now();
+  skinLanded = false;
   const box = $('#t-skins'), info = $('#t-info');
   box.animate([{ translate: '0 0' }, { translate: '0 120vh', rotate: '-8deg' }], { duration: 420, easing: 'steps(7, end)', fill: 'forwards' });
   sfx('wood');
@@ -695,13 +753,14 @@ function exitSkins() {
     info.animate([{ translate: '0 -130vh' }, { translate: '0 8px', offset: 0.8 }, { translate: '0 0' }], { duration: 420, easing: 'steps(7, end)' });
     sfx('wood');
   }, 380);
-  teamAnimFor(SKIN_RUN + 100);
+  teamAnimFor(SKIN_BACK + 100);
   setTimeout(() => {
     teamMode = null;
     skinOut = false;
+    skinPreview = 0;
     $('#scr-team').classList.remove('skins');
     heroSigns();
-  }, SKIN_RUN + 40);
+  }, SKIN_BACK + 40);
 }
 
 // Sortie immédiate (on quitte la pièce).
@@ -709,6 +768,7 @@ function resetSkins() {
   if (!teamMode) return;
   teamMode = null;
   skinOut = false;
+  skinPreview = 0;
   const box = $('#t-skins');
   box.getAnimations().forEach((a) => a.cancel());
   box.classList.add('hidden');
@@ -840,10 +900,10 @@ function dragEnd(e, cancel) {
 
 // Le carrousel dessiné dans la salle : la salle un peu assombrie, les socles du fond d'abord
 // (héros dans la pénombre), puis celui de devant sous un rai de lumière ; pendant un glisser,
-// les socles s'allument en pointillés.
+// les socles s'allument en pointillés. Au vestiaire, voir skinState.
 function drawTeamLife(g) {
   if (!teamSlots.length) return;
-  const now = performance.now(), dragging = !!teamDrag;
+  const now = performance.now(), dragging = !!teamDrag, sk = skinState(now);
   g.globalAlpha = 0.28;
   g.fillStyle = OUTLINE;
   g.fillRect(0, 0, CAMP_W, SH);
@@ -851,35 +911,39 @@ function drawTeamLife(g) {
   const order = [0, 1, 2].sort((a, b) => teamSlots[a].depth - teamSlots[b].depth);
   for (const i of order) {
     const sl = teamSlots[i], front = sl.depth > 0.9, over = teamDrag?.over === i, id = state.team[i];
-    // vestiaire (skins) : ceux du fond sautillent puis filent vers la gauche, celui de devant recule avec son socle
-    const p = skinProgress(now);
-    const x = Math.round(sl.x), fy = Math.round(sl.y) - (front ? Math.round(p * 4) : 0);
+    const x = Math.round(sl.x), fy = Math.round(sl.y);
+    // le héros de devant glisse vers le centre de la salle libre pendant le vestiaire
+    const hx = front && sk.hero > 0 ? Math.round(x + (skinCenterX() - x) * sk.hero) : x;
     if ((front && id && id === selected && !dragging) || over) {
       g.fillStyle = over ? '#ffe9a0' : '#fff2c0';
       g.globalAlpha = over ? 0.14 : 0.11;
       for (let y = 0; y < fy; y += 4) {
         const w = 14 + Math.floor((y / fy) * 8) * 2;
-        g.fillRect(x - (w >> 1), y, w, 4);
+        g.fillRect(hx - (w >> 1), y, w, 4);
       }
       g.globalAlpha = 0.16;
-      for (const [dy, w] of [[-1, 26], [0, 34], [1, 26]]) g.fillRect(x - (w >> 1), fy + dy, w, 1);
+      for (const [dy, w] of [[-1, 26], [0, 34], [1, 26]]) g.fillRect(hx - (w >> 1), fy + dy, w, 1);
       g.globalAlpha = 1;
     }
-    // socle : disque de pierre en perspective, liseré qui s'allume pendant un glisser
-    for (let dy = -3; dy <= 4; dy++)
-      for (let dx = -15; dx <= 15; dx++) {
-        const dd = (dx / 15) ** 2 + (dy / 3.6) ** 2;
-        if (dd > 1) continue;
-        let c = dy > 1 ? '#4a4048' : dy < -1 ? '#8a8088' : '#6a6068';
-        if (dd > 0.72) c = dragging && (roomStep + dx) % 2 ? (over ? '#ffffff' : '#ffd86a') : '#2a2228';
-        g.fillStyle = c;
-        g.fillRect(x + dx, fy + dy, 1, 1);
-      }
-    g.fillStyle = OUTLINE;
-    g.fillRect(x - 13, fy + 5, 27, 1);
+    // socle : disque de pierre en perspective, liseré qui s'allume pendant un glisser ;
+    // au vestiaire il a volé en éclats, puis il retombe du ciel au retour
+    if (!sk.padGone[i]) {
+      const py = fy - sk.padLift;
+      for (let dy = -3; dy <= 4; dy++)
+        for (let dx = -15; dx <= 15; dx++) {
+          const dd = (dx / 15) ** 2 + (dy / 3.6) ** 2;
+          if (dd > 1) continue;
+          let c = dy > 1 ? '#4a4048' : dy < -1 ? '#8a8088' : '#6a6068';
+          if (dd > 0.72) c = dragging && (roomStep + dx) % 2 ? (over ? '#ffffff' : '#ffd86a') : '#2a2228';
+          g.fillStyle = c;
+          g.fillRect(x + dx, py + dy, 1, 1);
+        }
+      g.fillStyle = OUTLINE;
+      g.fillRect(x - 13, py + 5, 27, 1);
+    }
     if (!id || (teamDrag && teamDrag.from === i)) {
       // socle vide : contour de héros en pointillés qui attend
-      if (!id && roomStep % 4 < 3) {
+      if (!id && !sk.on && roomStep % 4 < 3) {
         g.fillStyle = dragging ? '#ffd86a' : '#8a7068';
         for (let y = fy - 18; y < fy - 1; y += 3) { g.fillRect(x - 6, y, 1, 1); g.fillRect(x + 6, y, 1, 1); }
         for (let xx = x - 6; xx <= x + 6; xx += 3) g.fillRect(xx, fy - 19, 1, 1);
@@ -890,14 +954,21 @@ function drawTeamLife(g) {
     }
     const own = state.owned[id];
     let dx = 0, dy = 0, run = false;
-    if (p > 0 && !front) {
-      run = p > 0.3;
-      dx = run ? -Math.round(((p - 0.3) / 0.7) * 240) : 0;
+    if (front) dx = hx - x;
+    else if (sk.hero > 0) {
+      // ceux du fond sautillent puis filent vers la gauche (ils reviennent en courant au retour)
+      if (sk.hero >= 1) continue;
+      run = sk.hero > 0.3;
+      dx = run ? -Math.round(((sk.hero - 0.3) / 0.7) * 240) : 0;
       dy = -(Math.floor(now / 90) % 2) * 2;
-      if (p >= 1) continue;
     }
-    const key = `h-${id}-${own.rank}` + (run ? '-f' : '');
-    const bm = bitmap(key, () => (run ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)));
+    const flip = run && !sk.back; // ils regardent là où ils courent
+    const skin = front && sk.on ? skinPreview : 0;
+    const key = `h-${id}-${own.rank}` + (flip ? '-f' : '') + (skin ? '-s' + skin : '');
+    const bm = bitmap(key, () => {
+      const sp = skinnedSprite(id, own.rank, skin);
+      return flip ? sp.flip() : sp;
+    });
     const white = now < slotFlash[i] && roomStep % 2 === 0;
     const img = white ? bitmap(`h-${id}-${own.rank}-w`, () => heroSprite(id, own.rank).silhouette('#ffffff')) : bm;
     const bx = x - (bm.w >> 1) + dx, by = fy - bm.h - ((Math.floor(roomStep / 2) + i) % 2) + dy;
@@ -909,26 +980,29 @@ function drawTeamLife(g) {
     drawFx(g, bm, bx, by, roomStep);
     if (run && roomStep % 2) {
       g.fillStyle = '#b8a080';
-      g.fillRect(bx + bm.w, fy - 1, 2, 1);
-      g.fillRect(bx + bm.w + 2, fy - 2, 1, 1);
+      const tx = flip ? bx + bm.w : bx - 2;
+      g.fillRect(tx, fy - 1, 2, 1);
+      g.fillRect(flip ? tx + 2 : tx - 1, fy - 2, 1, 1);
     }
     // au fond : dans la pénombre
     if (!front && !over) {
       g.globalAlpha = 0.45;
-      g.drawImage(bitmap(key + '-d', () => (run ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)).silhouette(OUTLINE)).canvas, bx, by);
+      g.drawImage(bitmap(key + '-d', () => (flip ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)).silhouette(OUTLINE)).canvas, bx, by);
       g.globalAlpha = 1;
     }
   }
   // poussière dorée qui monte devant
   const f = teamSlots.find((sl) => sl.depth > 0.9);
-  if (f && !dragging)
+  if (f && !dragging) {
+    const fx0 = sk.hero > 0 ? Math.round(f.x + (skinCenterX() - f.x) * sk.hero) : Math.round(f.x);
     for (let i = 0; i < 6; i++) {
-      const t = (roomStep + i * 5) % 22, px = Math.round(f.x) - 12 + ((i * 11) % 25) + (t % 4 < 2 ? 0 : 1);
+      const t = (roomStep + i * 5) % 22, px = fx0 - 12 + ((i * 11) % 25) + (t % 4 < 2 ? 0 : 1);
       if (t < 18) {
         g.fillStyle = t < 10 ? '#fbe08a' : '#c89a4a';
         g.fillRect(px, Math.round(f.y) - 2 - t * 2, 1, 1);
       }
     }
+  }
 }
 
 // Monter de rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
