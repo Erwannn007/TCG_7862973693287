@@ -160,6 +160,46 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - Plus de deux pixels de néon ou de couleur fluo sur une tenue.
 - Une arme qui reste à l'intérieur de la silhouette.
 
+### 2.9 Animations et effets de combat
+
+Chaque personnage a ses **poses** et ses **effets** à lui (`js/fx.js`).
+
+**Poses** — fabriquées automatiquement à partir du sprite, en le penchant rangée par rangée
+(les pieds restent au sol) : elles marchent pour **les 5 rangs, les tenues et tout futur héros**,
+sans dessin en plus.
+
+| Pose | Quand | Effet |
+|---|---|---|
+| élan (`windup`) | avant de frapper | recule d'un pas, penché en arrière de 2 px |
+| frappe (`strike`) | au coup | bondit, penché en avant de 3 px |
+| incantation (`cast`) | sorts, tirs magiques, soins | se redresse et lève les bras (+2 px) |
+| garde (`guard`) | il se met en garde | se ramasse, reste en garde jusqu'à son tour |
+| choc (`hurt`) | il encaisse | penché en arrière de 3 px un instant |
+
+**Effets** — la fiche du personnage (`HERO_FX`) donne sa couleur, son effet d'attaque, son
+effet de compétence, s'il attaque **à distance** (il ne s'avance pas, le tir part et frappe en
+arrivant) et ses sons.
+
+| Héros | Attaque | Compétence | Couleur |
+|---|---|---|---|
+| Kael | croissant de lame qui balaie, gerbe d'étincelles | **Taille croisée** : deux entailles en X qui s'illuminent | rouge |
+| Lyra | flèche en cloche (pointe blanche, empennage vert) | **Flèche sonnante** : flèche lumineuse et onde qui assomme | vert |
+| Elio | orbe magique avec traînée | **Météore** : un rocher de feu tombe sur chaque ennemi et explose | bleu |
+| Séra | orbe de lumière qui scintille en croix | **Bénédiction** : colonnes de lumière sur l'équipe, croix qui montent | rose et or |
+| Volt | double entaille de néon | **Lame plasma** : ruée en ligne de néon, entailles, éclat | cyan néon |
+| (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
+
+Ennemis : éclaboussures (slime), griffes (gobelin, golem, dragon), lame d'os (squelette) ;
+boss : **Séisme** (le sol se fend sous les héros), **Souffle de feu** (flot de flammes).
+
+**Selon le rang** : les effets grandissent un peu à chaque rang ; au **rang 4** l'éclat devient
+doré, au **rang 5** l'effet est blanc et or.
+
+**Règles** : pixels entiers, animations par paliers (8 à 12 images), moins d'une demi-seconde
+pour une attaque, moins d'une seconde pour une compétence ; peu de pixels, beaucoup de lisibilité ;
+toujours un peu de blanc à la tête de l'effet. **Nouveau héros** : une ligne dans `HERO_FX`
+(et, s'il le faut, un nouvel effet dans `FX`), un son dans `js/sfx.js`.
+
 ## 3. Palette
 
 - Couleurs chaudes, saturées mais pas fluo, contour violet-noir `#1a1320`.

@@ -5,6 +5,7 @@ import { bitmap, drawFx, drawText, textWidth } from './render.js';
 import { sceneLayers, LAYER_M, SW, SH } from './scene.js';
 import { OUTLINE } from './spr.js';
 import { sfx, haptic } from './sfx.js';
+import { posed, POSE_PAD, HERO_FX, ENEMY_FX, fxColors, drawEffect } from './fx.js';
 
 // Largeur variable (240 à 320) selon l'écran ; les positions sont données pour 240 et recentrées.
 // Hauteur au moins H : le surplus s'ajoute en bas (plus de sol), pour remplir tout l'écran.
@@ -22,7 +23,7 @@ const DUEL_STEP = 8;
 // Parallaxe : de combien la caméra se tourne vers celui qui agit, et le glissement d'entrée en combat.
 const PAN = 6, PAN_INTRO = 18;
 // Couleur de la charge avant une compétence.
-const CHARGE = { heal: '#9af098', boss: '#ff5a4a', other: '#c08aff' };
+const CHARGE = { boss: '#ff5a4a' }; // les héros chargent dans leur propre couleur (js/fx.js)
 const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
@@ -41,6 +42,7 @@ export class Battle {
     this.over = false;
     this.floats = [];
     this.puffs = [];
+    this.vfx = []; // effets de combat en cours (voir js/fx.js)
     this.focus = null;
     this.dark = 0;
     this.darkT = 0;
@@ -97,6 +99,8 @@ export class Battle {
       bm, flash, shade, cx, by, sx, sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
       // cx0/sx0 : place dans la formation ; fx : décalage de mise en scène (fxT = où il va)
       cx0: cx, sx0: sx, fx: 0, fxT: 0,
+      // pose en cours (élan, frappe, incantation, garde, choc) et fiche d'effets du personnage
+      pose: null, prof: side === 'h' ? HERO_FX[data.id] || HERO_FX.kael : ENEMY_FX[data.kind] || ENEMY_FX.goblin,
     };
   }
 
@@ -139,7 +143,9 @@ export class Battle {
       const bob = u.charge ? 1 : u.alive && !u.stun && (step + i) % 2 ? -1 : 0;
       const x = u.sx + u.dx, y = u.sy + bob;
       const white = t < u.flashUntil && Math.floor(t / 80) % 2 === 0;
-      g.drawImage(white ? u.flash.canvas : u.bm.canvas, x, y);
+      const src = white ? u.flash : u.bm;
+      if (u.pose && u.alive) g.drawImage(posed(src, u.pose, u.side === 'h' ? 1 : -1), x - POSE_PAD, y);
+      else g.drawImage(src.canvas, x, y);
       if (u.alive) drawFx(g, u.bm, x, y, step);
       if (!u.alive) return;
       // ceux qui n'agissent pas restent dans la pénombre (sauf les cibles qu'on peut toucher)
@@ -172,6 +178,7 @@ export class Battle {
     if (a && a.alive && !this.over) this.chevron(a, step, a.side === 'h' ? '#fbe08a' : '#e2334a');
     if (this.targeting) for (const u of this.targeting) if (u.alive) this.reticle(u, step);
 
+    this.drawVfx(t);
     this.drawPuffs(t);
     for (const u of all) if (u.charge) this.drawCharge(u, t);
     // éclair blanc sur tout l'écran (coup critique, attaque de boss)
@@ -278,6 +285,30 @@ export class Battle {
     const c = this.canvas, cam = this.cam, k = c.clientWidth / this.W;
     const z = this.focus ? this.zoom : 1, [ox, oy] = cam.next || cam.origin;
     return [c.offsetLeft + (ox + (x - ox) * z) * k, c.offsetTop + (oy + (y - oy) * z) * k, k * z];
+  }
+
+  // ---- effets de combat
+
+  // Lance un effet (nom dans js/fx.js) de l'unité a vers les cibles d ; se résout à la fin.
+  addFx(name, ms, a, d, steps = 8) {
+    return new Promise((res) => this.vfx.push({ name, a, d, t0: performance.now(), dur: ms / this.speed, steps, res }));
+  }
+
+  drawVfx(t) {
+    const g = this.g, at = (u) => ({ tx: u.cx + u.dx, ty: u.by - (u.bm.h >> 1) });
+    this.vfx = this.vfx.filter((v) => {
+      const p = (t - v.t0) / v.dur;
+      if (p >= 1) {
+        v.res();
+        return false;
+      }
+      const a = v.a, d0 = at(v.d[0] || a);
+      drawEffect(v.name, g, Math.floor(p * v.steps) / v.steps, {
+        x: a.cx + a.dx, y: a.by - (a.bm.h >> 1), tx: d0.tx, ty: d0.ty, d: v.d.map(at),
+        dir: a.side === 'h' ? 1 : -1, rank: a.rank || 1, cols: fxColors(a.prof, a.side === 'h' ? a.rank : 1),
+      });
+      return true;
+    });
   }
 
   // Étincelles qui convergent vers celui qui prépare sa compétence, en 6 paliers.
@@ -566,6 +597,7 @@ export class Battle {
 
   async heroTurn(u) {
     u.guard = false;
+    if (u.pose === 'guard') u.pose = null;
     let choice;
     if (this.auto) {
       this.log(`${u.name} agit…`);
@@ -580,10 +612,11 @@ export class Battle {
     if (!choice || this.over) return;
     if (choice.type === 'guard') {
       u.guard = true;
+      u.pose = 'guard';
       if (u.cd > 0) u.cd--;
       this.log(`${u.name} se met en garde.`);
-      sfx('tick');
-      await this.wait(450);
+      sfx('shield');
+      await this.addFx('shield', 500, u, [u]);
     } else if (choice.type === 'skill' && u.cd === 0) {
       await this.useSkill(u, choice.target);
       u.cd = u.skill.cd;
@@ -598,33 +631,42 @@ export class Battle {
   async useSkill(u, target) {
     const s = u.skill, foes = this.alive('e');
     this.log(`${u.name} : ${s.name} !`);
-    await this.charge(u, s.kind === 'heal' ? CHARGE.heal : CHARGE.other);
-    sfx(s.kind === 'heal' ? 'heal' : 'skill');
+    await this.charge(u, u.prof.cols[0]);
+    sfx(u.prof.skillSound || 'skill');
     if (s.kind === 'heal') {
-      await this.lunge(u);
-      for (const h of this.alive('h')) {
+      // il lève son bâton : des colonnes de lumière tombent sur l'équipe
+      const allies = this.alive('h');
+      u.pose = 'cast';
+      const fxp = this.addFx(u.prof.skill, 800, u, allies, 10);
+      await this.wait(300);
+      for (const h of allies) {
         const v = Math.min(h.max - h.hp, Math.round(u.atk * s.mult));
         h.hp += v;
         u.healed = (u.healed || 0) + v;
         h.healAt = performance.now();
         this.float(h, '+' + v, '#5cc85a');
       }
-      await this.wait(500);
+      await fxp;
+      u.pose = null;
+      await this.wait(200);
     } else if (s.kind === 'all') {
-      await this.lunge(u, () => {
-        this.shake(2, 300);
-        foes.forEach((f) => this.hit(u, f, s.mult));
-      });
-      await this.wait(400);
+      u.pose = 'cast';
+      const fxp = this.addFx(u.prof.skill, 1000, u, foes, 12);
+      await this.wait(600);
+      this.shake(2, 300);
+      foes.forEach((f) => this.hit(u, f, s.mult));
+      await fxp;
+      u.pose = null;
+      await this.wait(250);
     } else if (s.kind === 'multi') {
       for (let i = 0; i < s.hits; i++) {
         const live = this.alive('e');
         if (!live.length) break;
-        await this.strike(u, rand(live), s.mult, false);
+        await this.strike(u, rand(live), s.mult, false, 'skill');
       }
     } else {
       const t = target && target.alive ? target : foes[0];
-      await this.strike(u, t, s.mult);
+      await this.strike(u, t, s.mult, true, 'skill');
       if (s.stun && t.alive) t.stun = s.stun;
     }
   }
@@ -636,12 +678,15 @@ export class Battle {
       await this.charge(u, CHARGE.boss);
       sfx('boom');
       haptic(60);
-      await this.lunge(u, () => {
-        this.shake(3, 450);
-        this.flashT = performance.now();
-        heroes.forEach((h) => this.hit(u, h, u.boss.mult));
-      });
+      u.pose = 'strike';
+      const fxp = this.addFx(u.prof.skill || 'claw', 800, u, heroes, 10);
       await this.wait(400);
+      this.shake(3, 450);
+      this.flashT = performance.now();
+      heroes.forEach((h) => this.hit(u, h, u.boss.mult));
+      await fxp;
+      u.pose = null;
+      await this.wait(200);
       return;
     }
     const t = Math.random() < 0.3 ? [...heroes].sort((a, b) => a.hp - b.hp)[0] : rand(heroes);
@@ -650,27 +695,51 @@ export class Battle {
   }
 
   // Avance par sauts de pixels, frappe, recule.
+  // Il prend son élan (recule d'un pas, penché en arrière), bondit penché en avant, frappe, revient.
   async lunge(u, onHit) {
     const dir = u.side === 'h' ? 1 : -1;
+    u.pose = 'windup';
+    u.dx = -2 * dir;
+    await this.wait(90);
+    u.pose = 'strike';
     u.dx = 4 * dir;
-    await this.wait(70);
+    await this.wait(60);
     u.dx = 8 * dir;
     if (onHit) onHit();
     await this.wait(160);
     u.dx = 4 * dir;
     await this.wait(70);
     u.dx = 0;
+    u.pose = null;
   }
 
   // Un coup : la cible s'avance face à l'attaquant (sauf en rafale), il frappe, chacun reprend sa place.
-  async strike(a, d, mult, duel = true) {
+  // mode : 'attack' ou 'skill' (l'effet vient de la fiche du personnage, js/fx.js).
+  async strike(a, d, mult, duel = true, mode = 'attack') {
     if (duel && d.alive) {
       this.duel = d;
       d.fxT = (d.side === 'h' ? 1 : -1) * DUEL_STEP;
       await this.wait(140);
     }
-    await this.lunge(a, () => this.hit(a, d, mult));
-    await this.wait(350);
+    const P = a.prof, name = mode === 'skill' ? P.skill : P.attack;
+    if (P.ranged) {
+      // à distance : élan, puis le tir part et frappe en arrivant
+      a.pose = 'windup';
+      await this.wait(120);
+      a.pose = mode === 'skill' || name === 'bolt' || name === 'holy' ? 'cast' : 'strike';
+      sfx(mode === 'skill' ? P.skillSound || P.sound : P.sound);
+      await this.addFx(name, mode === 'skill' ? 520 : 300, a, [d]);
+      this.hit(a, d, mult);
+      await this.wait(120);
+      a.pose = null;
+    } else {
+      await this.lunge(a, () => {
+        sfx(mode === 'skill' ? P.skillSound || P.sound : P.sound);
+        this.addFx(name, mode === 'skill' ? 480 : 320, a, [d]);
+        this.hit(a, d, mult);
+      });
+    }
+    await this.wait(300);
     if (this.duel === d) {
       this.duel = null;
       d.fxT = 0;
@@ -692,6 +761,11 @@ export class Battle {
     if (d.hp === 0) a.kills = (a.kills || 0) + 1;
     d.hitAt = performance.now();
     d.flashUntil = performance.now() + 320 / this.speed;
+    // il encaisse : penché en arrière un instant (puis revient à sa garde s'il en avait une)
+    if (!d.pose || d.pose === 'guard') {
+      d.pose = 'hurt';
+      setTimeout(() => d.pose === 'hurt' && (d.pose = d.guard ? 'guard' : null), 220 / this.speed);
+    }
     this.float(d, crit ? v + '!' : String(v), crit ? '#fbe08a' : WHITE);
     this.shake(crit ? 2 : 1, crit ? 260 : 120);
     if (crit) this.flashT = performance.now();

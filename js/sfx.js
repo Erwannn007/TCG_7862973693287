@@ -128,6 +128,13 @@ const SOUNDS = {
   // charge d'une compétence : souffle qui monte et note qui grimpe
   charge: () => { whoosh(0.42, 300, 2600, 0.9); tone(220, 0.4, 0, 'square', 0.3, 880); },
   // coup sourd de bois quand on choisit une pancarte
+  // sons d'attaque propres à chaque héros (voir js/fx.js)
+  slash: () => { whoosh(0.12, 3000, 800, 1.2); noise(0.05, 0.08, 0.6); },
+  arrow: () => { whoosh(0.16, 1800, 4200, 0.9); tone(N.E6, 0.03, 0.14, 'square', 0.4); },
+  zap: () => { tone(N.C5, 0.18, 0, 'square', 0.5, N.C6 * 2); tone(N.G5, 0.12, 0.04, 'triangle', 0.6, N.E6); },
+  holy: () => [N.E5, N.A5, N.E6].forEach((f, i) => tone(f, 0.08, i * 0.05, 'triangle', 0.8)),
+  plasma: () => { tone(N.A5, 0.05, 0, 'square', 0.5, N.E6 * 1.5); tone(N.E6, 0.06, 0.05, 'square', 0.4, N.A5); noise(0.04, 0.03, 0.4); },
+  shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)
   thud: () => {
     noise(0.14, 0, 0.9);
