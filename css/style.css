@@ -290,9 +290,12 @@ small { font-size: 12px; }
 /* sous la pierre : on peut la faire glisser pour passer à l'autel des tenues */
 #s-hint { position: absolute; z-index: 2; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; white-space: nowrap; }
 #s-hint .hint { font-size: 12px; }
-#s-hint .dots { display: flex; gap: 6px; }
-#s-hint .dots i { width: 6px; height: 6px; background: var(--line); box-shadow: 0 0 0 1px #6a4a3a; }
-#s-hint .dots i.on { background: var(--gold-hi); }
+#s-hint .dots { display: flex; align-items: center; gap: 8px; height: 12px; }
+/* deux points grisâtres (l'autel affiché un peu plus clair) ; sous le doigt, ils grossissent et blanchissent */
+#s-hint .dots i { width: 6px; height: 6px; background: #6a6068; box-shadow: 0 0 0 2px var(--line); }
+#s-hint .dots i.on { background: #a8a0a8; }
+#s-hint.swiping .dots i { width: 10px; height: 10px; background: #f2eef4; box-shadow: 0 0 0 2px var(--line), 0 0 6px #ffffff; }
+#s-hint.swiping .dots i.on { background: #ffffff; }
 .lineup.wrap { flex-wrap: wrap; gap: 2px; }
 .card.back.skin canvas { filter: drop-shadow(0 0 3px #7af06a); }
 .lineup { display: flex; gap: 4px; justify-content: center; margin: 2px 0 4px; }

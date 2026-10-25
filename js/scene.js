@@ -1121,10 +1121,20 @@ function clothesOnFloor(g, x) {
 // socle de pierre gravé, rai de lumière, grand cristal flottant et ses éclats, poussière de magie.
 // charge : pendant le rituel (plus de lumière, anneaux qui partent du cristal).
 // kind : 'hero' (cristal violet) ou 'skin' (cristal vert, vêtements éparpillés et portant).
-export const ALTAR_Y = 50; // centre du cristal
+// Tout l'autel est remonté de ALTAR_LIFT pour laisser lisible ce qui est écrit dessous.
+const ALTAR_LIFT = 12;
+export const ALTAR_Y = 50 - ALTAR_LIFT; // centre du cristal à l'écran
+export const ALTAR_BASE = 120 - ALTAR_LIFT; // bas des vêtements au sol
 export function altar(g, x, step, charge = false, kind = 'hero') {
+  g.save();
+  g.translate(0, -ALTAR_LIFT);
+  altarAt(g, x, step, charge, kind);
+  g.restore();
+}
+
+function altarAt(g, x, step, charge, kind) {
   x = Math.round(x);
-  const P = ALTAR_PAL[kind], cy = ALTAR_Y - (step % 8 < 4 ? 0 : 1), fy = 101;
+  const P = ALTAR_PAL[kind], cy = 50 - (step % 8 < 4 ? 0 : 1), fy = 101;
   if (kind === 'skin') wardrobe(g, x, step);
   // lueur violette tramée au sol et sur le mur
   for (let y = 30; y < SH; y++)

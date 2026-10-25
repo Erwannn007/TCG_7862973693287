@@ -6,7 +6,7 @@ import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } 
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
-import { sceneBackground, drawRoomLayers, altar, ALTAR_Y, SH, CAMP_W, GATE } from './scene.js';
+import { sceneBackground, drawRoomLayers, altar, ALTAR_Y, ALTAR_BASE, SH, CAMP_W, GATE } from './scene.js';
 import { installUiArt, iconSprite, signUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
@@ -436,7 +436,7 @@ const canUpgrade = (id) => {
 let selected = null;
 let teamSlots = []; // socles : { x, y (pieds) en pixels d'art, sx, sy à l'écran, depth : 1 devant, -0,5 au fond }
 let teamDrag = null; // glisser en cours : { id, from (socle ou -1), over (socle, 'roster' ou null), ghost }
-const slotFlash = [0, 0, 0];
+const slotFlash = [0, 0, 0, 0]; // les trois socles, puis l'invité du vestiaire
 // carrousel : le socle i est à l'angle carR + 120·i ; devant quand l'angle vaut 90°
 let carR = 90, carT = 90, carRaf = 0;
 let carStage = { cx: 150, rx: 18 }; // centre et demi-largeur du carrousel (pixels d'art), posés par layoutTeam
@@ -615,6 +615,8 @@ function layoutTeam() {
 // Les tenues (SKINS, js/sprites.js) s'obtiennent à l'autel des tenues ; la tenue d'origine est
 // toujours en tête de liste. skinPreview : la tenue essayée (null : tenue d'origine).
 let teamMode = null, skinT0 = 0, skinOut = false, skinPreview = null;
+// Héros hors de l'équipe qui passe au vestiaire : toute l'équipe sort, et lui tombe du ciel au centre.
+let skinGuest = null, skinGuestLanded = false;
 let skinBoom = [false, false, false], skinLanded = false;
 const SKIN_IN = 800, SKIN_BACK = 1000; // durées de l'ouverture et du retour
 
@@ -632,14 +634,15 @@ function skinCenterX() {
 // hero : 0 en place → 1 (ceux du fond sortis, celui de devant au centre) ;
 // padGone[i] : le socle i a volé en éclats ; padLift : hauteur des socles qui retombent au retour.
 function skinState(now) {
-  const st = { on: !!teamMode, back: skinOut, hero: 0, padGone: [false, false, false], padLift: 0 };
+  const st = { on: !!teamMode, back: skinOut, hero: 0, q: 0, padGone: [false, false, false], padLift: 0 };
   if (!teamMode) return st;
   if (!skinOut) {
     const q = Math.min(1, (now - skinT0) / SKIN_IN);
-    st.hero = q;
+    st.hero = st.q = q;
     teamSlots.forEach((sl, i) => {
-      // le socle éclate quand son héros le quitte (vite pour celui de devant, au départ en courant pour les autres)
-      const at = sl.depth > 0.9 ? 0.12 : 0.4;
+      // le socle éclate quand son héros le quitte (vite pour celui de devant, au départ en courant pour
+      // les autres ; avec un invité, celui de devant part en courant lui aussi)
+      const at = sl.depth > 0.9 && !skinGuest ? 0.12 : 0.4;
       if (q < at) return;
       st.padGone[i] = true;
       if (!skinBoom[i]) {
@@ -650,6 +653,7 @@ function skinState(now) {
   } else {
     // d'abord les socles retombent du ciel, puis les héros reviennent
     const q = Math.min(1, (now - skinT0) / SKIN_BACK), d = Math.min(1, q / 0.35);
+    st.q = q;
     st.padLift = Math.round((1 - Math.floor(d * 6) / 6) * 120); // chute par paliers
     if (d >= 1 && !skinLanded) {
       skinLanded = true;
@@ -688,6 +692,8 @@ function enterSkins(id) {
   skinOut = false;
   skinT0 = performance.now();
   skinPreview = state.wear[id] || null;
+  skinGuest = state.team.includes(id) ? null : id;
+  skinGuestLanded = false;
   skinBoom = [false, false, false];
   skinLanded = false;
   $('#scr-team').classList.add('skins');
@@ -739,7 +745,7 @@ function renderSkins(id) {
       skinPreview = sk.id;
       const c = $('#team-canvas'), k = c.clientWidth / CAMP_W, f = teamSlots.find((sl) => sl.depth > 0.9);
       sparks(c.offsetLeft + skinCenterX() * k, f ? f.sy - 40 : innerHeight / 2, '#ff8ad8', 20, 1.6);
-      slotFlash[teamSlots.indexOf(f)] = performance.now() + 240;
+      slotFlash[skinGuest ? 3 : teamSlots.indexOf(f)] = performance.now() + 240;
       teamAnimFor(300);
       sfx('select');
       haptic(10);
@@ -801,6 +807,7 @@ function exitSkins() {
     teamMode = null;
     skinOut = false;
     skinPreview = null;
+    skinGuest = null;
     $('#scr-team').classList.remove('skins');
     heroSigns();
   }, SKIN_BACK + 40);
@@ -812,6 +819,7 @@ function resetSkins() {
   teamMode = null;
   skinOut = false;
   skinPreview = null;
+  skinGuest = null;
   const box = $('#t-skins');
   box.getAnimations().forEach((a) => a.cancel());
   box.classList.add('hidden');
@@ -956,7 +964,9 @@ function drawTeamLife(g) {
     const sl = teamSlots[i], front = sl.depth > 0.9, over = teamDrag?.over === i, id = state.team[i];
     const x = Math.round(sl.x), fy = Math.round(sl.y);
     // le héros de devant glisse vers le centre de la salle libre pendant le vestiaire
-    const hx = front && sk.hero > 0 ? Math.round(x + (skinCenterX() - x) * sk.hero) : x;
+    // (avec un invité au vestiaire, celui de devant part en courant comme les autres)
+    const runner = !front || !!skinGuest;
+    const hx = !runner && sk.hero > 0 ? Math.round(x + (skinCenterX() - x) * sk.hero) : x;
     if ((front && id && id === selected && !dragging) || over) {
       g.fillStyle = over ? '#ffe9a0' : '#fff2c0';
       g.globalAlpha = over ? 0.14 : 0.11;
@@ -997,7 +1007,7 @@ function drawTeamLife(g) {
     }
     const own = state.owned[id];
     let dx = 0, dy = 0, run = false;
-    if (front) dx = hx - x;
+    if (!runner) dx = hx - x;
     else if (sk.hero > 0) {
       // ceux du fond sautillent puis filent vers la gauche (ils reviennent en courant au retour)
       if (sk.hero >= 1) continue;
@@ -1007,7 +1017,7 @@ function drawTeamLife(g) {
     }
     const flip = run && !sk.back; // ils regardent là où ils courent
     // au vestiaire, celui de devant porte la tenue qu'on essaie
-    const lk = look(id, own.rank, front && sk.on ? skinPreview : state.wear[id]);
+    const lk = look(id, own.rank, !runner && sk.on ? skinPreview : state.wear[id]);
     const key = lk.key + (flip ? '-f' : '');
     const bm = bitmap(key, () => (flip ? lk.make().flip() : lk.make()));
     const white = now < slotFlash[i] && roomStep % 2 === 0;
@@ -1026,15 +1036,16 @@ function drawTeamLife(g) {
       g.fillRect(flip ? tx + 2 : tx - 1, fy - 2, 1, 1);
     }
     // au fond : dans la pénombre
-    if (!front && !over) {
+    if ((!front || (skinGuest && sk.hero > 0)) && !over) {
       g.globalAlpha = 0.45;
       g.drawImage(bitmap(key + '-d', () => (flip ? lk.make().flip() : lk.make()).silhouette(OUTLINE)).canvas, bx, by);
       g.globalAlpha = 1;
     }
   }
+  if (sk.on && skinGuest) drawGuest(g, sk, now);
   // poussière dorée qui monte devant
   const f = teamSlots.find((sl) => sl.depth > 0.9);
-  if (f && !dragging) {
+  if (f && !dragging && !skinGuest) {
     const fx0 = sk.hero > 0 ? Math.round(f.x + (skinCenterX() - f.x) * sk.hero) : Math.round(f.x);
     for (let i = 0; i < 6; i++) {
       const t = (roomStep + i * 5) % 22, px = fx0 - 12 + ((i * 11) % 25) + (t % 4 < 2 ? 0 : 1);
@@ -1044,6 +1055,40 @@ function drawTeamLife(g) {
       }
     }
   }
+}
+
+// L'invité du vestiaire : il tombe du ciel au centre de la salle (pendant que l'équipe sort),
+// sous un rai de lumière, et repart vers le haut au retour.
+function drawGuest(g, sk, now) {
+  const id = skinGuest, own = state.owned[id], lk = look(id, own.rank, skinPreview);
+  const x = Math.round(skinCenterX()), fy = CAR_CY + CAR_RY;
+  const u = sk.back ? Math.min(1, sk.q / 0.3) : 1 - Math.max(0, Math.min(1, (sk.q - 0.3) / 0.45));
+  const lift = Math.round((Math.floor(u * 6) / 6) * 130);
+  if (!sk.back && lift === 0 && !skinGuestLanded) {
+    skinGuestLanded = true;
+    const c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
+    fx(Array.from({ length: 14 }, () => ({ x: c.offsetLeft + x * k + rr(-40, 40), y: c.offsetTop + fy * k, vx: rr(-1.5, 1.5), vy: rr(-1.4, -0.2), g: 0.04, life: rr(16, 28) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 })));
+    sparks(c.offsetLeft + x * k, c.offsetTop + (fy - 12) * k, '#ff8ad8', 14, 1.4);
+    sfx('wood');
+    haptic(20);
+  }
+  if (lift < 20) {
+    g.fillStyle = '#fff2c0';
+    g.globalAlpha = 0.11;
+    for (let y = 0; y < fy; y += 4) {
+      const w = 14 + Math.floor((y / fy) * 8) * 2;
+      g.fillRect(x - (w >> 1), y, w, 4);
+    }
+    g.globalAlpha = 1;
+  }
+  const bm = bitmap(lk.key, lk.make), img = now < slotFlash[3] && roomStep % 2 === 0 ? bitmap(lk.key + '-w', () => lk.make().silhouette('#ffffff')) : bm;
+  g.globalAlpha = lift < 30 ? 0.4 : 0.15;
+  g.fillStyle = OUTLINE;
+  g.fillRect(x - 6, fy - 1, 12, 2);
+  g.globalAlpha = 1;
+  const bx = x - (bm.w >> 1), by = fy - bm.h - lift - (lift === 0 ? Math.floor(roomStep / 2) % 2 : 0);
+  g.drawImage(img.canvas, bx, by);
+  drawFx(g, bm, bx, by, roomStep);
 }
 
 // Monter de rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
@@ -1147,7 +1192,7 @@ function layoutSummon(enter = 'fan') {
   summonAltarX = (cx - c.offsetLeft) / k;
   const hint = $('#s-hint');
   hint.style.left = Math.round(cx) + 'px';
-  hint.style.top = Math.round(c.offsetTop + 118 * k) + 'px';
+  hint.style.top = Math.round(Math.min(innerHeight - 52, c.offsetTop + (ALTAR_BASE - 4) * k)) + 'px';
   drawRooms(false, 'summon');
   const skin = summonKind === 'skin', G = skin ? SKIN_GACHA : GACHA;
   layoutSigns($('#s-menu'), null, [
@@ -1216,11 +1261,13 @@ function animSummon(ms) {
     if (Math.abs(e.clientX - ax) > 34 * k || e.clientY < ay - 34 * k || e.clientY > ay + 60 * k) return;
     e.stopPropagation();
     start = { x: e.clientX, y: e.clientY };
+    $('#s-hint').classList.add('swiping'); // les points grossissent et blanchissent sous le doigt
   });
   addEventListener('pointerup', (e) => {
     if (!start) return;
     const dx = e.clientX - start.x, dy = e.clientY - start.y;
     start = null;
+    $('#s-hint').classList.remove('swiping');
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) swapAltar(dx < 0 ? 1 : -1);
   }, true);
 })();

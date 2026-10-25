@@ -66,7 +66,8 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Elles s'obtiennent à l'**autel des tenues** : sur la page Invocation, on fait glisser la pierre
   de droite à gauche ; seule la pierre glisse et laisse place à un cristal vert, avec des
   vêtements éparpillés au sol et un portant ; toutes les pancartes et la plaque tombent, les
-  nouvelles tombent du haut. On revient en glissant dans l'autre sens.
+  nouvelles tombent du haut. On revient en glissant dans l'autre sens. Sous la pierre, deux points
+  grisâtres indiquent l'autel affiché ; sous le doigt, ils grossissent et blanchissent.
 - Tenue ×1 : **150 or** — ×10 : **1350 or** (au moins une Rare). Mêmes taux que les héros,
   sans pitié. Doublon → **+50 or**.
 - On les essaie puis on les porte au **vestiaire** (bouton Skin de l'Équipe). La tenue portée
@@ -137,7 +138,8 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    toucher choisit le héros : sa fiche s'affiche à droite sur une plaque de bois (rang, place,
    stats, compétence, aperçu des 5 rangs) et ses pancartes jaillissent de lui en arc comme en
    combat : « Améliorer » et « Skin ». Skin ouvre le vestiaire : les autres héros sortent de la
-   salle, les socles éclatent, le héros se place au centre, la fiche tombe et une plaque
+   salle, les socles éclatent, le héros se place au centre (s'il n'est pas dans l'équipe, toute
+   l'équipe sort et il tombe du ciel au centre), la fiche tombe et une plaque
    « Vestiaire » prend sa place : une liste de skins qu'on fait défiler de haut en bas ; toucher
    un skin l'essaie sur le héros (aucun skin pour l'instant, seulement la tenue d'origine et des
    emplacements « Bientôt » ; un skin = une table de recoloration dans `SKINS`) ; pour un héros hors de l'équipe, elles
