@@ -27,6 +27,47 @@ Trois piliers :
 - Exceptions autorisées, uniquement pour l'interface : halo `drop-shadow` coloré autour des
   pancartes, voiles semi-transparents (assombrissement, éclair blanc).
 
+## 2 bis. Simple, mais plein de détails : la recette
+
+Le style tient en une règle : **des formes simples, lisibles au premier coup d'œil, enrichies de
+petits détails de texture qu'on découvre en regardant de plus près.** Jamais de détail qui brouille
+la silhouette, jamais de grande surface vide.
+
+**1. La forme d'abord.** Chaque objet est une silhouette nette (rectangle, disque, losange…) avec un
+contour sombre `#1a1320` (pas du noir pur). On doit la reconnaître même dans la pénombre.
+
+**2. Trois ou quatre teintes par matière, pas plus.**
+
+| Rôle | Où |
+|---|---|
+| reflet | bord haut et gauche (la lumière vient d'en haut à gauche) |
+| teinte de base | le corps |
+| ombre | bord bas et droit |
+| creux | joints, fissures, contour intérieur |
+
+**3. Puis la texture, par petites touches** (quelques % des pixels, jamais un motif régulier) :
+
+| Matière | Détails |
+|---|---|
+| pierre, brique | grain (pixels un ton plus sombre), briques fêlées en diagonale, mousse au pied du mur, ombre tramée en bas |
+| dallage | grain, fissures, reflet clair sur le bord haut de chaque dalle, paille, flaque |
+| bois | planches de teintes voisines, veinures de longueurs variées, nœuds, clous, équerres de fer |
+| herbe, terre | taches de bruit lissé tramé, touffes, fleurs en bouquets, ornières |
+| métal, cristal | facettes claires / sombres, une arête lumineuse, un ou deux reflets qui scintillent |
+
+**4. Le hasard est déterministe.** Les détails viennent de `hash(x, y)` et du bruit lissé `noise2`,
+jamais de `Math.random()` dans un décor : le même écran se redessine toujours à l'identique.
+
+**5. La lumière raconte.** Éclairage par paliers autour des sources (torche, feu, lave), tramage aux
+frontières, voile plus sombre sur ce qui compte moins, rai de lumière sur le sujet.
+
+**6. Un peu de vie partout.** Au moins un détail qui bouge par paliers dans chaque décor (flamme,
+poussière, goutte, herbe, nuage), à petite dose.
+
+**À éviter** : les aplats unis sur de grandes surfaces, les dégradés doux, les motifs qui se répètent
+à l'identique, les détails plus contrastés que la silhouette, et agrandir un sprite (les pixels
+doivent garder la même taille dans une même scène).
+
 ## 3. Décors
 
 - **Plein écran** : le décor couvre tout l'écran ; le surplus de hauteur devient du sol en bas.
