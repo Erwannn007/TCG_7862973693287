@@ -1917,20 +1917,21 @@ function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '', ente
   sfx('menu');
 }
 
-// Tous les boutons et cadres de l'interface sont peints comme les pancartes : bois texturé à leur
-// taille exacte (doré quand c'est actif ou principal, rouge pour ce qui est dangereux), et le
-// message de combat est une note de parchemin clouée. Repeints dès qu'ils changent de taille ou de classe.
+// Tous les boutons et cadres de l'interface sont peints comme les pancartes d'action : même bois
+// brun veiné, à leur taille exacte (doré quand c'est actif ou principal, rouge pour ce qui est
+// dangereux). Repeints dès qu'ils changent de taille ou de classe.
 const WOOD_SEL = '.btn, .tool, .icon-btn, .gold-pill, #b-queue, #modal-box, #b-log';
 let woodSeed = 30;
 function paintWood(e) {
   const w = e.offsetWidth, h = e.offsetHeight;
   if (!w || !h) return;
   e._seed ??= woodSeed++ % 40;
-  const kind = e.id === 'b-log' ? 'poster' : e.classList.contains('red') ? 'red' : e.classList.contains('gold') || e.classList.contains('on') ? 'hot' : e.id === 'b-queue' ? 'normal' : 'plain';
+  // une seule règle : le bois des pancartes d'action (doré si actif, rouge si dangereux)
+  const kind = e.classList.contains('red') ? 'red' : e.classList.contains('gold') || e.classList.contains('on') ? 'hot' : 'normal';
   const key = `${w}x${h}-${kind}`;
   if (e._woodKey === key) return;
   e._woodKey = key;
-  e.style.backgroundImage = kind === 'poster' ? posterUrl(w, h, e._seed) : signUrl(w, h, kind, e._seed);
+  e.style.backgroundImage = signUrl(w, h, kind, e._seed);
   e.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
 }
 (() => {
@@ -1952,8 +1953,7 @@ function paintWood(e) {
 function paintSign(row) {
   const w = row.offsetWidth, h = row.offsetHeight;
   if (!w) return;
-  // pancartes d'action : bois brun veiné ; plaques à lire : bois clair où le texte est gravé
-  const kind = row.classList.contains('hot') ? 'hot' : row.classList.contains('act') ? 'normal' : 'plain';
+  const kind = row.classList.contains('hot') ? 'hot' : 'normal';
   row.style.backgroundImage = signUrl(w, h, kind, row._seed || 1);
   row.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
 }
@@ -2274,7 +2274,7 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   const dots = el('div', 'end-dots');
   pages.forEach(() => dots.appendChild(el('i')));
   pl.appendChild(dots);
-  pl.appendChild(el('div', 'end-swipe', 'glisse la plaque pour les statistiques'));
+  pl.appendChild(el('div', 'end-swipe', '◂ glisse la plaque ▸'));
   endPage = 0;
   const show = (i) => {
     endPage = i;
@@ -2341,7 +2341,7 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   for (const [o, ms] of [[0.2, 0], [0.4, 60], [0.6, 120]]) setTimeout(() => (veil.style.opacity = o), ms);
   // la plaque (et celles de derrière) tombe du haut et rebondit, puis lâche une gerbe d'étincelles (ou de poussière)
   const paint = (e, seed) => {
-    e.style.backgroundImage = signUrl(e.offsetWidth, e.offsetHeight, 'plain', seed);
+    e.style.backgroundImage = signUrl(e.offsetWidth, e.offsetHeight, 'normal', seed);
     e.style.backgroundSize = '100% 100%';
   };
   paint(pl, 7);

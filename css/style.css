@@ -338,7 +338,6 @@ small { font-size: 12px; }
 #b-log {
   position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 58px); z-index: 3;
   min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 8px 16px 6px;
-  color: var(--ink);
 }
 
 /* pancartes d'action : en bois, disposées en arc autour du héros ou du cristal (positions posées en JS).
@@ -537,26 +536,15 @@ small { font-size: 12px; }
   .tool .tag { display: none; }
 }
 
-/* ================================================================ texte gravé
-   Sur les plaques et boutons où on lit (pas les pancartes d'action qui flottent) : lettres
-   creusées dans le bois clair, sombres, avec un liseré clair dessous comme un bord de taille. */
-:root { --engrave: #2a1608; --engrave-sh: 0 1px 0 rgba(255, 228, 176, .6), 0 -1px 0 rgba(40, 18, 6, .35); }
-#b-plaque, #t-info, #s-info, #t-skins, #modal-box, .gold-pill,
-.btn:not(.red):not(.gold), .tool:not(.red):not(.on), .r-sign:not(.in-team):not(.locked) {
-  color: var(--engrave); text-shadow: var(--engrave-sh);
+/* ================================================================ une règle pour toutes les pancartes
+   Quelle que soit sa taille (bouton, plaque, fenêtre, fiche), une pancarte suit le style des
+   pancartes d'action : bois brun veiné, texte crème en gras avec un contour sombre de 1 px tout
+   autour (doré : texte sombre à liseré clair). Jamais de texte sous 13 px. */
+#b-plaque, #t-info, #s-info, #t-skins, #modal-box, #b-log, .gold-pill, .btn, .tool, .r-sign:not(.locked) {
+  color: var(--cream); text-shadow: var(--txt-out); font-weight: 700;
 }
-:is(#b-plaque, #t-info, #s-info, #t-skins, #modal-box) :is(.muted, .end-note, .end-small, .end-swipe, .d-place, .d-line, .stat, .skill-line, .rate, .end-row.head, .sk-txt small, .end-lvl-info, .ranks) {
-  color: var(--engrave); text-shadow: var(--engrave-sh);
+.btn.gold, .tool.on, .r-sign.hot { color: var(--ink); text-shadow: var(--txt-gold); }
+:is(#b-plaque, #t-info, #s-info, #t-skins, #modal-box) :is(.muted, .end-note, .end-small, .end-swipe, .d-place, .sk-txt small, .end-row.head) {
+  font-size: max(13px, 1em); color: #f2d8a0; text-shadow: var(--txt-out);
 }
-/* accents gravés : rouge sombre, vert sombre, or bruni */
-:is(#b-plaque, #t-info, #t-skins) .skill-line b, #t-info .d-place.on, .end-up { color: #5e0c16; text-shadow: var(--engrave-sh); }
-.end-gold b, .gold-pill b { color: var(--engrave); text-shadow: var(--engrave-sh); }
-.end-xp { color: #0e3a14; text-shadow: var(--engrave-sh); }
-.end-row small { color: #8a1a28; }
-/* lignes et cases à l'intérieur des plaques : planche plus claire au lieu d'un fond sombre */
-.end-row, .end-lvl { background: rgba(255, 232, 186, .22); box-shadow: inset 0 0 0 1px rgba(60, 30, 10, .35); }
-.end-row.head { background: none; box-shadow: none; }
-.end-row.mvp { background: rgba(251, 224, 138, .55); box-shadow: inset 0 0 0 2px #a87a20; color: var(--engrave); }
-#t-skins .sk-row { color: var(--engrave); text-shadow: var(--engrave-sh); background: rgba(255, 232, 186, .22); box-shadow: inset 0 0 0 2px rgba(60, 30, 10, .4); }
-#t-skins .sk-row.on { background: rgba(255, 150, 210, .35); box-shadow: inset 0 0 0 2px #a83a6a; }
-.r-sign:not(.in-team):not(.locked) .stars, .r-sign.hot { text-shadow: var(--engrave-sh); }
+

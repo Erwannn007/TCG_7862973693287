@@ -192,11 +192,6 @@ const WOOD = {
     planks: ['#d8a052', '#dea85a', '#d29a4c'], grain: '#c08a44', grain2: '#e8b868', gap: '#5a3818',
     hi: '#f8d690', lo: '#9a6630', frame: ['#7a4a12', '#a87a20'], frameHi: '#e0a93a', metal: ['#5a3408', '#e0a93a', '#fff4c0'],
   },
-  // bois clair au grain calme : plaques et boutons où le texte est gravé (pas les pancartes d'action)
-  plain: {
-    planks: ['#bc8c5c', '#c49462', '#b68656'], grain: '#a87a50', grain2: '#d0a06c', gap: '#3a2414',
-    hi: '#dcaa72', lo: '#8a6040', frame: ['#4e3019', '#6a4228'], frameHi: '#8a5a32', metal: ['#2a262e', '#7a7480', '#c4c0c8'],
-  },
   // bois laqué rouge : actions dangereuses (fuir, effacer la partie)
   red: {
     planks: ['#a8323c', '#b43a44', '#9a2a36'], grain: '#7a1e2a', grain2: '#c85a5a', gap: '#3a0e14',

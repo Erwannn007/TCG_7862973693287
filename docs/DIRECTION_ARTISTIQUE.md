@@ -222,13 +222,12 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - Cadres **9-slice** dessinés en code (`js/ui-art.js`) : bois, parchemin, pierre,
   boutons bois / or / rouge, ruban. Les coins ne sont jamais étirés et les images sont
   générées directement à la taille des pixels de l'écran (aucun flou).
-- **Texte gravé** : sur les plaques et boutons où on lit (fiche, plaques d'informations, plaque de
-  fin, fenêtres, boutons, colonne des héros), le texte est creusé dans un **bois clair au grain
-  calme** (`plain`) : lettres brun très sombre `#2a1608` avec un liseré clair dessous. Les
-  pancartes d'action qui flottent gardent leur bois brun veiné et leur texte clair contouré.
+- **Toutes les pancartes** (boutons, plaques, fenêtres, fiche…) suivent le style des pancartes
+  d'action : bois brun veiné, écriture crème en gras contourée. Voir la règle unique de la
+  [charte](CHARTE_DESIGN.md#5-bis-la-règle-unique--toute-pancarte-ressemble-aux-pancartes-daction).
 - **Lisibilité** : texte clair sur bois ou décor = contour sombre de 1 px tout autour
   (`--txt-out`) ; texte sombre sur bois doré ou parchemin = liseré clair (`--txt-gold`) ;
-  jamais moins de 12 px, en gras pour les petites tailles.
+  jamais moins de 13 px, toujours en gras sur une pancarte.
 - Polices pixel (licence OFL, `fonts/`) : **Pixelify Sans** pour le texte, et
   **Jacquarda Bastarda 9** (gothique) pour les titres d'écran uniquement, car elle est
   moins lisible.

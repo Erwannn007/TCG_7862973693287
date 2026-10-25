@@ -158,28 +158,36 @@ grandes) pour les écrans avec peu d'actions.
 discret toutes les 5 s, deux étincelles par pancarte. **Pas de barre lumineuse** sous les
 pancartes.
 
-## 5 bis. Boutons et cadres de l'interface
+## 5 bis. La règle unique : toute pancarte ressemble aux pancartes d'action
 
-Tous les autres boutons et cadres (barre du haut, or, outils du combat, file des tours,
-fenêtres d'options et de confirmation) sont peints **dans le même bois que les pancartes**, à
-leur taille exacte (`paintWood` dans `js/main.js`, repeint automatiquement quand la taille ou la
-classe change). Pas de cadre 9-slice étiré.
+> **Règle absolue.** Quelle que soit sa taille — bouton, petite plaque, compteur d'or, fiche,
+> plaque d'invocation, vestiaire, fenêtre d'options, plaque de fin de combat, file des tours,
+> message de combat — **une pancarte a exactement le style des petites pancartes rectangulaires
+> d'action** : même bois, mêmes textures, même écriture.
 
-| Classe | Bois |
+| Élément | Règle |
 |---|---|
-| (aucune) | bois brun |
-| `.gold`, `.on` | bois doré (action principale, option active) |
-| `.red` | bois laqué rouge (Fuir, Effacer la partie) |
-| héros déjà sur un socle | bois sombre, non touchable dans la colonne |
+| **Bois** | `signUrl(w, h, 'normal')` : bois brun veiné, planches, nœuds, clous, équerres de fer, contour noir aux coins cassés — dessiné à la **taille exacte** de l'élément, jamais étiré |
+| **Écriture** | Pixelify Sans **en gras**, **crème `#f2e2b8`**, **contour sombre de 1 px tout autour** (`--txt-out`) ; textes secondaires crème plus doré `#f2d8a0`, même contour ; **jamais sous 13 px** |
+| **Titres** | Jacquarda Bastarda doré `#fbe08a`, contour sombre, ombre portée de 3 px |
+| **Doré** (`.gold`, `.on`, plaque choisie, pancarte visée) | bois doré, équerres de laiton ; écriture **sombre** à liseré clair (`--txt-gold`) |
+| **Rouge** (`.red` : Fuir, Effacer la partie) | bois laqué rouge, même écriture crème contourée |
+| **Sombre** (héros déjà sur un socle) | bois sombre, écriture crème contourée |
+| **Pressé** | s'enfonce de 2 px et s'assombrit |
 
-Le message de combat (`#b-log`) est une note de parchemin clouée. Pressé, un bouton s'enfonce
-de 2 px et s'assombrit.
+Interdits : texte sombre sur le bois brun, bois clair « gravé », dégradés, cadres 9-slice
+étirés, fond uni derrière un texte. Seules exceptions : les **avis de recherche** (héros pas
+encore obtenus, parchemin) et le parchemin des cartes, qui ne sont pas des pancartes.
+
+Dans le code : `paintWood` (boutons et cadres, repeints dès que leur taille ou leur classe
+change) et `paintSign` (plaques) dans `js/main.js` ; les couleurs d'écriture sont regroupées à la
+fin de `css/style.css` (« une règle pour toutes les pancartes »).
 
 ## 6. Plaques d'information
 
-Les informations (taux, compteurs, descriptions) vont sur une **plaque de bois** dessinée comme
-une pancarte (`paintSign`), qui flotte doucement (lévitation de 2,2 s). Titre en Jacquarda doré,
-texte crème avec ombre sombre, barres en segments.
+Les informations (taux, compteurs, descriptions) vont sur une **plaque de bois** qui suit la
+règle unique ci-dessus (`paintSign`), et qui flotte doucement (lévitation de 2,2 s). Barres en
+segments ; lignes de tableau sur un fond sombre translucide.
 
 Pour choisir parmi une liste (les héros de l'équipe), une **colonne de petites plaques**, la
 plaque choisie en bois doré et décalée de 6 px ; le sujet choisi est mis en scène dans le décor
