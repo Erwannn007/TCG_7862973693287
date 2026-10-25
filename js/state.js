@@ -16,6 +16,7 @@ function fresh() {
     pity: 0,
     lastDaily: '',
     sound: true,
+    filters: {}, // filtres et tri de la colonne de l'équipe
     haptics: true,
   };
 }

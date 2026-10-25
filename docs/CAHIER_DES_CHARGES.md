@@ -244,6 +244,12 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    Rares, Communes (avec le compte « obtenus / total »), puis « À trouver ». Dans chaque groupe,
    du plus haut rang au plus bas, puis du plus haut niveau, puis par nom. La colonne défile au
    doigt, même quand le geste commence sur un héros de l'équipe (grisé).
+   Le bouton **Filtres** (en haut, à côté du titre) ouvre un panneau en bois : **rareté**,
+   **obtenus / à trouver**, **rôle** (attaque, zone, soin, soutien, tank, d'après la compétence),
+   **univers** (Pixel Gacha, My Hero Academia, Hunter × Hunter) et **tri** (rareté, rang, niveau,
+   nom ; hors rareté, la colonne montre « Obtenus » puis « À trouver »). Le bouton affiche le
+   nombre de filtres actifs ; « Tout effacer » remet tout à zéro. Les choix sont gardés dans la
+   sauvegarde.
    Une petite plaque de bois par héros (dorée pour celui qu'on regarde, badge 1-2-3
    pour l'équipe, « UP » s'il peut monter de rang) ; un héros pas encore obtenu est un **avis de
    recherche** en parchemin cloué de travers (« Recherché », silhouette, ???). Un héros déjà dans

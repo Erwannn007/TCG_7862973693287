@@ -215,6 +215,20 @@ small { font-size: 12px; }
 .r-sign .wanted { display: block; font: 700 11px/1.1 'Pixelify', monospace; color: #8a1a28; letter-spacing: 1px; text-transform: uppercase; }
 .r-sign.locked { gap: 4px; padding-right: 6px; }
 .r-sign.in-team { cursor: pointer; color: #a8a090; }
+/* filtres de la colonne : bouton dans la barre du haut, panneau en bois par-dessus la salle */
+#t-filter-btn { min-height: 40px; padding: 6px 12px; font-size: 14px; }
+#t-filter-btn .n { margin-left: 4px; padding: 0 5px; background: #8a1a28; color: #fff; text-shadow: none; font-size: 12px; }
+#t-filters {
+  position: absolute; z-index: 6; left: var(--safe-l); top: calc(var(--safe-t) + 46px); max-height: calc(100% - var(--safe-t) - var(--safe-b) - 52px);
+  width: min(540px, calc(100% - var(--safe-l) - var(--safe-r) - 284px)); overflow-y: auto; scrollbar-width: none;
+  display: flex; flex-direction: column; gap: 6px; color: var(--cream); text-shadow: var(--txt-out); font-size: 13px; font-weight: 700;
+}
+#t-filters .f-row { display: flex; align-items: flex-start; gap: 6px; }
+#t-filters .f-label { flex-shrink: 0; width: 64px; padding-top: 8px; color: var(--gold-hi); }
+#t-filters .f-opts { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+#t-filters .tool { min-height: 32px; padding: 3px 9px; font-size: 13px; }
+#t-filters .f-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 2px; }
+#t-roster .r-empty { margin: auto 0; padding: 0 4px; font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out); text-align: center; }
 /* titres des groupes de la colonne (rareté, puis avis de recherche) : un petit ruban */
 #t-roster .r-head {
   flex-shrink: 0; align-self: flex-start; margin-top: 4px; padding: 0 6px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);

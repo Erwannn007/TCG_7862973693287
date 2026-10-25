@@ -1,7 +1,7 @@
 // Interface du jeu (écran horizontal).
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
-import { HEROES, HERO_IDS, RARITY, rankTitle, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
+import { HEROES, HERO_IDS, RARITY, ROLES, UNIVERSES, heroRole, heroUniverse, rankTitle, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
 import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave, hasBackup, backupSave, restoreBackup } from './state.js';
@@ -118,7 +118,7 @@ let screen = 'camp';
 
 function show(name) {
   screen = name;
-  if (name !== 'team') resetSkins();
+  if (name !== 'team') { resetSkins(); closeFilters(); }
   for (const s of [...ROOMS, 'battle']) {
     const e = $('#scr-' + s);
     e.classList.toggle('hidden', s !== name);
@@ -239,7 +239,7 @@ addEventListener('click', (e) => {
 }, true);
 $$('#nav-hints .edge').forEach((b) => (b.onclick = () => goRoom(+b.dataset.go)));
 
-const overlayOpen = () => !$('#modal').classList.contains('hidden') || !$('#reveal').classList.contains('hidden');
+const overlayOpen = () => !$('#modal').classList.contains('hidden') || !$('#reveal').classList.contains('hidden') || !$('#t-filters').classList.contains('hidden');
 
 // ---------------------------------------------------------------- décors animés des pièces
 
@@ -805,29 +805,99 @@ const CAR_CY = 92, CAR_RY = 10, CAR_STEP = 8; // centre et profondeur du carrous
 
 function renderTeam() {
   if (!selected || !HEROES[selected]) selected = state.team[0];
-  // la colonne défile (glisser vers le haut ou le bas). Elle est rangée par rareté (Légendaires,
-  // Rares, Communes), du plus haut rang au plus bas dans chaque groupe, puis les avis de recherche.
+  // la colonne défile (glisser vers le haut ou le bas). Elle montre les héros qui passent les
+  // filtres (bouton Filtres) ; triée par rareté, elle est groupée Légendaires, Rares, Communes (du
+  // plus haut rang au plus bas), sinon Obtenus puis À trouver dans l'ordre choisi.
   const old = $('#t-roster .r-list'), top = old ? old.scrollTop : 0;
   const roster = el('div', 'r-list');
   $('#t-roster').replaceChildren(roster);
-  const RAR = ['L', 'R', 'C'], own = (id) => state.owned[id];
-  const byStrength = (a, b) => own(b).rank - own(a).rank || own(b).lvl - own(a).lvl || HEROES[a].name.localeCompare(HEROES[b].name);
-  const groups = RAR.map((r) => {
-    const all = HERO_IDS.filter((id) => HEROES[id].rarity === r);
-    return { title: RARITY[r].name + 's', count: `${all.filter(own).length}/${all.length}`, ids: all.filter(own).sort(byStrength) };
-  });
-  const missing = HERO_IDS.filter((id) => !own(id)).sort((a, b) => RAR.indexOf(HEROES[a].rarity) - RAR.indexOf(HEROES[b].rarity) || HEROES[a].name.localeCompare(HEROES[b].name));
+  const F = teamFilters(), RAR = ['L', 'R', 'C'], own = (id) => state.owned[id];
+  const ids = HERO_IDS.filter((id) => (F.rarity === 'all' || HEROES[id].rarity === F.rarity)
+    && (F.own === 'all' || (F.own === 'owned') === !!own(id))
+    && (F.role === 'all' || heroRole(id) === F.role) && (F.uni === 'all' || heroUniverse(id) === F.uni));
+  const byName = (a, b) => HEROES[a].name.localeCompare(HEROES[b].name);
+  const byRarity = (a, b) => RAR.indexOf(HEROES[a].rarity) - RAR.indexOf(HEROES[b].rarity);
+  const byRank = (a, b) => own(b).rank - own(a).rank || own(b).lvl - own(a).lvl || byName(a, b);
+  const byLevel = (a, b) => own(b).lvl - own(a).lvl || own(b).rank - own(a).rank || byName(a, b);
+  const owned = ids.filter(own), missing = ids.filter((id) => !own(id)).sort((a, b) => byRarity(a, b) || byName(a, b));
+  let groups;
+  if (F.sort === 'rarete') {
+    groups = RAR.map((r) => {
+      const all = ids.filter((id) => HEROES[id].rarity === r);
+      return { title: RARITY[r].name + 's', count: `${all.filter(own).length}/${all.length}`, ids: all.filter(own).sort(byRank) };
+    });
+  } else {
+    const cmp = { rang: byRank, niveau: byLevel, nom: byName }[F.sort];
+    groups = [{ title: 'Obtenus', count: String(owned.length), ids: owned.sort(cmp) }];
+  }
   if (missing.length) groups.push({ title: 'À trouver', count: String(missing.length), ids: missing });
   let i = 0;
   for (const g of groups.filter((g) => g.ids.length)) {
-    const h = el('div', 'r-head', `${g.title} <small>${g.count}</small>`);
-    roster.appendChild(h);
+    roster.appendChild(el('div', 'r-head', `${g.title} <small>${g.count}</small>`));
     g.ids.forEach((id) => addRosterSign(roster, id, i++));
   }
+  if (!ids.length) roster.appendChild(el('div', 'r-empty', 'Aucun héros ne correspond à ces filtres'));
   roster.scrollTop = top;
+  const n = ['rarity', 'own', 'role', 'uni'].filter((k) => F[k] !== 'all').length;
+  $('#t-filter-btn').innerHTML = 'Filtres' + (n ? `<span class="n">${n}</span>` : '');
   renderDetail(selected);
   requestAnimationFrame(layoutTeam);
 }
+
+// Filtres et tri de la colonne de l'équipe (gardés dans la sauvegarde).
+const FILTER_DEFAULTS = { rarity: 'all', own: 'all', role: 'all', uni: 'all', sort: 'rarete' };
+const teamFilters = () => ({ ...FILTER_DEFAULTS, ...state.filters });
+const FILTER_ROWS = [
+  ['Rareté', 'rarity', [['all', 'Toutes'], ['L', 'Légendaires'], ['R', 'Rares'], ['C', 'Communes']]],
+  ['Héros', 'own', [['all', 'Tous'], ['owned', 'Obtenus'], ['missing', 'À trouver']]],
+  ['Rôle', 'role', [['all', 'Tous'], ...Object.entries(ROLES)]],
+  ['Univers', 'uni', [['all', 'Tous'], ...Object.entries(UNIVERSES)]],
+  ['Trier par', 'sort', [['rarete', 'Rareté'], ['rang', 'Rang'], ['niveau', 'Niveau'], ['nom', 'Nom']]],
+];
+// Panneau des filtres : une rangée de choix par critère ; chaque choix met la colonne à jour.
+function openFilters() {
+  const p = $('#t-filters'), F = teamFilters();
+  p.replaceChildren();
+  for (const [label, key, opts] of FILTER_ROWS) {
+    const row = el('div', 'f-row'), box = el('div', 'f-opts');
+    row.append(el('span', 'f-label', label), box);
+    for (const [v, name] of opts) {
+      const b = el('button', 'tool' + (F[key] === v ? ' on' : ''), name);
+      b.onclick = () => setFilter(key, v);
+      box.appendChild(b);
+    }
+    p.appendChild(row);
+  }
+  const foot = el('div', 'f-foot');
+  const reset = el('button', 'tool', 'Tout effacer'), close = el('button', 'tool gold', 'Fermer');
+  reset.onclick = () => { state.filters = {}; save(); sfx('swipe'); afterFilter(); };
+  close.onclick = closeFilters;
+  foot.append(reset, close);
+  p.appendChild(foot);
+  p.classList.remove('hidden');
+}
+function setFilter(key, v) {
+  state.filters = { ...state.filters, [key]: v };
+  save();
+  sfx('hover');
+  haptic(5);
+  afterFilter();
+}
+function afterFilter() {
+  const l = $('#t-roster .r-list');
+  if (l) l.scrollTop = 0;
+  renderTeam();
+  openFilters();
+}
+function closeFilters() {
+  $('#t-filters').classList.add('hidden');
+}
+$('#t-filter-btn').onclick = () => {
+  unlock();
+  sfx('hover');
+  if ($('#t-filters').classList.contains('hidden')) openFilters();
+  else closeFilters();
+};
 
 // Une plaque de la colonne : le héros, son nom, ses étoiles (ou son socle s'il est dans l'équipe).
 function addRosterSign(roster, id, i) {
@@ -2247,6 +2317,8 @@ attachSigns($('#c-menu'));
 attachSigns($('#board'));
 // Équipe : toucher à côté des pancartes du héros les fait éclater
 $('#scr-team').addEventListener('pointerdown', (e) => {
+  // toucher à côté du panneau des filtres le ferme
+  if (!$('#t-filters').classList.contains('hidden') && !e.target.closest('#t-filters, #t-filter-btn')) closeFilters();
   const m = $('#t-menu');
   if (teamMode || teamDrag || m.classList.contains('hidden') || e.target.closest('#t-menu, .r-sign, .t-slot, #t-skins')) return;
   explodeSigns(m);

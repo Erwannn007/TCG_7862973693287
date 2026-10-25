@@ -284,6 +284,15 @@ export const HEROES = {
 };
 export const HERO_IDS = Object.keys(HEROES);
 
+// Rôle d'un héros, d'après sa compétence (pour les filtres de l'équipe).
+export const ROLES = { attaque: 'Attaque', zone: 'Zone', soin: 'Soin', soutien: 'Soutien', tank: 'Tank' };
+const ROLE_OF_KIND = { single: 'attaque', multi: 'attaque', all: 'zone', heal: 'soin', heal1: 'soin', revive: 'soin', shield: 'soutien', buff: 'soutien', taunt: 'tank' };
+export const heroRole = (id) => ROLE_OF_KIND[HEROES[id].skill.kind] || 'attaque';
+// Univers d'origine : les héros du jeu, et les clins d'œil.
+export const UNIVERSES = { jeu: 'Pixel Gacha', mha: 'My Hero Academia', hxh: 'Hunter × Hunter' };
+const UNIVERSE_OF = { shoto: 'mha', bakugo: 'mha', redriot: 'mha', deku: 'mha', allmight: 'mha', gon: 'hxh', kirua: 'hxh', hisoka: 'hxh', netero: 'hxh', meruem: 'hxh' };
+export const heroUniverse = (id) => UNIVERSE_OF[id] || 'jeu';
+
 export const RANK_MULT = [1, 1.2, 1.45, 1.75, 2.2];
 // Le nom de chaque rang, propre à chaque héros (ses 5 étapes ; voir js/heroes.js et js/sprites.js).
 export const RANK_TITLES = {
