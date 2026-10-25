@@ -340,12 +340,16 @@ function noise2(x, y) {
   return (a + (b - a) * sx) * (1 - sy) + (c + (d - c) * sx) * sy;
 }
 
-function prairie(g, w) {
-  // le ciel est laissé transparent : il est dessiné dessous, avec ses nuages qui défilent
-  const far = [], near = [];
+// Chaque plan est une image à part ; ils glissent à des vitesses différentes (parallaxe).
+function prairieFar(g, w) {
+  const far = [];
   for (let i = -1; i * 46 < w + 46; i++) far.push({ x: i * 46 + Math.floor(hash(i, 21) * 20), h: 18 + hash(i, 22) * 10, s: 0.7 + hash(i, 23) * 0.3 });
-  for (let i = -1; i * 58 < w + 58; i++) near.push({ x: i * 58 + 20 + Math.floor(hash(i, 31) * 24), h: 22 + hash(i, 32) * 12, s: 0.8 + hash(i, 33) * 0.4 });
   mountains(g, w, 56, far, { lit: '#a2acd4', dark: '#9098c6', mid: '#9aa2cc', edge: '#b4bee0', snow: '#eef2fa', snowDark: '#d4dcee', snowAt: 23, haze: '#b8c8e2' });
+}
+
+function prairieMid(g, w) {
+  const near = [];
+  for (let i = -1; i * 58 < w + 58; i++) near.push({ x: i * 58 + 20 + Math.floor(hash(i, 31) * 24), h: 22 + hash(i, 32) * 12, s: 0.8 + hash(i, 33) * 0.4 });
   mountains(g, w, 58, near, { lit: '#7e82b8', dark: '#666aa0', mid: '#7276ac', edge: '#9094c4', snow: '#f4f6fc', snowDark: '#c8d0e8', snowAt: 28, haze: '#9ab0d0' });
   // collines : une rangée lointaine (avec le château), une plus proche
   const cxs = castleX(w);
@@ -354,6 +358,9 @@ function prairie(g, w) {
     for (let y = top; y < 66; y++) px(g, x, y, y === top ? '#a6cca0' : (x + y) % 2 && y > top + 3 ? '#7aa880' : '#88b68c');
   }
   castle(g, cxs, backHill(cxs) + 1);
+}
+
+function prairieForest(g, w) {
   for (let x = 0; x < w; x++) {
     const top = frontHill(x);
     for (let y = top; y < 66; y++) px(g, x, y, y === top ? '#86bc76' : y < top + 2 ? '#70a866' : '#62995c');
@@ -369,8 +376,11 @@ function prairie(g, w) {
     else roundTree(g, x, b, 4 + Math.floor(hash(i, 44) * 2));
     x += 5 + Math.floor(hash(i, 45) * 4);
   }
+}
+
+function prairieGround(g, w, h) {
   // champ : herbe en taches douces (bruit lissé puis tramé), plus claire au loin, ombres de nuages
-  for (let y = 67; y < SH; y++)
+  for (let y = 67; y < h; y++)
     for (let x = 0; x < w; x++) {
       let lv = y < 74 ? 3 : y < 104 ? 2 : 1;
       const n = noise2(x / 14, y / 5) - 0.5 + (BAYER[y % 4][x % 4] - 0.5) * 0.18;
@@ -390,7 +400,7 @@ function prairie(g, w) {
   }
   // chemin de terre en perspective, avec ornières et bords mangés par l'herbe
   const pathAt = (y) => ({ cx: Math.round(w / 2 + Math.sin((y - 66) / 14) * 6), hw: Math.round(3 + (y - 66) * 0.5) });
-  for (let y = 68; y < SH; y++) {
+  for (let y = 68; y < h; y++) {
     const { cx, hw } = pathAt(y);
     g.fillStyle = '#b08c5e';
     g.fillRect(cx - hw, y, hw * 2, 1);
@@ -466,16 +476,22 @@ function prairie(g, w) {
     g.fillStyle = '#5e9a44';
     g.fillRect(x + 2, y - 1, 3, 1);
   }
-  // premier plan : hautes herbes, buissons sombres dans les coins bas, feuillage qui pend en haut
+  // hautes herbes tout en bas
   for (let x = 0; x < w; x++) {
-    const h = 1 + Math.floor(hash(x, 91) * 4);
-    for (let j = 0; j < h; j++) px(g, x, SH - 1 - j, j === h - 1 ? '#5a9a42' : '#2e5e2a');
+    const th = 1 + Math.floor(hash(x, 91) * 4);
+    for (let j = 0; j < th; j++) px(g, x, h - 1 - j, j === th - 1 ? '#5a9a42' : '#2e5e2a');
   }
+}
+
+// Premier plan, devant les combattants : buissons sombres en bas, feuillage qui pend en haut.
+function prairieFront(g, w, h) {
   const FG = ['#183a1c', '#24502a', '#356a34'];
-  bush(g, 6, SH - 4, 9, FG);
-  bush(g, w - 7, SH - 3, 8, FG);
+  // les plans sont plus larges que l'écran de LAYER_M de chaque côté : on cale les coins dessus
+  const m = LAYER_M - 4;
+  bush(g, m + 6, h - 4, 9, FG);
+  bush(g, w - m - 7, h - 3, 8, FG);
   const LEAF = ['#163420', '#21462a', '#2f5e34'];
-  for (const [x0, dir] of [[0, 1], [w - 1, -1]]) {
+  for (const [x0, dir] of [[m, 1], [w - 1 - m, -1]]) {
     const cells = new Set();
     for (let i = 0; i < 6; i++) circleCells(cells, x0 + dir * (i * 5), Math.round(2 + Math.sin(i * 1.3) * 2 + i * 0.6), 5 - (i >> 1));
     blob(g, cells, LEAF[1], LEAF[2], LEAF[0]);
@@ -505,16 +521,7 @@ function cloudSprite(s) {
   }
   return STATIC[key];
 }
-function prairieBack(g, t, w) {
-  const key = 'prairie-sky' + w;
-  if (!STATIC[key]) {
-    const c = document.createElement('canvas');
-    c.width = w;
-    c.height = 66;
-    prairieSky(c.getContext('2d'), w);
-    STATIC[key] = c;
-  }
-  g.drawImage(STATIC[key], 0, 0);
+function prairieClouds(g, step, w, h, t) {
   for (const [x0, y, s, v] of CLOUDS) {
     const img = cloudSprite(s), span = w + img.width;
     const start = x0 < 0 ? w + x0 : x0 < 1 ? x0 * w : x0; // en px, ou en fraction de la largeur
@@ -533,19 +540,21 @@ function prairieBack(g, t, w) {
   }
 }
 
-// Vie du premier plan : herbes qui ondulent, papillons, pollen, drapeau du château.
-function prairieAnim(g, step, w) {
-  // drapeau
+function castleFlag(g, step, w) {
   const cx = castleX(w), top = backHill(cx) + 1 - 25 - 4;
   g.fillStyle = '#4a4c74';
   g.fillRect(cx, top - 5, 1, 5);
   g.fillStyle = '#c84a5a';
   g.fillRect(cx + 1, top - 5, 3, 2);
   px(g, cx + 4, top - 5 + (step % 2), '#c84a5a');
+}
+
+// Vie du sol : herbes qui ondulent, papillons, pollen.
+function prairieAnim(g, step, w, h) {
   // brins d'herbe qui se balancent devant
   for (let i = 0; i < 26; i++) {
     const x = Math.floor(hash(i, 93) * w), lean = (Math.floor(step / 3) + i) % 4 < 2 ? 0 : 1;
-    const y = SH - 2 - Math.floor(hash(i, 94) * 3);
+    const y = h - 2 - Math.floor(hash(i, 94) * 3);
     px(g, x, y, '#4e8c3a');
     px(g, x + lean, y - 1, '#6aae46');
     px(g, x + lean * 2, y - 2, '#9ad060');
@@ -610,11 +619,11 @@ function banner(g, cx, y0, h, cloth, dark) {
 }
 
 // Assombrit les bords de l'image par tramage ordonné : le regard reste au centre.
-function vignette(g, w, col, strength = 1) {
+function vignette(g, w, h, col, strength = 1) {
   g.fillStyle = col;
-  for (let y = 0; y < SH; y++)
+  for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
-      const d = ((x - w / 2) / (w * 0.56)) ** 2 + ((y - 64) / 78) ** 2 - 1;
+      const d = ((x - w / 2) / (w * 0.56)) ** 2 + ((y - h / 2 - 4) / (h * 0.65)) ** 2 - 1;
       if (d > 0 && d * 3 * strength > BAYER[y % 4][x % 4]) g.fillRect(x, y, 1, 1);
     }
 }
@@ -673,9 +682,15 @@ function bones(g, x, y, k) {
   }
 }
 
-function crypte(g, w) {
-  const c = w / 2, lights = [{ x: c - 30, y: 30, r: [6, 14, 26] }, { x: c + 30, y: 30, r: [6, 14, 26] }, { x: c, y: 86, r: [10, 24, 46] }];
-  dungeon(g, { w, lights, pillars: [c - 114, c + 106] });
+const crypteLights = (c) => [{ x: c - 30, y: 30, r: [6, 14, 26] }, { x: c + 30, y: 30, r: [6, 14, 26] }, { x: c, y: 86, r: [10, 24, 46] }];
+
+// Mur du fond (plan qui glisse moins que le sol).
+function crypteWall(g, w) {
+  const c = w / 2, lights = crypteLights(c);
+  bricks(g, 0, 72, lights, w);
+  g.fillStyle = '#140d11';
+  g.fillRect(0, 72, w, 2);
+  for (const p of [c - 114, c + 106]) pillar(g, p, lights);
   // voûte : nervures en arc qui retombent sur les piliers
   for (const [x0, x1] of [[c - 114, c - 4], [c + 4, c + 114]]) {
     const mid = (x0 + x1) / 2, half = (x1 - x0) / 2;
@@ -693,7 +708,11 @@ function crypte(g, w) {
   chain(g, c + 50, 12);
   sarcophagus(g, c - 52, 77);
   sarcophagus(g, c + 52, 77);
-  // fissures des dalles, flaques sombres, ossements
+}
+
+function crypteFloor(g, w, h) {
+  flags(g, 74, h, crypteLights(w / 2), w);
+  // fissures des dalles, ossements
   g.fillStyle = '#120c0e';
   for (let i = 0; i < 8; i++) {
     let x = Math.floor(hash(i, 111) * w), y = 80 + Math.floor(hash(i, 112) * 36);
@@ -704,8 +723,11 @@ function crypte(g, w) {
     }
   }
   for (let i = 0; i < 7; i++) bones(g, Math.floor(hash(i, 121) * (w - 10)) + 2, 84 + Math.floor(hash(i, 122) * 30), i);
-  // toiles d'araignée dans les coins, plus grandes
-  for (const [x0, dir] of [[0, 1], [w - 1, -1]]) {
+}
+
+// Toiles d'araignée dans les coins de l'écran (fixes, comme collées à l'objectif).
+function crypteFront(g, w) {
+  for (const [x0, dir] of [[LAYER_M, 1], [w - 1 - LAYER_M, -1]]) {
     for (let i = 0; i < 16; i++) {
       px(g, x0 + dir * i, 15 - i, '#8a8088');
       if (i < 12) px(g, x0 + dir * i, 6, i % 2 ? '#6a6068' : '#8a8088');
@@ -713,24 +735,14 @@ function crypte(g, w) {
     }
     for (let i = 0; i < 9; i++) px(g, x0 + dir * (10 - Math.abs(i - 4)), 3 + i, '#6a6068');
   }
-  vignette(g, w, '#0a0609');
 }
 
-// Brume qui rampe au sol et feux follets.
-function crypteAnim(g, step, w) {
+// Torches, bougies et feux follets du mur.
+function crypteWallAnim(g, step, w) {
   torch(g, w / 2 - 30, 30, step);
   torch(g, w / 2 + 30, 30, step + 1);
-  brazier(g, w / 2, 86, step);
   candle(g, w / 2 - 68, 52, step);
   candle(g, w / 2 + 76, 52, step + 1);
-  g.fillStyle = '#9a90b0';
-  g.globalAlpha = 0.16;
-  for (let y = 100; y < SH; y++)
-    for (let x = 0; x < w; x++) {
-      const n = noise2((x + step * 0.7) / 16, y / 4 + 20) + (y - 100) / 60;
-      if (n > 0.66 && BAYER[y % 4][x % 4] < (n - 0.66) * 2.5) g.fillRect(x, y, 1, 1);
-    }
-  g.globalAlpha = 1;
   [[w / 2 - 52, 58], [w / 2 + 58, 62]].forEach(([x0, y0], i) => {
     const x = Math.round(x0 + Math.sin(step / 9 + i * 2) * 6), y = Math.round(y0 + Math.sin(step / 4 + i) * 3);
     g.globalAlpha = 0.35;
@@ -741,6 +753,19 @@ function crypteAnim(g, step, w) {
     px(g, x, y - 1 - (step % 2), '#7af0c8');
     px(g, x, y, '#ffffff');
   });
+}
+
+// Brasero et brume qui rampe au sol.
+function crypteFloorAnim(g, step, w, h) {
+  brazier(g, w / 2, 86, step);
+  g.fillStyle = '#9a90b0';
+  g.globalAlpha = 0.16;
+  for (let y = h - 20; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const n = noise2((x + step * 0.7) / 16, y / 4 + 20) + (y - h + 20) / 60;
+      if (n > 0.66 && BAYER[y % 4][x % 4] < (n - 0.66) * 2.5) g.fillRect(x, y, 1, 1);
+    }
+  g.globalAlpha = 1;
 }
 
 // ---------------------------------------------------------------- volcan
@@ -771,11 +796,12 @@ function crystal(g, x, by, h, dir) {
   px(g, x + Math.round((dir * h) / 4), by - h, '#ff8a9a');
 }
 
-function volcan(g, sw) {
-  const lights = [{ x: sw / 2, y: 120, r: [20, 40, 70] }, { x: 30, y: 70, r: [6, 14, 26] }, { x: sw - 30, y: 66, r: [6, 14, 26] }, { x: sw * 0.22, y: 40, r: [5, 10, 18] }, { x: sw * 0.78, y: 40, r: [5, 10, 18] }];
-  const ROCK = ['#1c1216', '#2c1a1c', '#44221e', '#6a2e1e'];
-  // roche : lumière de la lave par paliers, veines et fissures tirées d'un bruit lissé
-  for (let y = 0; y < SH; y++)
+const volcanLights = (sw) => [{ x: sw / 2, y: 120, r: [20, 40, 70] }, { x: 30, y: 70, r: [6, 14, 26] }, { x: sw - 30, y: 66, r: [6, 14, 26] }, { x: sw * 0.22, y: 40, r: [5, 10, 18] }, { x: sw * 0.78, y: 40, r: [5, 10, 18] }];
+
+// Roche : lumière de la lave par paliers, veines et fissures tirées d'un bruit lissé.
+function volcanRock(g, sw, y0, y1) {
+  const lights = volcanLights(sw), ROCK = ['#1c1216', '#2c1a1c', '#44221e', '#6a2e1e'];
+  for (let y = y0; y < y1; y++)
     for (let x = 0; x < sw; x++) {
       let lv = light(lights, x, y);
       const n = noise2(x / 9, y / 6 + 40);
@@ -785,6 +811,11 @@ function volcan(g, sw) {
       if (y >= 70 && Math.abs(noise2(x / 12 + 70, y / 3) - 0.5) < 0.03) c = '#120a0c';
       px(g, x, y, c);
     }
+}
+
+// Fond de la caverne : voûte, cascades et rivière de lave.
+function volcanBack(g, sw) {
+  volcanRock(g, sw, 0, 66);
   // stalactites
   for (let i = 0; i * 14 < sw; i++) {
     const x = i * 14 + Math.floor(hash(i, 101) * 8), h = 6 + Math.floor(hash(i, 102) * 14);
@@ -820,26 +851,46 @@ function volcan(g, sw) {
     px(g, x, 65, '#120a0c');
     px(g, x, 66, x % 3 ? '#8a3a1c' : '#6a2e1e');
   }
+}
+
+function volcanFloor(g, sw, h) {
+  volcanRock(g, sw, 67, h);
   // failles de lave du sol (repeintes en pulsant par l'animation)
   for (const [x, y] of volcanCracks(sw)) {
     px(g, x, y, '#ff6a1f');
     if (hash(x, y) < 0.4) px(g, x, y - 1, '#8a3a1c');
   }
   // cristaux de part et d'autre
-  for (const [x, h, d] of [[11, 20, 1], [18, 12, 1], [5, 11, -1], [sw - 12, 21, -1], [sw - 19, 12, -1], [sw - 6, 10, 1]]) crystal(g, x, 74, h, d);
-  // rochers sombres au premier plan, liserés de rouge
-  for (const [x0, dir] of [[0, 1], [sw - 1, -1]]) {
-    for (let j = 0; j < 24; j++) {
-      const h = Math.max(0, 14 - Math.floor(j * 0.65) + (j % 3));
-      for (let y = SH - h; y < SH; y++) px(g, x0 + dir * j, y, y === SH - h ? '#a83a1c' : y === SH - h + 1 ? '#3a2228' : '#100a0c');
-    }
+  for (const [x, ch, d] of [[11, 20, 1], [18, 12, 1], [5, 11, -1], [-12, 21, -1], [-19, 12, -1], [-6, 10, 1]]) {
+    crystal(g, x < 0 ? sw - LAYER_M + x : LAYER_M + x, 74, ch, d);
   }
-  vignette(g, sw, '#0e0608', 0.8);
 }
 
-// Lave qui pulse, bulles qui éclatent, braises qui montent, fumée sous la voûte.
-function volcanAnim(g, step, w) {
+// Rochers sombres au premier plan, liserés de rouge.
+function volcanFront(g, sw, h) {
+  // depuis le bord de l'écran (LAYER_M) vers l'intérieur, et pleine hauteur dans la marge
+  for (const [x0, dir] of [[LAYER_M, 1], [sw - 1 - LAYER_M, -1]]) {
+    for (let j = -LAYER_M; j < 24; j++) {
+      const rh = Math.max(0, 14 - Math.floor(Math.max(0, j) * 0.65) + (((j % 3) + 3) % 3));
+      for (let y = h - rh; y < h; y++) px(g, x0 + dir * j, y, y === h - rh ? '#a83a1c' : y === h - rh + 1 ? '#3a2228' : '#100a0c');
+    }
+  }
+}
+
+// Lave qui pulse dans les failles, braises qui montent.
+function volcanFloorAnim(g, step, w) {
   for (const [x, y, i] of volcanCracks(w)) if ((step + i * 2) % 8 < 3) px(g, x, y, (step + i) % 2 ? '#ffb030' : '#fbe08a');
+  for (let i = 0; i < 9; i++) {
+    const t = (step + i * 4) % 16, x = Math.round((w / 9) * i + 12 + (t % 3) + Math.sin(t / 3) * 2);
+    px(g, x, 70 - t * 4, t < 8 ? '#ffb030' : t < 12 ? '#ff6a1f' : '#8a3a1c');
+  }
+  // cristaux qui scintillent
+  if (step % 6 === 0) px(g, LAYER_M + 15, 56, '#ffffff');
+  if (step % 6 === 3) px(g, w - LAYER_M - 17, 55, '#ffffff');
+}
+
+// Bulles qui éclatent, reflets des cascades, fumée sous la voûte.
+function volcanBackAnim(g, step, w) {
   for (let i = 0; i < 4; i++) {
     const t = (step + i * 5) % 12, x = Math.floor(hash(i, 131) * w);
     if (t < 4) {
@@ -848,10 +899,6 @@ function volcanAnim(g, step, w) {
       if (t < 3) g.fillRect(x - (t >> 1), y - t, 1 + t, 1 + (t >> 1));
       else { px(g, x - 2, y - 3, '#fbe08a'); px(g, x + 2, y - 3, '#fbe08a'); px(g, x, y - 4, '#ffb030'); }
     }
-  }
-  for (let i = 0; i < 9; i++) {
-    const t = (step + i * 4) % 16, x = Math.round((w / 9) * i + 12 + (t % 3) + Math.sin(t / 3) * 2);
-    px(g, x, 70 - t * 4, t < 8 ? '#ffb030' : t < 12 ? '#ff6a1f' : '#8a3a1c');
   }
   // reflets qui descendent dans les cascades de lave
   for (const lx of [w * 0.22, w * 0.78]) for (let k = 0; k < 3; k++) px(g, Math.round(lx), 10 + ((step * 3 + k * 17) % 52), '#fbe08a');
@@ -864,9 +911,6 @@ function volcanAnim(g, step, w) {
       if (n > 0.5 && BAYER[y % 4][x % 4] < (n - 0.5) * 3) g.fillRect(x, y, 1, 1);
     }
   g.globalAlpha = 1;
-  // cristaux qui scintillent
-  if (step % 6 === 0) px(g, 15, 56, '#ffffff');
-  if (step % 6 === 3) px(g, w - 17, 55, '#ffffff');
 }
 
 // ---------------------------------------------------------------- pièces du camp
@@ -994,11 +1038,62 @@ const SCENES = {
       }
     },
   },
-  // Les décors de combat s'adaptent à la largeur de l'écran (centre en x = w / 2).
-  prairie: { draw: prairie, back: prairieBack, anim: prairieAnim },
-  crypte: { draw: crypte, anim: crypteAnim },
-  volcan: { draw: volcan, anim: volcanAnim },
 };
+
+// Décors de combat : une pile de plans. d = profondeur (0 : à l'infini, 1 : le sol où se tiennent
+// les combattants, > 1 : devant eux). front : dessiné par-dessus les combattants.
+// Chaque plan est dessiné plus large que l'écran (LAYER_M de chaque côté) pour pouvoir glisser.
+const LAYERS = {
+  prairie: [
+    { d: 0, draw: prairieSky, anim: prairieClouds },
+    { d: 0.15, draw: prairieFar },
+    { d: 0.35, draw: prairieMid, anim: castleFlag },
+    { d: 0.6, draw: prairieForest },
+    { d: 1, draw: prairieGround, anim: prairieAnim },
+    { d: 1.6, draw: prairieFront, front: true },
+  ],
+  crypte: [
+    { d: 0.6, draw: crypteWall, anim: crypteWallAnim },
+    { d: 1, draw: crypteFloor, anim: crypteFloorAnim },
+    { d: 1, draw: crypteFront, front: true },
+    { d: 1, draw: (g, w, h) => vignette(g, w, h, '#0a0609'), front: true },
+  ],
+  volcan: [
+    { d: 0.5, draw: volcanBack, anim: volcanBackAnim },
+    { d: 1, draw: volcanFloor, anim: volcanFloorAnim },
+    { d: 1.6, draw: volcanFront, front: true },
+    { d: 1, draw: (g, w, h) => vignette(g, w, h, '#0e0608', 0.8), front: true },
+  ],
+};
+export const LAYER_M = 16;
+
+// Images des plans d'un décor pour un écran de w × h pixels d'art (mises en cache).
+// shade : silhouette sombre du plan, pour l'assombrir avec le reste pendant la mise en scène.
+export function sceneLayers(name, w, h) {
+  const key = `L-${name}-${w}-${h}`;
+  if (!STATIC[key]) {
+    const lw = w + LAYER_M * 2;
+    STATIC[key] = LAYERS[name].map((l) => {
+      const c = document.createElement('canvas');
+      c.width = lw;
+      c.height = h;
+      l.draw(c.getContext('2d'), lw, h);
+      let shade = null;
+      if (l.front) {
+        shade = document.createElement('canvas');
+        shade.width = lw;
+        shade.height = h;
+        const sg = shade.getContext('2d');
+        sg.drawImage(c, 0, 0);
+        sg.globalCompositeOperation = 'source-in';
+        sg.fillStyle = OUTLINE;
+        sg.fillRect(0, 0, lw, h);
+      }
+      return { ...l, canvas: c, shade, lw };
+    });
+  }
+  return STATIC[key];
+}
 
 // Décor fixe (mis en cache), à redessiner à chaque image avant les éléments animés.
 export function sceneBackground(name, w = SW) {
@@ -1011,11 +1106,6 @@ export function sceneBackground(name, w = SW) {
     STATIC[key] = c;
   }
   return STATIC[key];
-}
-
-// Couche du fond, redessinée à chaque image sous le décor fixe (ciel animé). Absente pour la plupart des décors.
-export function sceneBack(name, g, t, w = SW) {
-  SCENES[name].back?.(g, t, w);
 }
 
 export function sceneAnim(name, g, step, w = SW) {

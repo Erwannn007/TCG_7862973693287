@@ -613,21 +613,35 @@ async function reveal(results) {
 
 let battle = null, queueSig = '', queueTimer = null;
 
+// Échelle entière la plus grande où la scène de base (W × H) tient à l'écran.
+const battleScale = () => Math.max(1, Math.floor(Math.min((innerWidth * DPR()) / W, (innerHeight * DPR()) / H)));
+
+// Place le canvas de combat à l'échelle s, centré ; il peut déborder d'un pixel d'art pour couvrir l'écran.
+function placeBattleCanvas(cv, w, h, s) {
+  const dpr = DPR(), cw = (w * s) / dpr, ch = (h * s) / dpr;
+  cv.style.width = cw + 'px';
+  cv.style.height = ch + 'px';
+  cv.style.left = Math.round(((innerWidth - cw) / 2) * dpr) / dpr + 'px';
+  cv.style.top = Math.round(((innerHeight - ch) / 2) * dpr) / dpr + 'px';
+  cv.style.position = 'absolute';
+}
+
 function startBattle(n) {
   const st = stage(n);
   closeModal(false);
   show('battle');
   const cv = $('#b-canvas'), dpr = DPR();
-  // échelle entière la plus grande, puis scène élargie pour remplir l'écran
-  const s = Math.max(1, Math.floor(Math.min((innerWidth * dpr) / W, (innerHeight * dpr) / H)));
-  const width = Math.max(W, Math.min(320, Math.floor((innerWidth * dpr) / s)));
+  // échelle entière la plus grande, puis scène élargie et allongée (sol en plus en bas) pour couvrir tout l'écran
+  const s = battleScale();
+  const width = Math.max(W, Math.min(320, Math.ceil((innerWidth * dpr) / s)));
+  const height = Math.max(H, Math.min(180, Math.ceil((innerHeight * dpr) / s)));
   cv.width = width;
-  cv.height = H;
-  fitCanvas(cv, width, H, innerWidth, innerHeight, false);
+  cv.height = height;
+  placeBattleCanvas(cv, width, height, s);
   $('#b-stage').textContent = `Étape ${n} · ${st.chapter.name}`;
   battle = new Battle({
     // zoom caméra d'un pixel d'écran de plus par pixel d'art : reste net (plafonné pour les petites échelles)
-    canvas: cv, width, zoom: Math.min((s + 1) / s, 1.2), team: state.team, stage: st, owned: state.owned,
+    canvas: cv, width, height, zoom: Math.min((s + 1) / s, 1.2), team: state.team, stage: st, owned: state.owned,
     ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
   });
@@ -825,7 +839,7 @@ async function nextBattle(n) {
 
 addEventListener('resize', () => {
   if (screen === 'battle' && battle) {
-    fitCanvas($('#b-canvas'), battle.W, H, innerWidth, innerHeight, false);
+    placeBattleCanvas($('#b-canvas'), battle.W, battle.H, battleScale());
     if (!$('#b-menu').classList.contains('hidden') && battle.active) showMenu(battle.active);
   } else if (ROOMS.includes(screen)) refresh();
 });

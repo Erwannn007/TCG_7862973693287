@@ -2,11 +2,12 @@
 import { HEROES, heroStats } from './data.js';
 import { heroSprite, enemySprite } from './sprites.js';
 import { bitmap, drawFx, drawText, textWidth } from './render.js';
-import { sceneBackground, sceneBack, sceneAnim, SW, SH } from './scene.js';
+import { sceneLayers, LAYER_M, SW, SH } from './scene.js';
 import { OUTLINE } from './spr.js';
 import { sfx, haptic } from './sfx.js';
 
 // Largeur variable (240 à 320) selon l'écran ; les positions sont données pour 240 et recentrées.
+// Hauteur au moins H : le surplus s'ajoute en bas (plus de sol), pour remplir tout l'écran.
 export const W = SW, H = SH;
 // Formation en chevron : le héros du milieu est en retrait, l'arc d'actions tombe dans le vide.
 const HERO_SLOTS = [[54, 80], [36, 96], [54, 112]];
@@ -18,6 +19,8 @@ const WHITE = '#ffffff';
 const STEP_IN = 14, STEP_BACK = 4, DARK_MAX = 4;
 // La cible d'un coup s'avance aussi, pour un face-à-face.
 const DUEL_STEP = 8;
+// Parallaxe : de combien la caméra se tourne vers celui qui agit, et le glissement d'entrée en combat.
+const PAN = 6, PAN_INTRO = 18;
 // Couleur de la charge avant une compétence.
 const CHARGE = { heal: '#9af098', boss: '#ff5a4a', other: '#c08aff' };
 const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
@@ -25,7 +28,7 @@ const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 export class Battle {
-  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, zoom = 1 }) {
+  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, height = H, zoom = 1 }) {
     this.g = canvas.getContext('2d');
     this.canvas = canvas;
     this.ui = ui;
@@ -44,7 +47,7 @@ export class Battle {
     this.flashT = 0;
     // caméra : zoom (z vers zT) autour de origin ; next = prochain point visé, appliqué une fois dézoomé
     this.zoom = zoom;
-    this.cam = { z: 1, zT: 1, origin: [width / 2, H / 2], next: null, sx: 0, sy: 0, shakeUntil: 0, amp: 0, css: '' };
+    this.cam = { z: 1, zT: 1, origin: [width / 2, height / 2], next: null, sx: 0, sy: 0, shakeUntil: 0, amp: 0, css: '' };
     canvas.style.transform = '';
     this.active = null;
     this.targeting = null; // ennemis ciblables pendant le choix d'une cible
@@ -52,6 +55,9 @@ export class Battle {
     this.queue = [];
     this.scene = stage.chapter.bg;
     this.W = width;
+    this.H = height;
+    this.pan = PAN_INTRO;
+    this.panT = 0;
     this.ox = Math.round((width - W) / 2);
 
     const hs = SLOT_ORDER[team.length];
@@ -94,9 +100,8 @@ export class Battle {
   draw(t) {
     if (this.stopped) return;
     const g = this.g, step = Math.floor(t / 250), fstep = Math.floor(t / 140);
-    sceneBack(this.scene, g, t, this.W);
-    g.drawImage(sceneBackground(this.scene, this.W), 0, 0);
-    sceneAnim(this.scene, g, fstep, this.W);
+    const layers = sceneLayers(this.scene, this.W, this.H);
+    for (const l of layers) if (!l.front) this.layer(l, fstep, t);
     const all = [...this.heroes, ...this.enemies];
     this.spotlight(t, all);
     this.camera(t);
@@ -142,6 +147,17 @@ export class Battle {
       if (u.guard) this.shieldMark(u);
     });
 
+    // premier plan, devant les combattants (assombri lui aussi pendant la mise en scène)
+    for (const l of layers) {
+      if (!l.front) continue;
+      this.layer(l, fstep, t);
+      if (this.dark) {
+        g.globalAlpha = this.dark * 0.07;
+        g.drawImage(l.shade, this.layerX(l), 0);
+        g.globalAlpha = 1;
+      }
+    }
+
     if (a && a.alive && !this.over) this.chevron(a, step, a.side === 'h' ? '#fbe08a' : '#e2334a');
     if (this.targeting) for (const u of this.targeting) if (u.alive) this.reticle(u, step);
 
@@ -151,7 +167,7 @@ export class Battle {
     if (t - this.flashT < 70) {
       g.globalAlpha = 0.35;
       g.fillStyle = WHITE;
-      g.fillRect(0, 0, this.W, H);
+      g.fillRect(0, 0, this.W, this.H);
       g.globalAlpha = 1;
     }
     this.floats = this.floats.filter((fl) => t - fl.t0 < 760);
@@ -160,6 +176,22 @@ export class Battle {
       drawText(g, fl.txt, fl.x - (textWidth(fl.txt) >> 1), fl.y - rise, fl.color);
     }
     this.raf = requestAnimationFrame((tt) => this.draw(tt));
+  }
+
+  // Un plan du décor, décalé selon sa profondeur : le sol (d = 1) ne bouge pas,
+  // le lointain suit la caméra, le premier plan file en sens inverse.
+  layerX(l) {
+    return Math.round(this.pan * (l.d - 1)) - LAYER_M;
+  }
+
+  layer(l, fstep, t) {
+    const g = this.g, x = this.layerX(l);
+    g.drawImage(l.canvas, x, 0);
+    if (!l.anim) return;
+    g.save();
+    g.translate(x, 0);
+    l.anim(g, fstep, l.lw, this.H, t);
+    g.restore();
   }
 
   // Fait avancer la mise en scène par paliers de 2 px, puis assombrit le décor
@@ -174,11 +206,12 @@ export class Battle {
         u.sx = u.sx0 + u.fx;
       }
       if (this.dark !== this.darkT) this.dark += Math.sign(this.darkT - this.dark);
+      if (this.pan !== this.panT) this.pan += Math.sign(this.panT - this.pan);
     }
     if (!this.dark) return;
     g.globalAlpha = this.dark * 0.07;
     g.fillStyle = OUTLINE;
-    g.fillRect(0, 0, this.W, H);
+    g.fillRect(0, 0, this.W, this.H);
     const f = this.focus;
     if (!f || !f.alive) {
       g.globalAlpha = 1;
@@ -270,14 +303,16 @@ export class Battle {
   setFocus(u) {
     this.focus = u;
     this.darkT = u ? DARK_MAX : 0;
+    // la caméra se tourne vers lui : vers la gauche pour un héros, la droite pour un ennemi
+    this.panT = !u ? 0 : u.side === 'h' ? PAN : -PAN;
     const dir = u?.side === 'h' ? 1 : -1;
     const front = u && Math.max(...this.alive(u.side).map((v) => v.cx0 * dir)) * dir;
     for (const v of [...this.heroes, ...this.enemies]) {
       v.fxT = !u ? 0 : v === u ? front + STEP_IN * dir - v.cx0 : v.side === u.side ? -STEP_BACK * dir : 0;
     }
-    // la caméra dézoome, puis vise celui qui s'avance
+    // la caméra dézoome, puis vise celui qui s'avance ; ancrée sur le bas pour garder les barres de vie à l'écran
     this.cam.zT = 1;
-    this.cam.next = u ? [u.cx0 + u.fxT, u.by - (u.bm.h >> 1)] : null;
+    this.cam.next = u ? [u.cx0 + u.fxT, this.H - 4] : null;
     if (u) this.puffs.push({ x: u.cx, y: u.by, dir: u.side === 'h' ? 1 : -1, t0: performance.now() });
   }
 
@@ -371,7 +406,7 @@ export class Battle {
   tap(ev) {
     if (!this.targeting || !this.onTargetTap) return;
     const r = this.canvas.getBoundingClientRect();
-    const x = ((ev.clientX - r.left) / r.width) * this.W, y = ((ev.clientY - r.top) / r.height) * H;
+    const x = ((ev.clientX - r.left) / r.width) * this.W, y = ((ev.clientY - r.top) / r.height) * this.H;
     const hit = this.targeting.find((u) => u.alive && x >= u.sx - 6 && x <= u.sx + u.bm.w + 6 && y >= u.sy - 8 && y <= u.by + 8);
     if (hit) this.onTargetTap(hit);
   }
