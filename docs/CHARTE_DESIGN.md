@@ -188,6 +188,16 @@ Dans le code : `paintWood` (boutons et cadres, repeints dès que leur taille ou 
 change) et `paintSign` (plaques) dans `js/main.js` ; les couleurs d'écriture sont regroupées à la
 fin de `css/style.css` (« une règle pour toutes les pancartes »).
 
+## 5 ter. Tableaux de pancartes (options, rejouer)
+
+Pas de fenêtre posée par-dessus l'écran : **tout ce qui est à l'écran tombe**, puis les
+pancartes tombent du ciel et se **clouent en grille un peu de travers** (décalées et penchées
+différemment, jamais alignées), avec un ruban de titre. Toucher une pancarte la fait éclater ;
+toucher à côté (ou « Fermer ») fait éclater le tableau, et l'écran retombe à sa place.
+Fonctions : `openBoard`, `closeBoard`, `explodeSigns` (`js/main.js`).
+
+De même, des pancartes ouvertes (Équipe) **éclatent** quand on touche à côté.
+
 ## 6. Plaques d'information
 
 Les informations (taux, compteurs, descriptions) vont sur une **plaque de bois** qui suit la

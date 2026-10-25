@@ -109,7 +109,6 @@ const toArt = (c, w, ev) => {
 $$('.coin').forEach((s) => s.appendChild(spriteCanvas('coin', coinSprite, 2)));
 $('#btn-options').appendChild(icon('gear'));
 $('#btn-daily').appendChild(icon('chest'));
-$('#go-replay').appendChild(icon('scroll'));
 
 // ---------------------------------------------------------------- pièces et transitions
 
@@ -325,7 +324,6 @@ function towerKeys() {
 }
 
 function renderCamp() {
-  $('#go-replay').classList.toggle('hidden', state.best === 0);
   $('#btn-daily').classList.toggle('hidden', state.lastDaily === today());
   campRibbon();
   requestAnimationFrame(() => layoutCamp());
@@ -345,7 +343,7 @@ function campItems() {
   if (campMode === 'story') {
     const next = stage(state.best + 1);
     const items = [{ ico: 'fight', mg: '#ff8a4a', label: 'Combattre', sub: `Étape ${next.n}${next.boss ? ' · Boss' : ''}`, showSub: true, go: () => enterDoor() }];
-    if (state.best > 0) items.push({ ico: 'scroll', mg: '#d8c8b0', label: 'Rejouer', sub: 'une étape gagnée', showSub: true, go: () => $('#go-replay').onclick() });
+    if (state.best > 0) items.push({ ico: 'scroll', mg: '#d8c8b0', label: 'Rejouer', sub: 'une étape gagnée', showSub: true, go: () => openReplay() });
     return items;
   }
   if (campMode === 'endless') {
@@ -395,14 +393,7 @@ function layoutCamp(enter = 'fan') {
 
 // Les pancartes du camp explosent en copeaux, puis les nouvelles tombent du ciel.
 function swapCampSigns() {
-  const m = $('#c-menu'), WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
-  [...m.querySelectorAll('.act')].forEach((a, i) => {
-    const r = a.getBoundingClientRect();
-    fx(Array.from({ length: 14 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2.5, 2.5), vy: rr(-3.5, -0.5), g: 0.25, life: rr(20, 34) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
-    a.animate([{ scale: 1, filter: 'brightness(1)' }, { scale: 1.12, filter: 'brightness(2)', offset: 0.3 }, { scale: 0.3, opacity: 0 }], { duration: 260, delay: i * 50, easing: 'steps(5, end)', fill: 'forwards' });
-  });
-  sfx('wood');
-  haptic(12);
+  explodeSigns($('#c-menu'));
   setTimeout(() => {
     campRibbon();
     layoutCamp('drop');
@@ -594,24 +585,6 @@ async function enterDoor(st = null) {
   await fade(false);
 }
 
-$('#go-replay').onclick = () => {
-  const box = el('div');
-  box.appendChild(el('div', 'big-title', 'Rejouer'));
-  const list = el('div', 'stage-list');
-  for (let n = state.best; n >= 1; n--) {
-    const st = stage(n);
-    const b = el('button', 'btn' + (st.boss ? ' red' : ''), `${n}${st.boss ? ' boss' : ''}`);
-    b.onclick = async () => {
-      closeModal(false);
-      await fade(true);
-      startBattle(n);
-      await fade(false);
-    };
-    list.appendChild(b);
-  }
-  box.appendChild(list);
-  modal(box, [['Fermer', closeModal]]);
-};
 $('#btn-daily').onclick = () => {
   state.lastDaily = today();
   state.gold += DAILY_GOLD;
@@ -619,25 +592,105 @@ $('#btn-daily').onclick = () => {
   sfx('coin');
   modal(el('div', '', `<div class="big-title">Coffre du jour</div><p style="text-align:center">+${DAILY_GOLD} or</p>`), [['Merci !', closeModal]]);
 };
-$('#btn-options').onclick = () => {
-  const box = el('div');
-  box.appendChild(el('div', 'big-title', 'Options'));
-  const row = el('div', 'row');
-  const tog = (label, key, apply) => {
-    const b = el('button', 'btn', `${label} : ${state[key] ? 'oui' : 'non'}`);
-    b.onclick = () => {
-      state[key] = !state[key];
-      apply(state[key]);
-      save();
-      b.textContent = `${label} : ${state[key] ? 'oui' : 'non'}`;
-    };
-    return b;
-  };
-  row.append(tog('Sons', 'sound', setSound), tog('Vibration', 'haptics', setHaptics));
-  box.appendChild(row);
-  box.appendChild(el('p', 'muted', 'La vibration ne marche pas sur iPhone depuis iOS 26.5 (bloquée par Apple pour les sites web).'));
-  modal(box, [['Effacer la partie', () => ask('Tout effacer et recommencer ?', () => { resetSave(); show('camp'); }), 'red'], ['Fermer', closeModal]]);
-};
+// ---- tableau de pancartes (options, rejouer une étape)
+// Tout ce qui est à l'écran tombe, puis des pancartes tombent du ciel et se clouent en grille un
+// peu de travers. Toucher à côté (ou « Fermer ») : elles éclatent et le camp retombe à sa place.
+const CAMP_UI = '#scr-camp .tb-right > *:not(.hidden), #door-sign, #c-modes, #c-menu .act, #nav-hints .edge:not(.hidden), #nav-hints .dots';
+let boardOpen = false;
+
+// Les pancartes d'un élément éclatent en copeaux.
+function explodeSigns(m) {
+  const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
+  [...m.querySelectorAll('.act')].forEach((a, i) => {
+    const r = a.getBoundingClientRect();
+    fx(Array.from({ length: 14 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2.5, 2.5), vy: rr(-3.5, -0.5), g: 0.25, life: rr(20, 34) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+    a.animate([{ scale: 1, filter: 'brightness(1)' }, { scale: 1.12, filter: 'brightness(2)', offset: 0.3 }, { scale: 0.3, opacity: 0 }], { duration: 260, delay: i * 50, easing: 'steps(5, end)', fill: 'forwards' });
+  });
+  sfx('wood');
+  haptic(12);
+}
+
+// Place les pancartes en grille (cols colonnes), chacune décalée et penchée un peu au hasard.
+function boardItems(items, cols) {
+  const rows = Math.ceil(items.length / cols), cw = Math.min(250, (innerWidth - 80) / cols), rh = Math.min(84, (innerHeight - 150) / rows);
+  const x0 = innerWidth / 2 - (cols * cw) / 2 + 12, y0 = (70 + innerHeight) / 2 - ((rows - 1) * rh) / 2;
+  const JX = [10, -14, 6, -6, 16, -10, 4, -16, 12], JY = [-6, 8, 4, -8, 6, -4, 10, -2, -6], JT = [-5, 4, 7, -3, -6, 5, 3, -7, 6];
+  return items.map((it, i) => ({ ...it, at: [Math.round(x0 + (i % cols) * cw + JX[i % 9]), Math.round(y0 + Math.floor(i / cols) * rh + JY[i % 9]), JT[i % 9]] }));
+}
+
+function openBoard(title, items, cols = 2) {
+  const m = $('#board');
+  if (!boardOpen) {
+    boardOpen = true;
+    // tout le camp tombe
+    $$(CAMP_UI).forEach((e, i) => e.animate([{ translate: getComputedStyle(e).translate }, { translate: '0 120vh', rotate: i % 2 ? '12deg' : '-10deg' }], { duration: 420, delay: (i % 6) * 40, easing: 'steps(7, end)', fill: 'forwards' }));
+    sfx('swipe');
+    setTimeout(() => $('#scr-camp').classList.add('boarded'), 440);
+    $('#board-veil').classList.remove('hidden');
+  } else explodeSigns(m);
+  setTimeout(() => {
+    layoutSigns(m, null, boardItems(items, cols), 0, 0, 0, 0, 'board', 'drop');
+    const t = el('div', 'board-title ribbon', title);
+    m.prepend(t);
+    t.animate([{ translate: '-50% -120vh' }, { translate: '-50% 6px', offset: 0.8 }, { translate: '-50% 0' }], { duration: 420, easing: 'steps(7, end)', fill: 'backwards' });
+    setTimeout(() => { sfx('thud'); haptic(15); }, 520);
+  }, boardOpen && m.children.length ? 300 : 360);
+}
+
+function closeBoard() {
+  if (!boardOpen) return;
+  boardOpen = false;
+  const m = $('#board');
+  explodeSigns(m);
+  $('#board-veil').classList.add('hidden');
+  setTimeout(() => {
+    m.classList.add('hidden');
+    m.innerHTML = '';
+    $('#scr-camp').classList.remove('boarded');
+    // le camp retombe du ciel à sa place
+    $$(CAMP_UI).forEach((e, i) => {
+      e.getAnimations().forEach((a) => a.cancel());
+      if (!e.closest('#c-menu')) e.animate([{ translate: '0 -120vh' }, { translate: '0 6px', offset: 0.8 }, { translate: '0 0' }], { duration: 420, delay: (i % 6) * 40, easing: 'steps(7, end)', fill: 'backwards', composite: 'add' });
+    });
+    renderCamp();
+    requestAnimationFrame(() => layoutCamp('drop'));
+  }, 300);
+}
+
+function openOptions() {
+  const on = (k) => (state[k] ? 'activés' : 'coupés');
+  openBoard('Options', [
+    { ico: 'auto', mg: '#ffd86a', label: 'Sons', sub: on('sound'), showSub: true, go: () => { state.sound = !state.sound; setSound(state.sound); save(); openOptions(); } },
+    { ico: 'auto', mg: '#5ae0ee', label: 'Vibration', sub: `${state.haptics ? 'activée' : 'coupée'} · pas sur iPhone récent`, showSub: true, go: () => { state.haptics = !state.haptics; setHaptics(state.haptics); save(); openOptions(); } },
+    { ico: 'cancel', mg: '#ff6a6a', label: 'Effacer', sub: 'toute la partie', showSub: true, go: () => openBoard('Tout effacer ?', [
+      { ico: 'cancel', mg: '#ff6a6a', label: 'Oui', sub: 'recommencer à zéro', showSub: true, go: () => { closeBoard(); resetSave(); show('camp'); } },
+      { ico: 'back', mg: '#d8c8b0', label: 'Non', sub: 'garder ma partie', showSub: true, go: openOptions },
+    ]) },
+    { ico: 'back', mg: '#d8c8b0', label: 'Fermer', go: closeBoard },
+  ]);
+}
+
+// Rejouer une étape gagnée : 6 étapes par page, de la plus récente à la plus ancienne.
+let replayPage = 0;
+function openReplay(page = 0) {
+  replayPage = page;
+  const top = state.best - page * 6, items = [];
+  for (let n = top; n > Math.max(0, top - 6); n--) {
+    const st = stage(n);
+    items.push({ ico: st.boss ? 'fight' : 'scroll', mg: st.boss ? '#ff6a6a' : '#ffd86a', label: `Étape ${n}`, sub: `${st.chapter.name}${st.boss ? ' · Boss' : ''}`, showSub: true, go: async () => {
+      closeBoard();
+      await wait(320);
+      enterDoor(stage(n));
+    } });
+  }
+  if (top - 6 > 0) items.push({ ico: 'speed', mg: '#c08aff', label: 'Plus anciennes', sub: `étapes ${Math.max(1, top - 11)} à ${top - 6}`, showSub: true, go: () => openReplay(page + 1) });
+  if (page > 0) items.push({ ico: 'back', mg: '#c08aff', label: 'Plus récentes', go: () => openReplay(page - 1) });
+  items.push({ ico: 'back', mg: '#d8c8b0', label: 'Fermer', go: closeBoard });
+  openBoard('Rejouer une étape', items, 3);
+}
+$('#btn-options').onclick = openOptions;
+$('#board-veil').addEventListener('pointerdown', (e) => { e.stopPropagation(); closeBoard(); });
+
 
 // ---------------------------------------------------------------- cartes
 
@@ -766,6 +819,7 @@ function selectHero(id, from) {
   sfx('hover');
   haptic(5);
   if (!same) renderTeam();
+  else if ($('#t-menu').classList.contains('hidden')) heroSigns();
 }
 
 // Socle i : position sur l'ellipse du carrousel.
@@ -1786,6 +1840,8 @@ function startBattle(n, carry = null) {
     ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
   });
+  battle.speed = state.battleSpeed || 1;
+  battle.auto = !!state.battleAuto;
   setTools();
   queueSig = '';
   clearInterval(queueTimer);
@@ -1800,20 +1856,27 @@ function setTools() {
     s.append(icon('speed'), el('span', 'tag', '×1'));
     f.append(icon('flee'), el('span', 'tag', 'Fuir'));
   }
-  a.classList.toggle('on', !!battle?.auto);
-  a.querySelector('.tag').textContent = battle?.auto ? 'Auto : oui' : 'Auto';
+  const on = battle?.over ? !!state.battleAuto : !!battle?.auto;
+  a.classList.toggle('on', on);
+  a.querySelector('.tag').textContent = on ? 'Auto : oui' : 'Auto';
   s.querySelector('.tag').textContent = '×' + (battle?.speed || 1);
 }
 
+// Auto et vitesse sont gardés d'un combat à l'autre (et sauvegardés).
 $('#b-auto').onclick = () => {
-  if (!battle || battle.over) return;
+  if (!battle) return;
+  if (battle.over) return endAutoToggle();
   battle.targeting = null;
   battle.setAuto(!battle.auto);
+  state.battleAuto = battle.auto;
+  save();
   setTools();
 };
 $('#b-speed').onclick = () => {
   if (!battle) return;
   battle.speed = battle.speed === 1 ? 2 : 1;
+  state.battleSpeed = battle.speed;
+  save();
   setTools();
 };
 $('#b-flee').onclick = () => {
@@ -1876,10 +1939,12 @@ function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '', ente
   items.forEach((it, i) => {
     // messy : pancartes clouées en désordre (décalées et penchées un peu au hasard, toujours pareil)
     const messy = cls.includes('messy'), jx = messy ? [14, -10, 22, -4, 16, -12][i % 6] : 0, jt = messy ? [-5, 6, -3, 7, -6, 4][i % 6] : 0;
-    const a = (i - (n - 1) / 2) * step, x = Math.round(hx + R * Math.cos(a)) + jx, y = Math.round(cy + R * Math.sin(a));
+    // it.at = [x, y, inclinaison] : position imposée (tableau de pancartes)
+    const a = it.at ? 0 : (i - (n - 1) / 2) * step;
+    const x = it.at ? it.at[0] : Math.round(hx + R * Math.cos(a)) + jx, y = it.at ? it.at[1] : Math.round(cy + R * Math.sin(a));
     const row = el('div', 'act' + (it.cd || it.off ? ' off' : '') + (it.showSub ? ' sub' : ''), '<span class="motes"><i></i><i></i></span>');
     if (it.mg) row.style.setProperty('--mg', it.mg);
-    row.style.setProperty('--tilt', (a * 7 + jt).toFixed(1) + 'deg');
+    row.style.setProperty('--tilt', (it.at ? it.at[2] : a * 7 + jt).toFixed(1) + 'deg');
     row.style.left = x + 'px';
     row.style.top = y + 'px';
     row.appendChild(icon(it.ico));
@@ -2107,6 +2172,14 @@ attachSigns($('#s-menu'));
 attachSigns($('#t-menu'));
 attachSigns($('#b-end-menu'));
 attachSigns($('#c-menu'));
+attachSigns($('#board'));
+// Équipe : toucher à côté des pancartes du héros les fait éclater
+$('#scr-team').addEventListener('pointerdown', (e) => {
+  const m = $('#t-menu');
+  if (teamMode || teamDrag || m.classList.contains('hidden') || e.target.closest('#t-menu, .r-sign, .t-slot, #t-skins')) return;
+  explodeSigns(m);
+  setTimeout(() => m.classList.add('hidden'), 300);
+});
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {
@@ -2215,6 +2288,9 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   const end = $('#b-end'), veil = $('#b-veil'), pl = $('#b-plaque');
   pl.innerHTML = '';
   pl.className = win ? 'win' : 'lose';
+  $('#scr-battle').classList.add('ending'); // outils (Auto, vitesse) au-dessus du voile
+  endNext = signs[0];
+  setTools();
   end.dataset.res = win ? 'win' : 'lose'; // lueur dorée (victoire) ou rouge (défaite) autour de la pile
   const heroes = battle ? battle.heroes : [];
 
@@ -2361,10 +2437,44 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
     sfx('thud');
     $('#scr-battle').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -3 : 3}px` })), { duration: 160, easing: 'steps(5, end)' });
     layoutSigns($('#b-end-menu'), null, signs, r.right - 60, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
+    endAutoStart(win);
   }, 540);
 }
 
+// Fin de combat en mode auto : on relance tout seul (victoire), avec un compte à rebours ;
+// toucher Auto sur l'écran de fin le coupe, ou le rallume et relance aussitôt.
+let endNext = null, endTimer = 0;
+function endAutoStart(win) {
+  clearInterval(endTimer);
+  if (!state.battleAuto || !win || !endNext || endNext.off) return;
+  let n = 3;
+  const tick = () => {
+    if (n === 0) {
+      clearInterval(endTimer);
+      return endNext && endNext.go();
+    }
+    $('#b-log').textContent = `Auto : relance dans ${n}…`;
+    n--;
+  };
+  tick();
+  endTimer = setInterval(tick, 900 / (state.battleSpeed || 1));
+}
+function endAutoToggle() {
+  state.battleAuto = !state.battleAuto;
+  save();
+  setTools();
+  clearInterval(endTimer);
+  if (state.battleAuto && endNext && !endNext.off) {
+    $('#b-log').textContent = 'Auto : relance !';
+    sfx('select');
+    endNext.go();
+  } else $('#b-log').textContent = state.battleAuto ? 'Auto activé' : 'Auto coupé';
+}
+
 function hideEnd() {
+  clearInterval(endTimer);
+  endNext = null;
+  $('#scr-battle').classList.remove('ending');
   $('#b-end').classList.add('hidden');
   $('#b-end-menu').classList.add('hidden');
   $('#b-veil').style.opacity = 0;

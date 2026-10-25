@@ -124,6 +124,11 @@ mode infini rapporte de l'or et de l'XP.
 - Ennemis : Slime, Gobelin, Squelette — variantes = même dessin, autre palette.
 - Les ennemis gagnent +10 % de stats par étape.
 
+**Auto et vitesse** sont conservés d'un combat à l'autre (et sauvegardés). Sur l'écran de fin,
+les outils restent accessibles : toucher Auto le rallume et relance aussitôt (étape suivante,
+réessayer, recommencer, vague suivante) ; si Auto est déjà actif, une victoire relance toute
+seule après un compte à rebours de 3 (jamais après une défaite, pour ne pas perdre en boucle).
+
 ## 7 bis. Modes de jeu
 
 Derrière la porte du camp, trois modes. On passe de l'un à l'autre en **faisant glisser la porte

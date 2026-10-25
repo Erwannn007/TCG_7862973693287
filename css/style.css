@@ -488,8 +488,6 @@ small { font-size: 12px; }
 #modal-box .row .btn { flex: 1; }
 .big-title { font: 700 32px/1.1 'Pixelify', monospace; text-align: center; color: #8a1a28; text-shadow: 2px 2px 0 #e8b0a0; }
 .big-title.lose { color: #4a2e1c; }
-.stage-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.stage-list .btn { font-size: 14px; padding: 0 4px; }
 
 #reveal-grid { display: grid; gap: 12px 10px; }
 #reveal-grid.grid1 { grid-template-columns: 172px; }
@@ -571,3 +569,15 @@ small { font-size: 12px; }
 .end-row, .end-lvl, #t-skins .sk-row { box-shadow: inset 2px 2px 0 rgba(14, 8, 11, .45), inset -1px -1px 0 rgba(255, 220, 160, .15); }
 .end-row.mvp { box-shadow: inset 0 0 0 2px #e0a93a, 3px 3px 0 rgba(14, 8, 11, .5); }
 #t-skins .sk-row.on { box-shadow: inset 0 0 0 2px #ff8ad8, 0 0 6px #ff8ad8; }
+
+/* tableau de pancartes (options, rejouer) : le camp est tombé, les pancartes sont clouées en grille */
+#board-veil { position: absolute; inset: 0; z-index: 5; }
+#board { z-index: 6; }
+#board .act { width: 210px; }
+#board .act.hot { width: 250px; }
+.board-title { position: absolute; left: 50vw; top: calc(var(--safe-t) + 14px); translate: -50% 0; font-size: 18px; z-index: 2; }
+#scr-camp.boarded :is(.tb-right > *, #door-sign, #c-modes, #c-menu) { visibility: hidden; }
+#scr-camp.boarded ~ #nav-hints, body:has(#scr-camp.boarded) #nav-hints { visibility: hidden; }
+/* fin de combat : les outils restent au-dessus du voile, pour garder Auto et la vitesse */
+#scr-battle.ending #b-top, #scr-battle.ending #b-log { z-index: 7; }
+
