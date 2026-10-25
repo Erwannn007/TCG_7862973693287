@@ -222,12 +222,10 @@ small { font-size: 12px; }
   filter: drop-shadow(0 0 6px #ffd86a); animation: wobble .5s steps(1) infinite;
 }
 @keyframes wobble { 0% { rotate: -4deg; } 50% { rotate: 4deg; } }
-/* héros au premier plan : la salle s'assombrit (dessinée dans le canvas), l'interface autour aussi ;
-   un voile invisible attrape le toucher pour le renvoyer à sa place */
-#t-veil { position: absolute; inset: 0; z-index: 3; display: none; }
-#scr-team.focus #t-veil { display: block; }
-#scr-team.focus #t-roster { filter: brightness(.4); }
-#scr-team.focus #t-slots, #scr-team.focus #t-hint { visibility: hidden; }
+/* carrousel : au fond, seul le numéro reste, plus petit et plus sombre */
+.t-slot.back .cap { display: none; }
+.t-slot.back .num { scale: .85; filter: brightness(.6); }
+.t-slot.back.empty .cap { display: block; filter: brightness(.6); }
 .r-sign .r-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .r-sign .badge { top: -6px; right: -6px; }
 .r-sign .badge.team { left: -6px; right: auto; }
