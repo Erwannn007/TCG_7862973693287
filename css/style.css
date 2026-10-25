@@ -210,15 +210,20 @@ small { font-size: 12px; }
 .d-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
 .d-actions .btn { flex: 1; }
 
-/* invocation : le cristal dans sa salle à gauche, le parchemin à droite */
-#summon-info {
-  position: absolute; z-index: 1; top: 60px; bottom: 34px; right: var(--safe-r); width: min(48%, 400px);
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
+/* invocation : même langage que le combat — pancartes en arc autour du cristal,
+   plaque d'informations en bois qui flotte en haut à droite, voile sombre pendant le rituel */
+#s-info {
+  position: absolute; z-index: 2; top: calc(var(--safe-t) + 50px); right: var(--safe-r); width: 264px;
+  display: flex; flex-direction: column; gap: 3px; padding: 12px 18px 14px;
+  font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  background: no-repeat center; image-rendering: pixelated;
+  animation: levitate 2.2s steps(1) infinite;
 }
-.lineup { display: flex; gap: 6px; justify-content: center; margin: 4px 0 8px; }
-.rate { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0; }
-.pull-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-.pull-row .btn { flex-direction: column; gap: 0; }
+#s-info .h { margin-bottom: 0; }
+#s-info .muted { color: #e8d4a4; font-size: 12px; }
+#s-veil { position: absolute; inset: 0; z-index: 3; background: #0e080b; opacity: 0; pointer-events: none; }
+.lineup { display: flex; gap: 4px; justify-content: center; margin: 2px 0 4px; }
+.rate { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 /* ================================================================ combat */
 #scr-battle { background: #0e080b; display: flex; align-items: center; justify-content: center; }
@@ -244,19 +249,20 @@ small { font-size: 12px; }
   min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 0 6px;
 }
 
-/* menu d'actions : des pancartes en bois disposées en arc autour du héros (positions posées en JS).
+/* pancartes d'action : en bois, disposées en arc autour du héros ou du cristal (positions posées en JS).
    On glisse le doigt dessus : celle qui est visée se redresse, grossit et suit un peu le doigt ;
    on relâche pour la choisir. */
-#b-menu { position: absolute; left: 0; top: 0; z-index: 4; touch-action: none; }
-#b-menu.chosen { pointer-events: none; }
-#b-menu .m-title {
+/* .signs : conteneur de pancartes (combat : #b-menu, invocation : #s-menu) */
+.signs { position: absolute; left: 0; top: 0; z-index: 4; touch-action: none; }
+.signs.chosen { pointer-events: none; }
+.signs .m-title {
   position: absolute; translate: 0 -100%; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
   border: 6px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 6px stretch;
   animation: pop .2s steps(3) backwards;
 }
 @keyframes pop { 0% { scale: .4; opacity: 0; } 50% { scale: 1.15; } }
 /* pancartes : l'image est dessinée par js/ui-art.js à la taille du bouton (voir paintSign) */
-#b-menu .act {
+.signs .act {
   --mg: #f2e2b8; --px: 0px; --py: 0px;
   position: absolute; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 8px 18px;
   font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
@@ -264,47 +270,49 @@ small { font-size: 12px; }
   translate: var(--px) calc(-50% + var(--py)); rotate: var(--tilt, 0deg);
   animation: levitate 1.6s steps(1) infinite, aura 1.6s steps(1) infinite;
 }
-#b-menu .act:nth-of-type(2) { animation-delay: -.53s; }
-#b-menu .act:nth-of-type(3) { animation-delay: -1.06s; }
-#b-menu .act:nth-of-type(4) { animation-delay: -.8s; }
+.signs .act:nth-of-type(2) { animation-delay: -.53s; }
+.signs .act:nth-of-type(3) { animation-delay: -1.06s; }
+.signs .act:nth-of-type(4) { animation-delay: -.8s; }
 /* quand une pancarte est visée, les autres s'effacent un peu */
-#b-menu.picking .act:not(.hot) { opacity: .82; scale: .94; }
+.signs.picking .act:not(.hot) { opacity: .82; scale: .94; }
 /* reflet discret : une bande claire à bords nets traverse la pancarte, puis longue pause */
-#b-menu .act::before {
+.signs .act::before {
   content: ''; position: absolute; inset: 6px; z-index: 1; pointer-events: none;
   background: linear-gradient(110deg, transparent 42%, rgba(255, 250, 220, .16) 42%, rgba(255, 250, 220, .16) 47%, transparent 47%) 160% 0 / 300% 100% no-repeat;
   animation: shine 5s steps(1) infinite; animation-delay: inherit;
 }
-#b-menu .act > canvas, #b-menu .act > span:not(.motes) { position: relative; z-index: 2; }
-#b-menu .act > canvas { filter: drop-shadow(0 0 2px var(--mg)); }
+.signs .act > canvas, .signs .act > span:not(.motes) { position: relative; z-index: 2; }
+.signs .act > canvas { filter: drop-shadow(0 0 2px var(--mg)); }
 /* étincelles : deux petits carrés de 2 px qui montent et clignotent */
-#b-menu .motes { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
-#b-menu .motes i {
+.signs .motes { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.signs .motes i {
   position: absolute; bottom: 4px; width: 2px; height: 2px; background: #fff;
   box-shadow: 0 0 2px 1px var(--mg); opacity: 0; animation: mote 2.8s steps(1) infinite;
 }
-#b-menu .motes i:nth-child(1) { left: 18%; animation-delay: -.2s; }
-#b-menu .motes i:nth-child(2) { left: 74%; animation-delay: -1.5s; }
-#b-menu .motes i:nth-child(n + 3) { display: none; }
-#b-menu .act.hot {
+.signs .motes i:nth-child(1) { left: 18%; animation-delay: -.2s; }
+.signs .motes i:nth-child(2) { left: 74%; animation-delay: -1.5s; }
+.signs .motes i:nth-child(n + 3) { display: none; }
+.signs .act.hot {
   width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
   translate: calc(6px + var(--px)) calc(-50% + var(--py)); rotate: 0deg; z-index: 2;
   --mg: #ffd86a;
   animation: levitate 1.6s steps(1) infinite, aura-hot .8s steps(1) infinite;
 }
-#b-menu .act.hot::before { animation-duration: 1.6s; }
-#b-menu .act.hot .motes i { animation-duration: 1.4s; background: #fff8d0; }
-#b-menu .act.hot canvas { width: 42px !important; height: 42px !important; }
-#b-menu .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
-#b-menu .act.off .motes, #b-menu .act.off::before { display: none; }
-#b-menu .act small { display: none; font-size: 12px; font-weight: 400; }
-#b-menu .act.hot small { display: block; color: #5a3a22; }
-#b-menu .cd {
+.signs .act.hot::before { animation-duration: 1.6s; }
+.signs .act.hot .motes i { animation-duration: 1.4s; background: #fff8d0; }
+.signs .act.hot canvas { width: 42px !important; height: 42px !important; }
+.signs .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
+.signs .act.off .motes, .signs .act.off::before { display: none; }
+.signs .act small { display: none; font-size: 12px; font-weight: 400; }
+/* sub : le sous-titre (prix…) reste affiché même quand la pancarte n'est pas visée */
+.signs .act.sub small { display: block; color: #e8d4a4; }
+.signs .act.hot small { display: block; color: #5a3a22; }
+.signs .cd {
   position: absolute; right: 2px; top: -4px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
   background: var(--line); box-shadow: 0 0 0 2px #8a8088;
 }
 /* particules en pixels (traînée du doigt, éclats de bois) au-dessus de l'interface de combat */
-#fx { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
+#fx { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 11; pointer-events: none; }
 
 /* ================================================================ surcouches */
 .overlay {
@@ -327,13 +335,13 @@ small { font-size: 12px; }
 #reveal-grid .card { font-size: 14px; }
 #reveal-grid .card .pedestal { min-height: 60px; }
 .card.back {
-  min-height: 120px;
-  background: #3a2618 repeating-conic-gradient(#4a2e1c 0 25%, #3a2618 0 50%) 0 0 / 8px 8px;
+  min-height: 120px; justify-content: center; border-image: none; background: no-repeat center; image-rendering: pixelated;
 }
-#reveal-grid.grid10 .card.back { min-height: 104px; }
-.card.back.b-R { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--R), 0 3px 0 var(--line); }
-.card.back.b-L { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--gold-hi), 0 3px 0 var(--line); background-color: #8a5a1a; }
-.card.back.blink { background: var(--cream); }
+#reveal-grid.grid10 .card.back { min-height: 131px; }
+.card.back canvas { box-shadow: none; filter: drop-shadow(0 0 3px #c08aff); }
+.card.back.b-R { filter: drop-shadow(0 0 4px var(--R)); }
+.card.back.b-L { filter: drop-shadow(0 0 6px var(--gold-hi)); }
+.card.back.blink { filter: brightness(1.8); }
 .card.flash-L { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--L), 0 0 0 4px var(--gold-hi); }
 .card.flash-R { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--R), 0 0 0 4px var(--R); }
 

@@ -142,7 +142,7 @@ function renderRoom(name) {
 let moving = false;
 async function goRoom(dir) {
   const i = ROOMS.indexOf(screen), j = i + dir;
-  if (moving || i < 0 || j < 0 || j >= ROOMS.length) return;
+  if (moving || summoning || i < 0 || j < 0 || j >= ROOMS.length) return;
   moving = true;
   const from = $('#scr-' + screen), name = ROOMS[j], to = $('#scr-' + name);
   renderRoom(name);
@@ -202,7 +202,7 @@ async function fade(to) {
 // Balayage au doigt (ou à la souris) sur les pièces.
 let swipe = null, swallowClick = false;
 addEventListener('pointerdown', (e) => {
-  if (!ROOMS.includes(screen) || moving || overlayOpen()) return;
+  if (!ROOMS.includes(screen) || moving || summoning || overlayOpen()) return;
   swipe = { x: e.clientX, y: e.clientY, t: performance.now() };
 }, { passive: true });
 addEventListener('pointerup', (e) => {
@@ -266,9 +266,36 @@ function drawCampLife(g) {
 
 function drawAltar(g) {
   const crystal = bitmap('crystal', crystalSprite);
-  const cy = 56 - (roomStep % 8 < 4 ? 0 : 1);
+  const cy = 56 - (roomStep % 8 < 4 ? 0 : 1), mx = 96 + (crystal.w >> 1);
+  // rai de lumière qui tombe sur le cristal, élargi par bandes de 4 px (comme en combat)
+  g.fillStyle = '#e8d0ff';
+  g.globalAlpha = altarCharge ? 0.16 : 0.08;
+  for (let y = 0; y < 88; y += 4) {
+    const w = 10 + Math.floor((y / 88) * 8) * 2;
+    g.fillRect(mx - (w >> 1), y, w, 4);
+  }
+  g.globalAlpha = 1;
+  // poussière de magie qui monte autour du cristal
+  for (let i = 0; i < 7; i++) {
+    const t = (roomStep + i * 5) % 24, x = mx - 14 + ((i * 13) % 29) + (t % 4 < 2 ? 0 : 1);
+    if (t < 20) {
+      g.fillStyle = t < 12 ? '#c89af0' : '#7a4ab8';
+      g.fillRect(x, 92 - t * 3, 1, 1);
+    }
+  }
   g.drawImage(crystal.canvas, 96, cy);
   drawFx(g, crystal, 96, cy, roomStep);
+  // pendant le rituel : anneaux de lumière qui partent du cristal, par paliers
+  if (altarCharge) {
+    const cx = 96 + (crystal.w >> 1), cc = cy + (crystal.h >> 1);
+    for (const r of [4 + ((roomStep * 3) % 21), 4 + ((roomStep * 3 + 10) % 21)]) {
+      g.fillStyle = roomStep % 2 ? '#c89af0' : '#ffffff';
+      for (let i = 0; i < 28; i++) {
+        const t = (i / 28) * Math.PI * 2;
+        g.fillRect(Math.round(cx + Math.cos(t) * r), Math.round(cc + Math.sin(t) * r * 0.8), 1, 1);
+      }
+    }
+  }
 }
 
 // Panneau d'affichage en bois sur le mur de gauche.
@@ -510,8 +537,12 @@ async function upgrade(id) {
 
 // ---------------------------------------------------------------- invocation
 
+// Même langage que le combat : deux pancartes en arc autour du cristal (×1, ×10),
+// une plaque de bois avec les taux et la pitié, puis un rituel avant la révélation.
+let summoning = false;
+
 function renderSummon() {
-  const info = $('#summon-info');
+  const info = $('#s-info');
   info.innerHTML = '';
   info.appendChild(el('div', 'h', 'Autel d’invocation'));
   const line = el('div', 'lineup');
@@ -519,23 +550,71 @@ function renderSummon() {
   info.appendChild(line);
   for (const [k, r] of Object.entries(RARITY)) {
     const row = el('div', 'rate');
-    row.appendChild(starsRow(k, 2));
+    row.appendChild(starsRow(k));
     row.appendChild(el('b', '', `${r.name} · ${Math.round(r.rate * 100)} %`));
     info.appendChild(row);
   }
   const left = GACHA.pity - state.pity;
-  info.appendChild(el('p', '', `Légendaire garantie dans <b>${left}</b> invocation${left > 1 ? 's' : ''}`));
+  info.appendChild(el('div', '', `Légendaire garantie dans <b>${left}</b>`));
   info.appendChild(segBar(state.pity / GACHA.pity, 'pity', 20));
-  const row = el('div', 'pull-row');
-  const b1 = el('button', 'btn', `<b>Invoquer ×1</b><small>${GACHA.single} or</small>`);
-  const b10 = el('button', 'btn gold', `<b>Invoquer ×10</b><small>${GACHA.multi} or · 1 Rare min.</small>`);
-  b1.disabled = state.gold < GACHA.single;
-  b10.disabled = state.gold < GACHA.multi;
-  b1.onclick = () => pull(1);
-  b10.onclick = () => pull(10);
-  row.append(b1, b10);
-  info.appendChild(row);
-  info.appendChild(el('p', 'muted', 'Un doublon donne un éclat pour monter de rang.'));
+  info.appendChild(el('div', 'muted', 'Un doublon donne un éclat pour monter de rang.'));
+  // la mise en page dépend du canvas de la salle : on attend qu'elle soit affichée
+  requestAnimationFrame(layoutSummon);
+}
+
+function layoutSummon() {
+  if (screen !== 'summon' && $('#scr-summon').classList.contains('hidden')) return;
+  paintSign($('#s-info'));
+  const c = $('#summon-canvas');
+  if (c.width !== CAMP_W) {
+    c.width = CAMP_W;
+    c.height = SH;
+    fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
+  }
+  const cr = bitmap('crystal', crystalSprite), [x, y] = toScreen(c, CAMP_W, 96 + cr.w / 2, 56 + cr.h / 2);
+  layoutSigns($('#s-menu'), null, [
+    { ico: 'summon', mg: '#c08aff', label: 'Invoquer ×1', sub: `${GACHA.single} or`, showSub: true, off: state.gold < GACHA.single, go: () => ritual(1) },
+    { ico: 'summon', mg: '#ffd86a', label: 'Invoquer ×10', sub: `${GACHA.multi} or · 1 Rare min.`, showSub: true, off: state.gold < GACHA.multi, go: () => ritual(10) },
+  ], x, y, 120, 0.9);
+}
+
+// Rituel : la salle s'assombrit, la magie converge vers le cristal qui charge, la salle tremble,
+// éclair blanc, puis la révélation des cartes.
+let altarCharge = false;
+async function ritual(count) {
+  const cost = count === 1 ? GACHA.single : GACHA.multi;
+  if (summoning || state.gold < cost) return;
+  summoning = true;
+  const sec = $('#scr-summon'), veil = $('#s-veil'), c = $('#summon-canvas');
+  $('#s-menu').classList.add('hidden');
+  const cr = bitmap('crystal', crystalSprite), [cx, cy] = toScreen(c, CAMP_W, 96 + cr.w / 2, 56 + cr.h / 2);
+  for (const o of [0.2, 0.4, 0.55]) {
+    veil.style.opacity = o;
+    await wait(60);
+  }
+  altarCharge = true;
+  sfx('charge');
+  for (let wave = 0; wave < 4; wave++) {
+    fx(Array.from({ length: 14 }, () => {
+      const a = rr(0, Math.PI * 2), d = rr(70, 130), life = rr(18, 26) | 0;
+      return { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, vx: (-Math.cos(a) * d) / life, vy: (-Math.sin(a) * d) / life, g: 0, life, c: Math.random() < 0.3 ? '#ffffff' : count > 1 ? '#fbe08a' : '#c89af0', s: Math.random() < 0.4 ? 2 : 1 };
+    }));
+    haptic(8);
+    await wait(150);
+  }
+  sec.animate(Array.from({ length: 9 }, (_, i) => ({ translate: i === 8 ? '0 0' : `${Math.round(rr(-4, 4))}px ${Math.round(rr(-3, 3))}px` })), { duration: 420, easing: 'steps(9, end)' });
+  sfx('zoom');
+  haptic(40);
+  await wait(300);
+  veil.style.background = '#ffffff';
+  veil.style.opacity = 0.85;
+  sparks(cx, cy, count > 1 ? '#fbe08a' : '#c89af0', 34, 2.2);
+  await wait(80);
+  veil.style.background = '';
+  veil.style.opacity = 0;
+  altarCharge = false;
+  summoning = false;
+  pull(count);
 }
 
 function rollRarity(forceRare) {
@@ -568,6 +647,12 @@ function pull(count) {
   reveal(results);
 }
 
+// Dos de carte : une petite pancarte de bois (dorée pour une Légendaire) frappée du cristal.
+function paintBack(b) {
+  b.style.backgroundImage = signUrl(b.offsetWidth, b.offsetHeight, b.classList.contains('b-L') ? 'hot' : 'normal', b._seed);
+  b.style.backgroundSize = '100% 100%';
+}
+
 // Révélation : dos de carte qui clignote par paliers, puis la face.
 async function reveal(results) {
   const ov = $('#reveal'), grid = $('#reveal-grid'), ok = $('#reveal-ok');
@@ -580,7 +665,10 @@ async function reveal(results) {
   const backs = results.map((r) => {
     // Une Légendaire se cache parfois derrière un dos de Rare.
     const b = el('div', `card back b-${r.rar === 'L' && Math.random() < 0.5 ? 'R' : r.rar}`);
+    b.appendChild(icon('summon', 3));
+    b._seed = results.indexOf(r) + 3;
     grid.appendChild(b);
+    paintBack(b);
     return b;
   });
   for (let i = 0; i < results.length; i++) {
@@ -589,7 +677,10 @@ async function reveal(results) {
       const blinks = r.rar === 'L' ? 8 : r.rar === 'R' ? 4 : 2;
       for (let b = 0; b < blinks && !skip; b++) {
         back.classList.toggle('blink');
-        if (r.rar === 'L' && b === 3) back.className = 'card back b-L blink';
+        if (r.rar === 'L' && b === 3) {
+          back.className = 'card back b-L blink';
+          paintBack(back);
+        }
         sfx('card');
         await wait(110);
       }
@@ -597,6 +688,13 @@ async function reveal(results) {
     const face = card(r.id, { badge: r.isNew ? 'NEW' : '+1', k: results.length > 1 ? 2 : 4 });
     face.classList.add('flash-' + r.rar);
     back.replaceWith(face);
+    // éclat à la révélation, plus fort selon la rareté ; une Légendaire fait trembler l'écran
+    const fr = face.getBoundingClientRect();
+    sparks(fr.left + fr.width / 2, fr.top + fr.height / 2, { C: '#d0d6dc', R: '#7ab0f0', L: '#fbe08a' }[r.rar], { C: 6, R: 14, L: 30 }[r.rar], r.rar === 'L' ? 2 : 1.2);
+    if (r.rar === 'L') {
+      ov.animate(Array.from({ length: 7 }, (_, j) => ({ translate: j === 6 ? '0 0' : `${Math.round(rr(-4, 4))}px ${Math.round(rr(-3, 3))}px` })), { duration: 320, easing: 'steps(7, end)' });
+      haptic(30);
+    }
     if (!skip) {
       sfx(r.rar === 'L' ? 'legend' : r.rar === 'R' ? 'rare' : 'blip');
       await wait(r.rar === 'C' ? 140 : 380);
@@ -715,21 +813,26 @@ function hideMenu() {
   m.innerHTML = '';
 }
 
-// Les pancartes sont posées en arc de cercle autour du héros, un peu inclinées selon leur place.
-const ARC_R = 112, ARC_STEP = 0.72; // rayon (px CSS) et écart entre deux pancartes (radians)
+// Les pancartes sont posées en arc de cercle autour d'un centre (le héros, le cristal),
+// un peu inclinées selon leur place. ARC_STEP : écart entre deux pancartes (radians).
+const ARC_STEP = 0.72;
 
 function buildMenu(u, title, items) {
-  const m = $('#b-menu');
-  m.innerHTML = '';
-  m.className = '';
   // centre de l'arc : le héros, là où il s'arrête une fois avancé
   const [hx, hy] = battle.screenAt(u.cx0 + u.fxT, u.by - u.bm.h / 2);
-  const n = items.length, span = ARC_R * Math.sin((ARC_STEP * (n - 1)) / 2);
+  layoutSigns($('#b-menu'), title, items, hx, hy, 112);
+}
+
+// items : { ico, mg (couleur magique), label, sub, sub always visible si showSub, cd, off, go }
+function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP) {
+  m.innerHTML = '';
+  m.className = 'signs';
+  const n = items.length, span = R * Math.sin((step * (n - 1)) / 2);
   const cy = Math.max(96 + span, Math.min(innerHeight - 40 - span, hy));
   let first = null;
   items.forEach((it, i) => {
-    const a = (i - (n - 1) / 2) * ARC_STEP, x = Math.round(hx + ARC_R * Math.cos(a)), y = Math.round(cy + ARC_R * Math.sin(a));
-    const row = el('div', 'act' + (it.cd ? ' off' : ''), '<span class="motes"><i></i><i></i></span>');
+    const a = (i - (n - 1) / 2) * step, x = Math.round(hx + R * Math.cos(a)), y = Math.round(cy + R * Math.sin(a));
+    const row = el('div', 'act' + (it.cd || it.off ? ' off' : '') + (it.showSub ? ' sub' : ''), '<span class="motes"><i></i><i></i></span>');
     if (it.mg) row.style.setProperty('--mg', it.mg);
     row.style.setProperty('--tilt', (a * 7).toFixed(1) + 'deg');
     row.style.left = x + 'px';
@@ -741,7 +844,7 @@ function buildMenu(u, title, items) {
     row._seed = i + 1;
     m.appendChild(row);
     first ??= [x, y];
-    // les pancartes jaillissent du héros une à une et se déploient en éventail, par paliers
+    // les pancartes jaillissent du centre une à une et se déploient en éventail, par paliers
     row.animate(
       [
         { translate: `${hx - x}px calc(-50% + ${hy - y}px)`, scale: 0.2, rotate: '0deg', opacity: 0 },
@@ -750,20 +853,22 @@ function buildMenu(u, title, items) {
       { duration: 260, delay: 40 + i * 70, easing: 'steps(5, end)', fill: 'backwards' },
     );
   });
-  const t = el('div', 'm-title', title);
-  t.style.left = first[0] + 8 + 'px';
-  t.style.top = first[1] - 32 + 'px';
-  m.prepend(t);
+  if (title) {
+    const t = el('div', 'm-title', title);
+    t.style.left = first[0] + 8 + 'px';
+    t.style.top = first[1] - 32 + 'px';
+    m.prepend(t);
+  }
   m.classList.remove('hidden');
   m.querySelectorAll('.act').forEach(paintSign);
   sfx('menu');
 }
 
-// Pancarte en bois dessinée à la taille exacte du bouton (dorée quand il est visé).
+// Pancarte en bois dessinée à la taille exacte de l'élément (dorée quand elle est visée).
 function paintSign(row) {
   const w = row.offsetWidth, h = row.offsetHeight;
   if (!w) return;
-  row.style.backgroundImage = signUrl(w, h, row.classList.contains('hot') ? 'hot' : 'normal', row._seed);
+  row.style.backgroundImage = signUrl(w, h, row.classList.contains('hot') ? 'hot' : 'normal', row._seed || 1);
   row.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
 }
 
@@ -809,7 +914,7 @@ const sparks = (x, y, c, n, speed = 1) => fx(Array.from({ length: n }, () => {
 // Choisir une pancarte : elle s'illumine, gonfle puis éclate en copeaux et étincelles ;
 // les autres tombent. L'action part juste après.
 function chooseSign(r) {
-  const m = $('#b-menu'), rc = r.getBoundingClientRect(), col = mgOf(r);
+  const m = r.parentElement, rc = r.getBoundingClientRect(), col = mgOf(r);
   m.classList.add('chosen');
   const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e', '#fbe08a'];
   fx(Array.from({ length: 24 }, () => ({
@@ -835,16 +940,18 @@ function chooseSign(r) {
   haptic(15);
   setTimeout(() => {
     m.classList.remove('chosen');
-    if (battle && !battle.over) r._it.go();
+    if (r.isConnected) r._it.go();
   }, 300);
 }
 
-// Glisser sur le menu : la pancarte sous le doigt se redresse, grossit et suit un peu le doigt,
+// Glisser sur des pancartes : celle sous le doigt se redresse, grossit et suit un peu le doigt,
 // une traînée d'étincelles suit le doigt ; relâcher = choisir.
-(() => {
-  const m = $('#b-menu');
+function attachSigns(m) {
   let hot = null, dragging = false, last = null;
-  const rowAt = (e) => document.elementFromPoint(e.clientX, e.clientY)?.closest('#b-menu .act') || null;
+  const rowAt = (e) => {
+    const r = document.elementFromPoint(e.clientX, e.clientY)?.closest('.act') || null;
+    return r && r.parentElement === m ? r : null;
+  };
   const setHot = (r) => {
     if (r === hot) return;
     if (hot) {
@@ -878,7 +985,9 @@ function chooseSign(r) {
     const c = hot ? mgOf(hot) : '#fbe08a';
     fx([0, 1, 2].map((i) => ({ x: e.clientX + rr(-4, 4), y: e.clientY + rr(-4, 4), vx: rr(-0.5, 0.5), vy: rr(-1, -0.2), g: 0.02, life: rr(18, 32) | 0, c: Math.random() < 0.35 ? '#ffffff' : c, s: i ? 1 : 2 })));
   };
+  // stopPropagation : glisser sur les pancartes ne doit pas faire changer de pièce
   m.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
     dragging = true;
     last = null;
     m.setPointerCapture(e.pointerId);
@@ -894,6 +1003,7 @@ function chooseSign(r) {
     trail(e);
   });
   m.addEventListener('pointerup', (e) => {
+    e.stopPropagation();
     dragging = false;
     const r = rowAt(e);
     if (!r || r.classList.contains('off')) {
@@ -905,7 +1015,9 @@ function chooseSign(r) {
     chooseSign(r);
   });
   m.addEventListener('pointercancel', () => { dragging = false; setHot(null); });
-})();
+}
+attachSigns($('#b-menu'));
+attachSigns($('#s-menu'));
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {

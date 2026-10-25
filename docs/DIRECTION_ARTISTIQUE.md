@@ -5,6 +5,9 @@
 
 Direction artistique : pixel art « chibi » dessiné entièrement en code, **sans image externe**.
 
+Le langage visuel des écrans (décors en parallaxe, pancartes de bois, magie, mise en scène)
+est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat pour modèle.
+
 ## 1. Technique
 
 - Chaque sprite est une grille, dessinée pixel par pixel avec la classe `Spr`
@@ -84,8 +87,10 @@ Direction artistique : pixel art « chibi » dessiné entièrement en code, **sa
 ## 5. Animation
 
 - Animations « pixel » uniquement : rebond d'1 px, clignotements par paliers.
-- **Jamais** d'interpolation douce ni de rotation (pas de `transition` CSS,
-  pas de `ease`, pas de `rotate`). Les déplacements se font par sauts de pixels entiers.
+- **Jamais** d'interpolation douce (pas de `transition` CSS, pas de `ease`). Les déplacements
+  se font par sauts de pixels entiers.
+- Pas de rotation des sprites. Seule exception : les pancartes d'action, inclinées de ±5° au
+  plus selon leur place dans l'arc (voir la [charte design](CHARTE_DESIGN.md)).
 
 ## 6. Interface
 
@@ -99,8 +104,8 @@ Direction artistique : pixel art « chibi » dessiné entièrement en code, **sa
 - Polices pixel (licence OFL, `fonts/`) : **Pixelify Sans** pour le texte, et
   **Jacquarda Bastarda 9** (gothique) pour les titres d'écran uniquement, car elle est
   moins lisible.
-- Icônes 14×14 dessinées avec `Spr`, posées dans des **boutons rectangulaires** encadrés
-  de bois (or quand l'action est visée). Pas de médaillons ronds ou octogonaux.
+- Icônes 14×14 dessinées avec `Spr`, posées sur des **pancartes de bois** disposées en arc
+  (bois doré quand l'action est visée). Pas de médaillons ronds ou octogonaux.
 - Barres de vie et de stats **en segments** (plus lisibles qu'un remplissage continu).
 - Repères de combat bien visibles : chevron doré contouré qui rebondit au-dessus du
   héros actif, anneau doré à ses pieds, coins de visée clignotants sur les cibles.

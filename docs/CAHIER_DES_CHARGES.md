@@ -16,6 +16,7 @@ on les améliore avec les doublons, on monte une équipe de 3 et on enchaîne le
 - Or de départ : 1000 (une invocation ×10 possible dès le début).
 - Sauvegarde locale dans le navigateur (`localStorage`).
 - Direction artistique : voir [`DIRECTION_ARTISTIQUE.md`](DIRECTION_ARTISTIQUE.md) (règles absolues).
+- Charte design (style de tous les écrans, sur le modèle du combat) : voir [`CHARTE_DESIGN.md`](CHARTE_DESIGN.md).
 
 ## 3. Boucle de jeu
 
@@ -108,8 +109,11 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    l'équipe, « UP » s'il peut monter de rang) ; à droite la fiche du héros choisi (gemmes de
    rang, stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).
 3. **Invocation** (à droite) : salle sans porte, le cristal posé sur une estrade au-dessus
-   d'un cercle de runes qui s'illuminent, bougies, bannières violettes ; le parchemin à
-   droite donne les taux, la jauge de pitié et les boutons ×1 / ×10.
+   d'un cercle de runes qui s'illuminent, bougies, bannières violettes, rai de lumière et
+   poussière de magie sur le cristal. Deux pancartes en arc autour du cristal (×1 / ×10) ;
+   une plaque de bois flottante donne les héros, les taux et la jauge de pitié. Choisir une
+   pancarte lance un rituel (salle assombrie, magie qui converge, tremblement, éclair) puis la
+   révélation, avec des dos de cartes en bois et un éclat selon la rareté.
 
 ## 9. Hors périmètre (plus tard)
 
