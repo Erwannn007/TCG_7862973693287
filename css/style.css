@@ -47,6 +47,28 @@ small { font-size: 12px; }
 @keyframes levitate-shadow {
   0% { left: 14%; right: 14%; } 33% { left: 18%; right: 18%; } 50% { left: 22%; right: 22%; } 66% { left: 18%; right: 18%; }
 }
+/* halo qui respire (suit le contour du cadre grâce à drop-shadow) */
+@keyframes aura {
+  0% { filter: drop-shadow(0 0 3px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
+  33% { filter: drop-shadow(0 0 6px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
+  50% { filter: drop-shadow(0 0 8px var(--mg)) drop-shadow(0 0 1px #fff); }
+  66% { filter: drop-shadow(0 0 6px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
+}
+@keyframes aura-hot {
+  0% { filter: drop-shadow(0 0 7px var(--mg)) drop-shadow(0 0 2px #fff); }
+  50% { filter: drop-shadow(0 0 12px var(--mg)) drop-shadow(0 0 2px #fff) brightness(1.08); }
+}
+@keyframes shine {
+  0% { background-position: 160% 0; } 4% { background-position: 120% 0; } 8% { background-position: 80% 0; }
+  12% { background-position: 40% 0; } 16% { background-position: 0% 0; } 20% { background-position: -40% 0; }
+  24%, 100% { background-position: -80% 0; }
+}
+@keyframes mote {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 1; transform: translateY(-4px); } 25% { transform: translateY(-10px); }
+  40% { opacity: .5; transform: translateY(-16px); } 50% { opacity: 1; transform: translateY(-22px); }
+  65% { opacity: .4; transform: translateY(-28px); } 80%, 100% { opacity: 0; transform: translateY(-32px); }
+}
 
 /* ================================================================ structure */
 #app { position: fixed; inset: 0; }
@@ -239,23 +261,57 @@ small { font-size: 12px; }
   font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
   border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
 }
-#b-menu .act { animation: levitate 1.6s steps(1) infinite; }
+/* magie : halo coloré par action (--mg), reflet qui balaie le bouton, étincelles qui montent.
+   Tout reste en paliers (steps) pour garder le rendu pixel. */
+#b-menu .act {
+  --mg: #f2e2b8;
+  animation: levitate 1.6s steps(1) infinite, aura 1.6s steps(1) infinite;
+}
 #b-menu .act:nth-of-type(2) { animation-delay: -.53s; }
 #b-menu .act:nth-of-type(3) { animation-delay: -1.06s; }
+#b-menu .act:nth-of-type(4) { animation-delay: -.8s; }
+/* la lueur au sol remplace l'ombre : le bouton flotte au-dessus d'un éclat de magie */
 #b-menu .act::after {
-  content: ''; position: absolute; left: 14%; right: 14%; bottom: -14px; height: 3px;
-  background: rgba(14, 8, 11, .45); animation: levitate-shadow 1.6s steps(1) infinite; animation-delay: inherit;
+  content: ''; position: absolute; left: 14%; right: 14%; bottom: -14px; height: 3px; pointer-events: none;
+  background: var(--mg); opacity: .55; box-shadow: 0 0 6px 1px var(--mg), 0 0 14px 2px color-mix(in srgb, var(--mg) 45%, transparent);
+  animation: levitate-shadow 1.6s steps(1) infinite; animation-delay: inherit;
 }
+/* reflet : une bande claire à bords nets traverse le bouton, puis longue pause */
+#b-menu .act::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(110deg, transparent 42%, rgba(255, 250, 220, .28) 42%, rgba(255, 250, 220, .28) 47%,
+    transparent 47%, transparent 50%, rgba(255, 250, 220, .18) 50%, rgba(255, 250, 220, .18) 52%, transparent 52%) 160% 0 / 300% 100% no-repeat;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mg) 55%, transparent), inset 0 0 8px color-mix(in srgb, var(--mg) 30%, transparent);
+  animation: shine 3.6s steps(1) infinite; animation-delay: inherit;
+}
+#b-menu .act > canvas, #b-menu .act > span:not(.motes) { position: relative; z-index: 2; }
+#b-menu .act > canvas { filter: drop-shadow(0 0 3px var(--mg)); }
+/* étincelles : petits carrés de 2 px qui montent et clignotent autour du bouton */
+#b-menu .motes { position: absolute; inset: -8px; z-index: 3; pointer-events: none; }
+#b-menu .motes i {
+  position: absolute; bottom: 4px; width: 2px; height: 2px; background: #fff;
+  box-shadow: 0 0 3px 2px var(--mg); opacity: 0; animation: mote 2.4s steps(1) infinite;
+}
+#b-menu .motes i:nth-child(1) { left: 12%; animation-delay: -.2s; }
+#b-menu .motes i:nth-child(2) { left: 46%; animation-delay: -1.4s; }
+#b-menu .motes i:nth-child(3) { left: 78%; animation-delay: -.8s; }
+#b-menu .motes i:nth-child(4) { left: 92%; animation-delay: -2s; width: 1px; height: 1px; }
 #b-menu .act.hot {
   width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
   border-image-source: var(--f-gold); translate: 6px 0;
+  --mg: #ffd86a;
+  animation: levitate 1.6s steps(1) infinite, aura-hot .8s steps(1) infinite;
 }
+#b-menu .act.hot::before { animation-duration: 1.2s; }
+#b-menu .act.hot .motes i { animation-duration: 1.2s; background: #fff8d0; }
+#b-menu .act.hot::after { opacity: .9; }
 #b-menu .act.hot canvas { width: 42px !important; height: 42px !important; }
-#b-menu .act.off { filter: grayscale(1) brightness(.6); }
+#b-menu .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
+#b-menu .act.off .motes, #b-menu .act.off::before { display: none; }
 #b-menu .act small { display: none; font-size: 12px; font-weight: 400; }
 #b-menu .act.hot small { display: block; color: #5a3a22; }
 #b-menu .cd {
-  position: absolute; right: -6px; top: -10px; padding: 0 4px; font-size: 12px; color: #fff;
+  position: absolute; right: -6px; top: -10px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
   background: var(--line); box-shadow: 0 0 0 2px #8a8088;
 }
 

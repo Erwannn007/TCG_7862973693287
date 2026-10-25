@@ -685,12 +685,12 @@ function updateQueue() {
 function showMenu(u) {
   const single = u.skill.kind === 'single';
   buildMenu(u, u.name, [
-    { ico: 'attack', label: 'Attaque', sub: 'Frappe un ennemi', go: () => pickTarget(u, 'attack') },
+    { ico: 'attack', mg: '#ff8a4a', label: 'Attaque', sub: 'Frappe un ennemi', go: () => pickTarget(u, 'attack') },
     {
-      ico: u.id, label: u.skill.name, sub: u.cd ? `Prête dans ${u.cd} tour${u.cd > 1 ? 's' : ''}` : u.skill.desc,
+      ico: u.id, mg: '#c08aff', label: u.skill.name, sub: u.cd ? `Prête dans ${u.cd} tour${u.cd > 1 ? 's' : ''}` : u.skill.desc,
       cd: u.cd, go: () => (single ? pickTarget(u, 'skill') : battle.submit({ type: 'skill' })),
     },
-    { ico: 'guard', label: 'Garde', sub: 'Dégâts reçus ÷ 2', go: () => battle.submit({ type: 'guard' }) },
+    { ico: 'guard', mg: '#5ae0ee', label: 'Garde', sub: 'Dégâts reçus ÷ 2', go: () => battle.submit({ type: 'guard' }) },
   ]);
 }
 
@@ -705,7 +705,8 @@ function buildMenu(u, title, items) {
   m.innerHTML = '';
   m.appendChild(el('div', 'm-title', title));
   items.forEach((it) => {
-    const row = el('div', 'act' + (it.cd ? ' off' : ''));
+    const row = el('div', 'act' + (it.cd ? ' off' : ''), '<span class="motes"><i></i><i></i><i></i><i></i></span>');
+    if (it.mg) row.style.setProperty('--mg', it.mg);
     row.appendChild(icon(it.ico));
     row.appendChild(el('span', '', `${it.label}${it.sub ? `<small>${it.sub}</small>` : ''}`));
     if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
@@ -766,7 +767,7 @@ function pickTarget(u, type) {
   const foes = battle.alive('e');
   if (foes.length === 1) return battle.submit({ type, target: foes[0] });
   buildMenu(u, 'Touche un ennemi', [
-    { ico: 'cancel', label: 'Annuler', go: () => { battle.targeting = null; showMenu(u); } },
+    { ico: 'cancel', mg: '#d8c8b0', label: 'Annuler', go: () => { battle.targeting = null; showMenu(u); } },
   ]);
   battle.log('Choisis une cible.');
   battle.targeting = foes;
