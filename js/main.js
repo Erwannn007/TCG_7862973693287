@@ -6,7 +6,7 @@ import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } 
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
-import { sceneBackground, drawRoomLayers, altar, ALTAR_Y, ALTAR_BASE, SH, CAMP_W, GATE } from './scene.js';
+import { sceneBackground, drawRoomLayers, campFireFront, altar, ALTAR_Y, ALTAR_BASE, SH, CAMP_W, GATE } from './scene.js';
 import { installUiArt, iconSprite, signUrl, posterUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
@@ -261,6 +261,7 @@ function drawRooms(fit, only) {
     drawRoomLayers(sc, g, roomStep, roomPan[name], false);
     if (name === 'camp') {
       drawDoor(g);
+      campFireFront(g, roomStep);
       drawCampLife(g);
     }
     if (name === 'summon') drawAltar(g);
@@ -1925,7 +1926,7 @@ function paintWood(e) {
   const w = e.offsetWidth, h = e.offsetHeight;
   if (!w || !h) return;
   e._seed ??= woodSeed++ % 40;
-  const kind = e.id === 'b-log' ? 'poster' : e.classList.contains('red') ? 'red' : e.classList.contains('gold') || e.classList.contains('on') ? 'hot' : 'normal';
+  const kind = e.id === 'b-log' ? 'poster' : e.classList.contains('red') ? 'red' : e.classList.contains('gold') || e.classList.contains('on') ? 'hot' : e.id === 'b-queue' ? 'normal' : 'plain';
   const key = `${w}x${h}-${kind}`;
   if (e._woodKey === key) return;
   e._woodKey = key;
@@ -1951,7 +1952,9 @@ function paintWood(e) {
 function paintSign(row) {
   const w = row.offsetWidth, h = row.offsetHeight;
   if (!w) return;
-  row.style.backgroundImage = signUrl(w, h, row.classList.contains('hot') ? 'hot' : 'normal', row._seed || 1);
+  // pancartes d'action : bois brun veiné ; plaques à lire : bois clair où le texte est gravé
+  const kind = row.classList.contains('hot') ? 'hot' : row.classList.contains('act') ? 'normal' : 'plain';
+  row.style.backgroundImage = signUrl(w, h, kind, row._seed || 1);
   row.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
 }
 
@@ -2212,6 +2215,7 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   const end = $('#b-end'), veil = $('#b-veil'), pl = $('#b-plaque');
   pl.innerHTML = '';
   pl.className = win ? 'win' : 'lose';
+  end.dataset.res = win ? 'win' : 'lose'; // lueur dorée (victoire) ou rouge (défaite) autour de la pile
   const heroes = battle ? battle.heroes : [];
 
   // page 1 : résumé
@@ -2270,7 +2274,7 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   const dots = el('div', 'end-dots');
   pages.forEach(() => dots.appendChild(el('i')));
   pl.appendChild(dots);
-  pl.appendChild(el('div', 'end-swipe', '◂ glisse pour les statistiques ▸'));
+  pl.appendChild(el('div', 'end-swipe', 'glisse la plaque pour les statistiques'));
   endPage = 0;
   const show = (i) => {
     endPage = i;
@@ -2278,30 +2282,66 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
     [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
   };
   show(0);
-  // glisser ou toucher : la plaque part sur le côté et passe derrière, la suivante arrive devant
-  const turn = (dir) => {
-    const next = (endPage + dir + pages.length) % pages.length;
-    sfx('wood');
-    haptic(8);
-    pl.animate([{ translate: '-50% -50%', rotate: '0deg' }, { translate: `calc(-50% + ${dir * -70}px) -50%`, rotate: `${dir * -6}deg`, opacity: 0.4, offset: 0.5 }, { translate: '-50% -50%', rotate: '0deg' }], { duration: 300, easing: 'steps(6, end)' });
-    setTimeout(() => show(next), 150);
+  // La plaque suit le doigt (dans tous les sens). Lâchée assez loin, elle file un peu dans cette
+  // direction, éclate en copeaux comme une pancarte qu'on choisit, et la plaque suivante passe devant.
+  // Gauche ou haut : page suivante ; droite ou bas : page précédente. Un toucher : page suivante.
+  let drag = null, busy = false;
+  const at = (dx, dy, rot = 0) => {
+    pl.style.translate = `calc(-50% + ${Math.round(dx)}px) calc(-50% + ${Math.round(dy)}px)`;
+    pl.style.rotate = rot + 'deg';
   };
-  let sx = null;
-  pl.onpointerdown = (e) => { e.stopPropagation(); sx = e.clientX; };
+  const turn = (dir, dx = -60, dy = 0) => {
+    if (busy) return;
+    busy = true;
+    const next = (endPage + dir + pages.length) % pages.length, len = Math.hypot(dx, dy) || 1;
+    const fx2 = dx + (dx / len) * 70, fy2 = dy + (dy / len) * 70;
+    pl.animate([{ translate: pl.style.translate || '-50% -50%', scale: 1 }, { translate: `calc(-50% + ${Math.round(fx2)}px) calc(-50% + ${Math.round(fy2)}px)`, scale: 1.05, filter: 'brightness(1.8)' }], { duration: 140, easing: 'steps(3, end)', fill: 'forwards' });
+    setTimeout(() => {
+      const r = pl.getBoundingClientRect(), WOODS = ['#a8784a', '#c89660', '#7a5232', '#fbe08a'];
+      fx(Array.from({ length: 30 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-3, 3) + (dx / len) * 2, vy: rr(-4, -0.5) + (dy / len) * 2, g: 0.25, life: rr(22, 38) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+      sparks(r.left + r.width / 2, r.top + r.height / 2, win ? '#fbe08a' : '#ff6a6a', 16, 1.6);
+      sfx('wood');
+      haptic(12);
+      pl.getAnimations().forEach((an) => an.cancel());
+      at(0, 0);
+      show(next);
+      // la plaque suivante sort de la pile, derrière, et passe devant
+      pl.animate([{ translate: 'calc(-50% + 12px) calc(-50% + 8px)', rotate: '4deg', scale: 0.92, filter: 'brightness(.55)' }, { translate: '-50% -50%', rotate: '0deg', scale: 1, filter: 'brightness(1)' }], { duration: 220, easing: 'steps(5, end)' });
+      sfx('select');
+      setTimeout(() => (busy = false), 230);
+    }, 140);
+  };
+  pl.onpointerdown = (e) => {
+    e.stopPropagation();
+    if (busy) return;
+    pl.setPointerCapture(e.pointerId);
+    drag = { x: e.clientX, y: e.clientY, dx: 0, dy: 0 };
+  };
+  pl.onpointermove = (e) => {
+    if (!drag) return;
+    drag.dx = e.clientX - drag.x;
+    drag.dy = e.clientY - drag.y;
+    at(drag.dx, drag.dy, drag.dx * 0.04);
+  };
   pl.onpointerup = (e) => {
     e.stopPropagation();
-    if (sx === null) return;
-    const dx = e.clientX - sx;
-    sx = null;
-    turn(Math.abs(dx) > 30 ? (dx < 0 ? 1 : -1) : 1);
+    if (!drag) return;
+    const { dx, dy } = drag;
+    drag = null;
+    if (Math.hypot(dx, dy) > 50) return turn(dx < -Math.abs(dy) * 0.5 || dy < -Math.abs(dx) * 0.5 ? 1 : -1, dx, dy);
+    // pas assez loin : elle revient à sa place (un simple toucher tourne la page)
+    pl.animate([{ translate: pl.style.translate, rotate: pl.style.rotate }, { translate: '-50% -50%', rotate: '0deg' }], { duration: 120, easing: 'steps(3, end)' });
+    at(0, 0);
+    if (Math.hypot(dx, dy) < 8) turn(1);
   };
+  pl.onpointercancel = () => { drag = null; at(0, 0); };
 
   end.classList.remove('hidden');
   $('#b-end-menu').classList.add('hidden');
   for (const [o, ms] of [[0.2, 0], [0.4, 60], [0.6, 120]]) setTimeout(() => (veil.style.opacity = o), ms);
   // la plaque (et celles de derrière) tombe du haut et rebondit, puis lâche une gerbe d'étincelles (ou de poussière)
   const paint = (e, seed) => {
-    e.style.backgroundImage = signUrl(e.offsetWidth, e.offsetHeight, 'normal', seed);
+    e.style.backgroundImage = signUrl(e.offsetWidth, e.offsetHeight, 'plain', seed);
     e.style.backgroundSize = '100% 100%';
   };
   paint(pl, 7);

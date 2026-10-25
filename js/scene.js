@@ -1342,6 +1342,12 @@ function drip(g, x, y1, step) {
   }
 }
 
+// Feu de camp et sa lueur, dessinés par-dessus la lumière de la porte (premier plan du sol).
+export function campFireFront(g, step) {
+  torchGlow(g, 150, 86, step, '#ff9a3a');
+  campfire(g, 150, 92, step);
+}
+
 // Plans des pièces : mur du fond (glisse moins vite), sol, premier plan, vignettage.
 // Coordonnées des pièces : 0..CAMP_W ; chaque plan déborde de LAYER_M de chaque côté.
 const ROOM_LAYERS = {
@@ -1354,8 +1360,6 @@ const ROOM_LAYERS = {
       drip(g, 214, 104, step);
     } },
     { d: 1, draw: (g) => dungeonFloor(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: CAMP_LIGHTS, details: true, puddle: [214, 104, 9] }), anim(g, step) {
-      torchGlow(g, 150, 86, step, '#ff9a3a');
-      campfire(g, 150, 92, step);
       dust(g, 150, 70, step, 10);
     } },
     { d: 1.4, draw: campFront, front: true },

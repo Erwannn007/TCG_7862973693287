@@ -222,6 +222,10 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - Cadres **9-slice** dessinés en code (`js/ui-art.js`) : bois, parchemin, pierre,
   boutons bois / or / rouge, ruban. Les coins ne sont jamais étirés et les images sont
   générées directement à la taille des pixels de l'écran (aucun flou).
+- **Texte gravé** : sur les plaques et boutons où on lit (fiche, plaques d'informations, plaque de
+  fin, fenêtres, boutons, colonne des héros), le texte est creusé dans un **bois clair au grain
+  calme** (`plain`) : lettres brun très sombre `#2a1608` avec un liseré clair dessous. Les
+  pancartes d'action qui flottent gardent leur bois brun veiné et leur texte clair contouré.
 - **Lisibilité** : texte clair sur bois ou décor = contour sombre de 1 px tout autour
   (`--txt-out`) ; texte sombre sur bois doré ou parchemin = liseré clair (`--txt-gold`) ;
   jamais moins de 12 px, en gras pour les petites tailles.
