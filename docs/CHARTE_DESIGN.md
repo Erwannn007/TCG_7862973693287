@@ -44,7 +44,14 @@ Trois piliers :
   Les plans sont dessinés plus larges que l'écran (`LAYER_M` = 16 px de chaque côté) ; les
   éléments collés aux coins de l'écran se calent sur `LAYER_M`.
 - **Vie permanente** : chaque décor bouge un peu (nuages qui dérivent, oiseaux, herbes qui
-  ondulent, papillons, pollen, brume, feux follets, lave qui pulse, braises, fumée).
+  ondulent, papillons, pollen, brume, feux follets, lave qui pulse, braises, fumée ; dans les
+  pièces du camp : lueur des torches qui vacille, poussière dans la lumière, goutte d'eau qui
+  tombe du plafond dans une flaque).
+- **Pièces du camp** (`ROOM_LAYERS`) : mêmes plans qu'en combat — mur du fond (`d` 0,7), sol
+  (1), premier plan (1,4 : tonneaux, caisses) et vignettage. La parallaxe joue pendant le
+  passage d'une pièce à l'autre : le mur traîne, le premier plan file. Murs et sols ont du
+  grain, des briques fêlées, de la mousse au pied du mur, une poutre au plafond, de la paille
+  et une flaque. Le cadrage coupe environ 20 px de chaque côté : rien d'important au-delà.
 - **Profondeur atmosphérique** : le lointain est plus clair et bleuté, un voile de brume au pied
   des montagnes, un vignettage tramé dans les lieux sombres.
 - **Rai de lumière** sur le sujet important (le héros qui agit, le cristal d'invocation) :
@@ -183,7 +190,7 @@ Chaque geste a un son (`js/sfx.js`, ondes carrées 8 bits) et, si possible, une 
 
 | Quoi | Où |
 |---|---|
-| Plans de décor, parallaxe, animations de décor | `js/scene.js` (`LAYERS`, `sceneLayers`, `LAYER_M`) |
+| Plans de décor, parallaxe, animations de décor | `js/scene.js` (`LAYERS`, `sceneLayers`, `LAYER_M` ; pièces : `ROOM_LAYERS`, `roomLayers`, `drawRoomLayers`) |
 | Mise en scène, caméra, charge, face-à-face | `js/battle.js` (`setFocus`, `camera`, `charge`, `strike`) |
 | Dessin des pancartes en bois | `js/ui-art.js` (`signUrl`) |
 | Disposition en arc, glissé, choix, particules | `js/main.js` (`layoutSigns`, `attachSigns`, `chooseSign`, `fx`, `sparks`) |

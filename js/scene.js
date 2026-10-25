@@ -36,32 +36,77 @@ function light(lights, x, y) {
   return lv;
 }
 
-function bricks(g, y0, y1, lights, w = SW) {
+const MOSS = ['#1e2a1c', '#27361f', '#324626', '#3e582c'];
+// Mur de briques éclairé par paliers : grain de la pierre, briques fêlées ou plus sombres,
+// mousse qui monte du sol, ombre tramée au pied du mur. x0 < 0 : déborde à gauche (marge des plans).
+function bricks(g, y0, y1, lights, w = SW, x0 = 0) {
   for (let y = y0; y < y1; y++) {
     const row = Math.floor((y - y0) / 7), off = row % 2 ? 6 : 0;
-    for (let x = 0; x < w; x++) {
+    for (let x = x0; x < w; x++) {
       const lv = light(lights, x, y);
-      const bx = (x + off) % 12, by = (y - y0) % 7;
+      const bx = (((x + off) % 12) + 12) % 12, by = (y - y0) % 7;
       if (bx === 0 || by === 0) { px(g, x, y, MORTAR[lv]); continue; }
       const id = Math.floor((x + off) / 12) * 31 + row;
       let c = lv;
       if (hash(id, 7) < 0.25 && c > 0) c--;
       if (by === 1 && c < 3) c++;
       if (by === 6 && c > 0) c--;
+      if (hash(x, y * 3) < 0.07 && c > 0) c--; // grain
+      // brique fêlée : un trait en diagonale
+      if (hash(id, 9) < 0.08 && bx - by === 3) { px(g, x, y, MORTAR[lv]); continue; }
+      // ombre tramée au pied du mur
+      if (y > y1 - 6 && (x + y) % 2 && c > 0) c--;
+      // mousse dans les rangées du bas
+      if (y > y1 - 14 && noise2(x / 7, y / 3 + 9) > 0.72 - (y - (y1 - 14)) * 0.01 && noise2(x / 23, 4) > 0.45) { px(g, x, y, MOSS[lv]); continue; }
       px(g, x, y, WALL[c]);
     }
   }
 }
 
-function flags(g, y0, y1, lights, w = SW) {
+// Plafond : poutre de bois sombre en haut, pénombre tramée dessous.
+function ceiling(g, w, x0 = 0) {
+  for (let x = x0; x < w; x++) {
+    for (let y = 0; y < 4; y++) px(g, x, y, y === 3 ? '#140d11' : y === 0 ? '#3a2618' : (x + y) % 7 ? '#2a1a12' : '#3a2618');
+    for (let y = 4; y < 10; y++) if ((x + y) % 2 === 0 && y < 4 + ((x * 7) % 3) + 4) px(g, x, y, '#140d11');
+  }
+}
+
+// Dallage éclairé par paliers : grain, dalles fêlées, reflet clair sur le bord haut de chaque dalle.
+function flags(g, y0, y1, lights, w = SW, x0 = 0) {
   for (let y = y0; y < y1; y++) {
     const row = Math.floor((y - y0) / 8), off = row % 2 ? 9 : 0;
-    for (let x = 0; x < w; x++) {
+    for (let x = x0; x < w; x++) {
       const lv = light(lights, x, y);
-      const bx = (x + off) % 18, by = (y - y0) % 8;
-      if (bx === 0 || by === 0) px(g, x, y, FLOOR_LINE[lv]);
-      else px(g, x, y, FLOOR[hash(Math.floor((x + off) / 18), row) < 0.2 && lv > 0 ? lv - 1 : lv]);
+      const bx = (((x + off) % 18) + 18) % 18, by = (y - y0) % 8, tile = Math.floor((x + off) / 18) * 13 + row;
+      if (bx === 0 || by === 0) { px(g, x, y, FLOOR_LINE[lv]); continue; }
+      let c = hash(tile, row) < 0.2 && lv > 0 ? lv - 1 : lv;
+      if (by === 1 && c < 3 && lv > 1) c++;
+      if (hash(x * 3, y) < 0.06 && c > 0) c--;
+      if (hash(tile, 5) < 0.12 && (bx + by * 2) % 9 === 0) { px(g, x, y, FLOOR_LINE[lv]); continue; }
+      px(g, x, y, FLOOR[c]);
     }
+  }
+}
+
+// Paille et poussière au pied des murs, et une flaque qui reflète la lumière.
+function floorDetails(g, w, x0, puddle) {
+  // paille en touffes éparses (là où le bruit le permet), brins en biais
+  for (let i = 0; i < (w - x0) * 0.6; i++) {
+    const x = x0 + Math.floor(hash(i, 201) * (w - x0)), y = 74 + Math.floor(hash(i, 202) * 9);
+    if (noise2(x / 14, 3) < 0.58) continue;
+    const c = hash(i, 203) < 0.5 ? '#8a6a3a' : '#a8844a';
+    px(g, x, y, c);
+    px(g, x + (hash(i, 204) < 0.5 ? 1 : -1), y - 1, c);
+    if (hash(i, 205) < 0.3) px(g, x + 2, y, '#6a5030');
+  }
+  if (puddle) {
+    const [cx, cy, rx] = puddle;
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -rx; dx <= rx; dx++) {
+        const d = (dx / rx) ** 2 + (dy / 2.6) ** 2;
+        if (d > 1) continue;
+        px(g, cx + dx, cy + dy, d > 0.6 ? '#1a1418' : dy < 0 && dx < 0 && (dx + dy) % 3 === 0 ? '#6a5a6a' : '#241c24');
+      }
   }
 }
 
@@ -121,14 +166,25 @@ function campfire(g, x, y, step) {
 // ---------------------------------------------------------------- décors
 
 function dungeon(g, opts) {
-  const lights = opts.lights, w = opts.w || SW;
-  bricks(g, 0, 72, lights, w);
-  // plinthe
+  dungeonWall(g, opts);
+  dungeonFloor(g, opts);
+}
+
+// Le mur du fond : briques, plafond, plinthe, piliers, porte. opts.x0 < 0 : déborde dans la marge.
+function dungeonWall(g, opts) {
+  const lights = opts.lights, w = opts.w || SW, x0 = opts.x0 || 0;
+  bricks(g, 0, 72, lights, w, x0);
+  if (opts.ceiling) ceiling(g, w, x0);
   g.fillStyle = '#140d11';
-  g.fillRect(0, 72, w, 2);
-  flags(g, 74, SH, lights, w);
+  g.fillRect(x0, 72, w - x0, 2);
   for (const p of opts.pillars || []) pillar(g, p, lights);
   if (opts.gate) gate(g, opts.gate);
+}
+
+function dungeonFloor(g, opts) {
+  const w = opts.w || SW, x0 = opts.x0 || 0;
+  flags(g, 74, opts.h || SH, opts.lights, w, x0);
+  if (opts.details) floorDetails(g, w, x0, opts.puddle);
 }
 
 function pillar(g, x, lights) {
@@ -916,9 +972,9 @@ function volcanBackAnim(g, step, w) {
 // ---------------------------------------------------------------- pièces du camp
 
 // Salle de l'équipe : râtelier d'armes, armure, bannière.
+const TEAM_LIGHTS = [{ x: 90, y: 28, r: [6, 14, 26] }, { x: 210, y: 28, r: [6, 14, 26] }];
 function teamRoom(g) {
-  const lights = [{ x: 90, y: 28, r: [6, 14, 26] }, { x: 210, y: 28, r: [6, 14, 26] }];
-  dungeon(g, { w: CAMP_W, lights, pillars: [40, 252] });
+  dungeonWall(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: TEAM_LIGHTS, pillars: [40, 252], ceiling: true });
   banner(g, 150, 8, 26, '#8a1a28', '#6a1420');
   // râtelier
   g.fillStyle = '#4a2e1c';
@@ -949,9 +1005,9 @@ function teamRoom(g) {
 
 // Salle d'invocation : murs, piliers et bannières. L'autel (cristal, socle, cercle de runes,
 // bougies) est dessiné à part par altar(), à une position choisie selon l'écran.
+const SUMMON_LIGHTS = [{ x: 60, y: 28, r: [6, 14, 26] }, { x: 240, y: 28, r: [6, 14, 26] }];
 function summonRoom(g) {
-  const lights = [{ x: 60, y: 28, r: [6, 14, 26] }, { x: 240, y: 28, r: [6, 14, 26] }];
-  dungeon(g, { w: CAMP_W, lights, pillars: [20, 196] });
+  dungeonWall(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: SUMMON_LIGHTS, pillars: [20, 196], ceiling: true });
   banner(g, 78, 8, 24, '#62349a', '#4a2386');
   banner(g, 142, 8, 24, '#62349a', '#4a2386');
 }
@@ -1104,32 +1160,196 @@ function candle(g, x, y, step) {
 
 const STATIC = {};
 
-const SCENES = {
-  // Le camp est plus large (300) pour remplir les écrans très allongés ; centre en x = 150.
-  camp: {
-    fixed: CAMP_W,
-    lights: [{ x: 108, y: 28, r: [6, 14, 26] }, { x: 192, y: 28, r: [6, 14, 26] }, { x: 150, y: 88, r: [14, 30, 52] }],
-    draw(g) { dungeon(g, { w: CAMP_W, lights: this.lights, pillars: [56, 236], gate: { x: 135, w: 30 } }); },
-    anim(g, step) {
+// ---------------------------------------------------------------- pièces du camp en plans
+
+const CAMP_LIGHTS = [{ x: 108, y: 28, r: [6, 14, 26] }, { x: 192, y: 28, r: [6, 14, 26] }, { x: 150, y: 88, r: [14, 30, 52] }];
+
+function campWall(g) {
+  dungeonWall(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: CAMP_LIGHTS, pillars: [56, 236], gate: { x: 135, w: 30 }, ceiling: true });
+  noticeBoard(g);
+}
+
+// Panneau d'affichage en bois sur le mur de gauche (on le touche pour aller à l'Équipe).
+function noticeBoard(g) {
+  g.fillStyle = OUTLINE;
+  g.fillRect(71, 33, 30, 22);
+  g.fillStyle = '#6a4228';
+  g.fillRect(72, 34, 28, 20);
+  g.fillStyle = '#8a5a32';
+  g.fillRect(72, 34, 28, 2);
+  for (const [x, y, c] of [[75, 38, '#f2e2b8'], [85, 37, '#e8d4a4'], [92, 40, '#f2e2b8'], [78, 45, '#e8d4a4']]) {
+    g.fillStyle = c;
+    g.fillRect(x, y, 6, 7);
+    g.fillStyle = '#8a6a4a';
+    g.fillRect(x + 1, y + 2, 4, 1);
+    g.fillRect(x + 1, y + 4, 3, 1);
+    g.fillStyle = '#e2334a';
+    g.fillRect(x + 2, y, 1, 1);
+  }
+}
+
+// Tonneau cerclé de fer, vu de face.
+function barrel(g, x, by, h = 14) {
+  const R = (rx, ry, w, hh, c) => { g.fillStyle = c; g.fillRect(x + rx, by - h + ry, w, hh); };
+  R(-1, 0, 13, h, OUTLINE);
+  R(0, 1, 11, h - 2, '#7a4e2c');
+  R(0, 1, 3, h - 2, '#9a6a3a');
+  R(8, 1, 3, h - 2, '#5a3820');
+  for (const ry of [3, h - 4]) { R(0, ry, 11, 1, '#4a4650'); R(0, ry, 3, 1, '#8a8490'); }
+  R(1, 1, 9, 1, '#b07a42');
+}
+
+// Caisse de bois en planches.
+function crate(g, x, by, s = 14) {
+  const R = (rx, ry, w, hh, c) => { g.fillStyle = c; g.fillRect(x + rx, by - s + ry, w, hh); };
+  R(-1, -1, s + 2, s + 1, OUTLINE);
+  R(0, 0, s, s - 1, '#8a5a32');
+  R(0, 0, s, 1, '#b07a42');
+  R(0, 0, 1, s - 1, '#a06c3e');
+  R(0, (s >> 1) - 1, s, 1, '#5a3820');
+  for (let i = 1; i < s - 1; i++) R(i, i - 1, 1, 1, '#6a4228');
+}
+
+// Premier plan du camp : tonneaux et caisses dans les coins bas.
+// (le cadrage coupe environ 20 px de chaque côté de la pièce : on reste au-delà)
+function campFront(g) {
+  crate(g, 14, SH + 1, 16);
+  barrel(g, 30, SH + 1, 15);
+  barrel(g, 18, SH - 15, 12);
+  crate(g, CAMP_W - 32, SH + 1, 16);
+  barrel(g, CAMP_W - 46, SH + 1, 14);
+  // sac de grain
+  g.fillStyle = OUTLINE;
+  g.fillRect(CAMP_W - 58, SH - 9, 12, 10);
+  g.fillStyle = '#c8a870';
+  g.fillRect(CAMP_W - 57, SH - 8, 10, 8);
+  g.fillStyle = '#e8d4a4';
+  g.fillRect(CAMP_W - 57, SH - 8, 3, 6);
+  g.fillStyle = '#8a6a4a';
+  g.fillRect(CAMP_W - 53, SH - 9, 2, 2);
+}
+
+// Lueur d'une torche qui vacille : disques empilés très transparents dont le rayon tremble.
+function torchGlow(g, x, y, step, col = '#ffb050') {
+  const f = Math.floor(hash(step, x) * 3);
+  g.fillStyle = col;
+  for (const [r, a] of [[26 + f, 0.04], [18 + f, 0.05], [10 + f, 0.07]]) {
+    g.globalAlpha = a;
+    disc(g, x, y, r, col);
+  }
+  g.globalAlpha = 1;
+}
+
+// Poussière qui flotte dans la lumière autour d'un point.
+function dust(g, cx, cy, step, n = 8, col = '#fff2c0') {
+  g.fillStyle = col;
+  for (let i = 0; i < n; i++) {
+    const t = (step + i * 7) % 40;
+    const x = Math.round(cx - 20 + hash(i, 61) * 40 + Math.sin((step + i * 5) / 9) * 3);
+    const y = Math.round(cy + 12 - t * 0.8 + hash(i, 62) * 6);
+    if ((step + i) % 5) {
+      g.globalAlpha = t < 30 ? 0.7 : 0.35;
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  g.globalAlpha = 1;
+}
+
+// Goutte d'eau qui tombe du plafond et fait un rond dans la flaque.
+function drip(g, x, y1, step) {
+  const t = step % 30;
+  g.fillStyle = '#9ab0c8';
+  if (t < 4) g.fillRect(x, 4, 1, 1 + (t >> 1));
+  else if (t < 12) g.fillRect(x, 4 + Math.floor(((t - 4) / 8) * (y1 - 4)), 1, 2);
+  else if (t < 18) {
+    const r = t - 11;
+    g.globalAlpha = 0.6;
+    g.fillRect(x - r * 2, y1, 1, 1);
+    g.fillRect(x + r * 2, y1, 1, 1);
+    g.fillRect(x - r, y1 - 1, 1, 1);
+    g.fillRect(x + r, y1 - 1, 1, 1);
+    g.globalAlpha = 1;
+  }
+}
+
+// Plans des pièces : mur du fond (glisse moins vite), sol, premier plan, vignettage.
+// Coordonnées des pièces : 0..CAMP_W ; chaque plan déborde de LAYER_M de chaque côté.
+const ROOM_LAYERS = {
+  camp: [
+    { d: 0.7, draw: campWall, anim(g, step) {
+      torchGlow(g, 108, 28, step);
+      torchGlow(g, 192, 28, step + 1);
       torch(g, 108, 28, step);
       torch(g, 192, 28, step + 1);
+      drip(g, 214, 104, step);
+    } },
+    { d: 1, draw: (g) => dungeonFloor(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: CAMP_LIGHTS, details: true, puddle: [214, 104, 9] }), anim(g, step) {
+      torchGlow(g, 150, 86, step, '#ff9a3a');
       campfire(g, 150, 92, step);
-    },
-  },
-  teamRoom: {
-    fixed: CAMP_W,
-    draw: teamRoom,
-    anim(g, step) { torch(g, 90, 28, step); torch(g, 210, 28, step + 1); },
-  },
-  summonRoom: {
-    fixed: CAMP_W,
-    draw: summonRoom,
-    anim(g, step) {
+      dust(g, 150, 70, step, 10);
+    } },
+    { d: 1.4, draw: campFront, front: true },
+    { d: 1, draw: (g) => vignette(g, CAMP_W + LAYER_M * 2, SH, '#0a0609', 0.7), raw: true, front: true },
+  ],
+  teamRoom: [
+    { d: 0.7, draw: teamRoom, anim(g, step) {
+      torchGlow(g, 90, 28, step);
+      torchGlow(g, 210, 28, step + 1);
+      torch(g, 90, 28, step);
+      torch(g, 210, 28, step + 1);
+      drip(g, 262, 100, step + 9);
+    } },
+    { d: 1, draw: (g) => dungeonFloor(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: TEAM_LIGHTS, details: true, puddle: [262, 100, 8] }), anim(g, step) {
+      dust(g, 90, 46, step, 6);
+      dust(g, 210, 46, step + 13, 6);
+    } },
+    { d: 1, draw: (g) => vignette(g, CAMP_W + LAYER_M * 2, SH, '#0a0609', 0.7), raw: true, front: true },
+  ],
+  summonRoom: [
+    { d: 0.7, draw: summonRoom, anim(g, step) {
+      torchGlow(g, 60, 28, step);
+      torchGlow(g, 240, 28, step + 1);
       torch(g, 60, 28, step);
       torch(g, 240, 28, step + 1);
-    },
-  },
+      drip(g, 226, 106, step + 17);
+    } },
+    { d: 1, draw: (g) => dungeonFloor(g, { w: CAMP_W + LAYER_M, x0: -LAYER_M, lights: SUMMON_LIGHTS, details: true, puddle: [226, 106, 9] }) },
+    { d: 1, draw: (g) => vignette(g, CAMP_W + LAYER_M * 2, SH, '#0a0609', 0.7), raw: true, front: true },
+  ],
 };
+
+// Plans d'une pièce (mis en cache) : { canvas, d, anim, front, raw }. Le canvas fait CAMP_W + 2·LAYER_M
+// de large ; le point 0 de la pièce y est à x = LAYER_M.
+export function roomLayers(name) {
+  const key = 'room-' + name;
+  if (!STATIC[key]) {
+    STATIC[key] = ROOM_LAYERS[name].map((l) => {
+      const c = document.createElement('canvas');
+      c.width = CAMP_W + LAYER_M * 2;
+      c.height = SH;
+      const g = c.getContext('2d');
+      if (!l.raw) g.translate(LAYER_M, 0); // raw : dessiné sur toute la largeur du plan
+      l.draw(g, CAMP_W, SH);
+      return { ...l, canvas: c };
+    });
+  }
+  return STATIC[key];
+}
+
+// Dessine les plans d'une pièce (front : ceux de devant ou ceux du fond), décalés selon pan :
+// pendant un passage d'une pièce à l'autre, le mur glisse moins vite et le premier plan plus vite.
+export function drawRoomLayers(name, g, step, pan, front) {
+  for (const l of roomLayers(name)) {
+    if (!!l.front !== front) continue;
+    const x = Math.round(pan * (1 - l.d)) - LAYER_M;
+    g.drawImage(l.canvas, x, 0);
+    if (!l.anim) continue;
+    g.save();
+    g.translate(x + LAYER_M, 0);
+    l.anim(g, step);
+    g.restore();
+  }
+}
 
 // Décors de combat : une pile de plans. d = profondeur (0 : à l'infini, 1 : le sol où se tiennent
 // les combattants, > 1 : devant eux). front : dessiné par-dessus les combattants.
@@ -1186,21 +1406,18 @@ export function sceneLayers(name, w, h) {
   return STATIC[key];
 }
 
-// Décor fixe (mis en cache), à redessiner à chaque image avant les éléments animés.
-export function sceneBackground(name, w = SW) {
-  const sc = SCENES[name], width = sc.fixed || w, key = name + width;
+// Fond d'une pièce du camp sans décalage, plans du fond assemblés (portraits de la salle d'armes).
+export function sceneBackground(name) {
+  const key = 'flat-' + name;
   if (!STATIC[key]) {
     const c = document.createElement('canvas');
-    c.width = width;
+    c.width = CAMP_W;
     c.height = SH;
-    sc.draw(c.getContext('2d'), width);
+    const g = c.getContext('2d');
+    for (const l of roomLayers(name)) if (!l.front) g.drawImage(l.canvas, -LAYER_M, 0);
     STATIC[key] = c;
   }
   return STATIC[key];
-}
-
-export function sceneAnim(name, g, step, w = SW) {
-  SCENES[name].anim(g, step, w);
 }
 
 // Zone de la porte du camp (pixels d'art), pour savoir si on la touche.

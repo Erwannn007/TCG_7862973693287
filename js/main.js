@@ -6,7 +6,7 @@ import { heroSprite, coinSprite, starSprite, rankGemSprite } from './sprites.js'
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
-import { sceneBackground, sceneAnim, altar, ALTAR_Y, SH, CAMP_W, GATE } from './scene.js';
+import { sceneBackground, drawRoomLayers, altar, ALTAR_Y, SH, CAMP_W, GATE } from './scene.js';
 import { installUiArt, iconSprite, signUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
@@ -150,12 +150,17 @@ async function goRoom(dir) {
   sfx('wind');
   haptic(20);
   windGust(dir);
+  // parallaxe : pendant le glissement, le mur du fond traîne et le premier plan file
+  const PAN = 28;
   for (const p of [0.25, 0.5, 0.75, 1]) {
     from.style.transform = `translateX(${-dir * p * 100}%)`;
     to.style.transform = `translateX(${dir * (1 - p) * 100}%)`;
+    roomPan[screen] = dir * p * PAN;
+    roomPan[name] = -dir * (1 - p) * PAN;
     drawRooms(true, name);
     await wait(55);
   }
+  roomPan[screen] = roomPan[name] = 0;
   moving = false;
   show(name);
 }
@@ -229,6 +234,8 @@ const overlayOpen = () => !$('#modal').classList.contains('hidden') || !$('#reve
 
 const ROOM_SCENES = { camp: 'camp', team: 'teamRoom', summon: 'summonRoom' };
 let roomStep = 0;
+// Décalage de parallaxe de chaque pièce (pixels d'art), animé pendant le passage d'une pièce à l'autre.
+const roomPan = { camp: 0, team: 0, summon: 0 };
 
 function drawRooms(fit, only) {
   for (const name of ROOMS) {
@@ -240,12 +247,12 @@ function drawRooms(fit, only) {
       c.height = SH;
       fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
     }
-    const g = c.getContext('2d');
-    g.drawImage(sceneBackground(ROOM_SCENES[name]), 0, 0);
-    sceneAnim(ROOM_SCENES[name], g, roomStep);
+    const g = c.getContext('2d'), sc = ROOM_SCENES[name];
+    drawRoomLayers(sc, g, roomStep, roomPan[name], false);
     if (name === 'camp') drawCampLife(g);
     if (name === 'summon') drawAltar(g);
     if (name === 'team') drawTeamLife(g);
+    drawRoomLayers(sc, g, roomStep, roomPan[name], true);
   }
 }
 setInterval(() => {
@@ -255,7 +262,6 @@ setInterval(() => {
 }, 140);
 
 function drawCampLife(g) {
-  noticeBoard(g);
   const spots = [[124, 96], [136, 86], [176, 94]];
   state.team.forEach((id, i) => {
     const bm = bitmap(`h-${id}-${state.owned[id].rank}`, () => heroSprite(id, state.owned[id].rank));
@@ -269,25 +275,6 @@ function drawCampLife(g) {
 let summonAltarX = 110;
 function drawAltar(g) {
   altar(g, summonAltarX, roomStep, altarCharge);
-}
-
-// Panneau d'affichage en bois sur le mur de gauche.
-function noticeBoard(g) {
-  g.fillStyle = OUTLINE;
-  g.fillRect(71, 33, 30, 22);
-  g.fillStyle = '#6a4228';
-  g.fillRect(72, 34, 28, 20);
-  g.fillStyle = '#8a5a32';
-  g.fillRect(72, 34, 28, 2);
-  for (const [x, y, c] of [[75, 38, '#f2e2b8'], [85, 37, '#e8d4a4'], [92, 40, '#f2e2b8'], [78, 45, '#e8d4a4']]) {
-    g.fillStyle = c;
-    g.fillRect(x, y, 6, 7);
-    g.fillStyle = '#8a6a4a';
-    g.fillRect(x + 1, y + 2, 4, 1);
-    g.fillRect(x + 1, y + 4, 3, 1);
-    g.fillStyle = '#e2334a';
-    g.fillRect(x + 2, y, 1, 1);
-  }
 }
 
 // ---------------------------------------------------------------- camp
