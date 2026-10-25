@@ -60,6 +60,7 @@ Trois piliers :
 | Coup | la cible s'avance (face-à-face), l'attaquant bondit par sauts de 4 px |
 | Coup critique / attaque de boss | tremblement de 2 à 3 px, éclair blanc plein écran (70 ms) |
 | Rituel (invocation) | voile sombre, magie qui converge vers le cristal par vagues, anneaux de lumière, tremblement, éclair blanc |
+| Choisir un héros (équipe) | il pivote sur lui-même (retournements par paliers) en avançant au premier plan, grandit ×2, la salle s'assombrit, rai de lumière sur lui ; ses pancartes jaillissent ensuite ; toucher à côté le renvoie à sa place |
 
 Ceux qui n'agissent pas restent **dans la pénombre** (silhouette sombre à 9 % par palier) ;
 les cibles qu'on peut toucher restent éclairées.
@@ -187,6 +188,6 @@ Chaque geste a un son (`js/sfx.js`, ondes carrées 8 bits) et, si possible, une 
 | Dessin des pancartes en bois | `js/ui-art.js` (`signUrl`) |
 | Disposition en arc, glissé, choix, particules | `js/main.js` (`layoutSigns`, `attachSigns`, `chooseSign`, `fx`, `sparks`) |
 | Rituel d'invocation | `js/main.js` (`ritual`, `drawAltar`) |
-| Salle d'équipe (socles, glisser-déposer, fiche, montée de rang) | `js/main.js` (`renderTeam`, `layoutTeam`, `dragSource`, `dragEnd`, `drawTeamLife`, `upgrade`) |
+| Salle d'équipe (socles, glisser-déposer, premier plan, fiche, montée de rang) | `js/main.js` (`renderTeam`, `layoutTeam`, `dragSource`, `dragEnd`, `focusHero`, `drawFocus`, `focusSigns`, `upgrade`) |
 | Styles des pancartes et animations | `css/style.css` (`.signs`, `.act`, `@keyframes levitate / aura / shine / mote`) |
 | Sons | `js/sfx.js` |

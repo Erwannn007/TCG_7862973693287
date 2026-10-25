@@ -115,12 +115,16 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    Pendant le glisser, le héros suit le doigt en se balançant, les socles s'allument et celui
    qui est visé reçoit un rai de lumière ; au dépôt, il atterrit dans un éclat. Un simple
    toucher choisit le héros : sa fiche s'affiche à droite sur une plaque de bois (rang, place,
-   stats, compétence, aperçu des 5 rangs), avec la pancarte « Améliorer » dessous. Monter de
-   rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
+   stats, compétence, aperçu des 5 rangs) et il **passe au premier plan** comme en combat : il
+   pivote sur lui-même en avançant, grandit, la salle s'assombrit, un rai de lumière tombe sur
+   lui, et ses pancartes jaillissent en arc : « Améliorer » et « Skin » (pas encore actif).
+   Toucher à côté le renvoie à sa place. Monter de rang : la magie dorée converge vers le
+   héros, il s'illumine, la salle tremble.
 3. **Invocation** (à droite) : salle sans porte, bannières violettes. L'autel : un grand
    cristal facetté qui flotte au-dessus d'un socle de pierre gravé de runes, avec trois éclats
    en orbite, un cercle de runes au sol, des bougies, un rai de lumière et de la poussière de
-   magie. Il est centré entre le bord gauche et deux grandes pancartes en arc (×1 / ×10) ;
+   magie. Il est centré entre le bord gauche et deux grandes pancartes en arc (×1 / ×10),
+   elles-mêmes centrées entre le haut et le bas de l'écran ;
    une plaque de bois flottante, du haut jusqu'en bas à droite, donne les héros, les taux et
    la jauge de pitié. Choisir une pancarte lance un rituel (salle assombrie, magie qui
    converge, tremblement, éclair) puis la révélation : dos en bois frappés du cristal, faces

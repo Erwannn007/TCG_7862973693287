@@ -141,6 +141,11 @@ const ICONS = {
   cancel(s) { // croix
     s.sline(3, 3, 10, 10, '#e2334a'); s.sline(4, 3, 11, 10, '#e2334a'); s.sline(10, 3, 3, 10, '#e2334a'); s.sline(11, 3, 4, 10, '#e2334a');
   },
+  skin(s) { // tunique et pinceau
+    s.r(3, 3, 8, 9, '#d9548c'); s.r(1, 3, 2, 4, '#d9548c'); s.r(11, 3, 2, 4, '#d9548c'); s.hl(5, 8, 2, '#d9548c');
+    s.hl(6, 7, 2, '#f2ead6', true); s.v(7, 3, 11, '#a83a6a', true); s.p(4, 4, '#ff9ac8', true); s.p(4, 5, '#ff9ac8', true);
+    s.sline(9, 13, 13, 9, '#c8a870'); s.p(13, 8, C.goldHi, true); s.spark(1, 12, C.goldHi);
+  },
   gear(s) { ICONS.auto(s); },
   chest(s) { // coffre
     s.r(1, 5, 12, 7, '#8a5a32'); s.hl(2, 11, 3, '#8a5a32'); s.hl(1, 12, 4, '#a8703a'); s.hl(1, 12, 7, C.gold);

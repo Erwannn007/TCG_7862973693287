@@ -222,11 +222,17 @@ small { font-size: 12px; }
   filter: drop-shadow(0 0 6px #ffd86a); animation: wobble .5s steps(1) infinite;
 }
 @keyframes wobble { 0% { rotate: -4deg; } 50% { rotate: 4deg; } }
+/* héros au premier plan : la salle s'assombrit (dessinée dans le canvas), l'interface autour aussi ;
+   un voile invisible attrape le toucher pour le renvoyer à sa place */
+#t-veil { position: absolute; inset: 0; z-index: 3; display: none; }
+#scr-team.focus #t-veil { display: block; }
+#scr-team.focus #t-roster { filter: brightness(.4); }
+#scr-team.focus #t-slots, #scr-team.focus #t-hint { visibility: hidden; }
 .r-sign .r-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .r-sign .badge { top: -6px; right: -6px; }
 .r-sign .badge.team { left: -6px; right: auto; }
 #t-info {
-  position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 90px); right: var(--safe-r); width: 270px;
+  position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 4px); right: var(--safe-r); width: 270px;
   display: flex; flex-direction: column; justify-content: space-between; gap: 2px; padding: 10px 18px 12px; overflow: hidden;
   font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;

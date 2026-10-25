@@ -108,6 +108,11 @@ let screen = 'camp';
 
 function show(name) {
   screen = name;
+  if (name !== 'team' && teamFocus) {
+    teamFocus = null;
+    $('#scr-team').classList.remove('focus');
+    $('#t-menu').classList.add('hidden');
+  }
   for (const s of [...ROOMS, 'battle']) {
     const e = $('#scr-' + s);
     e.classList.toggle('hidden', s !== name);
@@ -245,7 +250,10 @@ function drawRooms(fit, only) {
     sceneAnim(ROOM_SCENES[name], g, roomStep);
     if (name === 'camp') drawCampLife(g);
     if (name === 'summon') drawAltar(g);
-    if (name === 'team') drawTeamLife(g);
+    if (name === 'team') {
+      drawTeamLife(g);
+      drawFocus(g);
+    }
   }
 }
 setInterval(() => {
@@ -415,7 +423,7 @@ const canUpgrade = (id) => {
 let selected = null;
 let teamSlots = []; // socles : { x: pixels d'art, sx, sy: écran (pieds) }
 let teamDrag = null; // glisser en cours : { id, from (socle ou -1), over (socle, 'roster' ou null), ghost }
-const slotFlash = [0, 0, 0];
+const slotFlash = [0, 0, 0, 0]; // les trois socles, puis le héros au premier plan
 const SLOT_FEET = 96; // ligne des pieds sur les socles (pixels d'art)
 
 function renderTeam() {
@@ -439,14 +447,69 @@ function renderTeam() {
   requestAnimationFrame(layoutTeam);
 }
 
-function selectHero(id, from) {
-  if (id === selected) return;
+// Toucher un héros : il devient le héros choisi et, s'il est à nous, passe au premier plan.
+// slot : socle d'où il part (-1 : depuis sa plaque dans la colonne).
+function selectHero(id, from, slot) {
   selected = id;
   const rc = from.getBoundingClientRect();
   sparks(rc.left + rc.width / 2, rc.top + rc.height / 2, '#ffd86a', 8, 0.9);
-  sfx('hover');
   haptic(5);
   renderTeam();
+  if (!state.owned[id]) return sfx('hover');
+  const c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
+  const start = slot >= 0 ? [teamSlots[slot].x, SLOT_FEET] : [(rc.left + rc.width / 2 - c.offsetLeft) / k, (rc.bottom - c.offsetTop) / k];
+  focusHero(id, start);
+}
+
+// ---- premier plan (comme le héros qui agit en combat)
+
+// teamFocus : { id, from: [x, pieds] en pixels d'art, t0, out (retour en cours), tOut }
+let teamFocus = null;
+const FOCUS_FEET = 116, FOCUS_IN = 300; // pieds au premier plan ; durée du trajet (ms)
+// x du premier plan (pixels d'art), posé par layoutTeam : assez à gauche pour que l'arc de pancartes
+// (≈ 380 px) tienne avant la fiche
+let teamFrontX = 150;
+const focusFront = () => [teamFrontX, FOCUS_FEET];
+
+function focusHero(id, from) {
+  teamFocus = { id, from, t0: performance.now(), out: false };
+  $('#scr-team').classList.add('focus');
+  $('#t-menu').classList.add('hidden');
+  sfx('focus');
+  teamAnim();
+  setTimeout(() => teamFocus && !teamFocus.out && teamFocus.id === id && focusSigns(), FOCUS_IN + 20);
+}
+
+function unfocusHero() {
+  if (!teamFocus || teamFocus.out) return;
+  teamFocus.out = true;
+  teamFocus.tOut = performance.now();
+  $('#t-menu').classList.add('hidden');
+  $('#scr-team').classList.remove('focus');
+  sfx('hover');
+  teamAnim();
+  setTimeout(() => { if (teamFocus?.out) teamFocus = null; drawRooms(false, 'team'); }, FOCUS_IN + 20);
+}
+
+// Redessine la salle à chaque image pendant les trajets (le reste du temps : toutes les 140 ms).
+function teamAnim() {
+  const f = teamFocus;
+  drawRooms(false, 'team');
+  if (f && performance.now() - (f.out ? f.tOut : f.t0) < FOCUS_IN + 60) requestAnimationFrame(teamAnim);
+}
+
+// Les pancartes jaillissent du héros au premier plan, comme en combat.
+function focusSigns() {
+  const id = teamFocus.id, own = state.owned[id], c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
+  const bm = bitmap(`h-${id}-${own.rank}`, () => heroSprite(id, own.rank)), [fx0, fy0] = focusFront();
+  const hx = c.offsetLeft + (fx0 + bm.w) * k, hy = c.offsetTop + (fy0 - bm.h * 1.3) * k;
+  const cost = UPGRADE[own.rank - 1];
+  layoutSigns($('#t-menu'), HEROES[id].name, [
+    own.rank < 5
+      ? { ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${cost.frags} · ${cost.gold} or`, showSub: true, off: !canUpgrade(id) || state.gold < cost.gold, go: () => upgrade(id) }
+      : { ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true },
+    { ico: 'skin', mg: '#ff8ad8', label: 'Skin', sub: 'bientôt', showSub: true, go: () => focusSigns() },
+  ], hx, hy, 104, 0.9);
 }
 
 // Fiche du héros sur une plaque de bois : nom, classe, rang, place dans l'équipe, stats, compétence, rangs.
@@ -513,16 +576,12 @@ function layoutTeam() {
     if (id) dragSource(z, id, i);
     box.appendChild(z);
   });
+  teamFrontX = (Math.max(left + 50, Math.min((left + right) / 2, ir.left - 400)) - c.offsetLeft) / k;
   const hint = $('#t-hint');
   hint.style.left = Math.round((left + right) / 2) + 'px';
   hint.style.top = Math.round(sy - 40 * k) + 'px';
-  // pancarte Améliorer sous la fiche
-  const id = selected, own = state.owned[id];
-  const items = !own ? [] : own.rank < 5
-    ? [{ ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${UPGRADE[own.rank - 1].frags} · ${UPGRADE[own.rank - 1].gold} or`, showSub: true, off: !canUpgrade(id) || state.gold < UPGRADE[own.rank - 1].gold, go: () => upgrade(id) }]
-    : [{ ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true }];
-  if (items.length) layoutSigns($('#t-menu'), null, items, ir.left + 6, ir.bottom + 44, 0, 0);
-  else $('#t-menu').classList.add('hidden');
+  // au premier plan, ses pancartes restent autour de lui (après une amélioration, un redimensionnement…)
+  if (teamFocus && !teamFocus.out && performance.now() - teamFocus.t0 > FOCUS_IN) focusSigns();
   drawRooms(false, 'team');
 }
 
@@ -550,7 +609,7 @@ function dragSource(elm, id, slot) {
       elm.removeEventListener('pointerup', up);
       elm.removeEventListener('pointercancel', up);
       if (st.moved) dragEnd(ev, ev.type === 'pointercancel');
-      else selectHero(id, elm);
+      else selectHero(id, elm, slot);
     };
     elm.addEventListener('pointermove', move);
     elm.addEventListener('pointerup', up);
@@ -677,8 +736,8 @@ function drawTeamLife(g) {
       }
     g.fillStyle = OUTLINE;
     g.fillRect(x - 13, fy + 5, 27, 1);
-    // socle vide : contour de héros en pointillés qui attend
-    if (!id || (teamDrag && teamDrag.from === i)) {
+    // socle vide : contour de héros en pointillés qui attend (ou héros parti au premier plan)
+    if (!id || (teamDrag && teamDrag.from === i) || teamFocus?.id === id) {
       if (!id && roomStep % 4 < 3) {
         g.fillStyle = dragging ? '#ffd86a' : '#8a7068';
         for (let y = fy - 18; y < fy - 1; y += 3) { g.fillRect(x - 6, y, 1, 1); g.fillRect(x + 6, y, 1, 1); }
@@ -710,13 +769,67 @@ function drawTeamLife(g) {
   });
 }
 
+// Le héros au premier plan : la salle s'assombrit par paliers, il quitte sa place en pivotant
+// (retournements par paliers), grandit (×2, plus près de nous) et se pose sous un rai de lumière.
+function drawFocus(g) {
+  const f = teamFocus;
+  if (!f) return;
+  const now = performance.now(), own = state.owned[f.id];
+  let p = Math.min(1, (now - (f.out ? f.tOut : f.t0)) / FOCUS_IN);
+  if (f.out) p = 1 - p;
+  const q = Math.floor(p * 4) / 4; // 5 paliers : 0, ¼, ½, ¾, 1
+  g.globalAlpha = q * 0.5;
+  g.fillStyle = OUTLINE;
+  g.fillRect(0, 0, CAMP_W, SH);
+  const [x1, y1] = focusFront(), [x0, y0] = f.from;
+  const x = Math.round(x0 + (x1 - x0) * q), fy = Math.round(y0 + (y1 - y0) * q), sc = q >= 0.5 ? 2 : 1;
+  if (q === 1) {
+    g.fillStyle = '#fff2c0';
+    g.globalAlpha = 0.11;
+    for (let y = 0; y < fy; y += 4) {
+      const w = 22 + Math.floor((y / fy) * 10) * 2;
+      g.fillRect(x - (w >> 1), y, w, 4);
+    }
+    g.globalAlpha = 0.18;
+    for (const [dy, w] of [[-1, 30], [0, 38], [1, 30]]) g.fillRect(x - (w >> 1), fy + dy, w, 1);
+  }
+  g.globalAlpha = 0.45;
+  g.fillStyle = OUTLINE;
+  g.fillRect(x - 6 * sc, fy - 1, 12 * sc, 2);
+  g.globalAlpha = 1;
+  const bm = bitmap(`h-${f.id}-${own.rank}`, () => heroSprite(f.id, own.rank));
+  const flash = now < slotFlash[3] && roomStep % 2 === 0;
+  const img = flash ? bitmap(`h-${f.id}-${own.rank}-w`, () => heroSprite(f.id, own.rank).silhouette('#ffffff')) : bm;
+  // pendant le trajet, il se retourne à chaque palier : un tour sur lui-même en pixel art
+  const flip = p > 0 && p < 1 && Math.round(q * 4) % 2 === 1;
+  const bob = q === 1 ? (Math.floor(roomStep / 2) % 2) * sc : 0;
+  g.save();
+  g.translate(x, fy - bob);
+  g.scale(flip ? -sc : sc, sc);
+  g.drawImage(img.canvas, -(bm.w >> 1), -bm.h);
+  if (!flip) drawFx(g, bm, -(bm.w >> 1), -bm.h, roomStep);
+  g.restore();
+  // poussière dorée qui monte autour de lui
+  if (q === 1)
+    for (let i = 0; i < 8; i++) {
+      const t = (roomStep + i * 5) % 22, px = x - 18 + ((i * 11) % 37) + (t % 4 < 2 ? 0 : 1);
+      if (t < 18) {
+        g.fillStyle = t < 10 ? '#fbe08a' : '#c89a4a';
+        g.fillRect(px, fy - 2 - t * 3, 1, 1);
+      }
+    }
+}
+
 // Monter de rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
 async function upgrade(id) {
   const own = state.owned[id], cost = UPGRADE[own.rank - 1];
   if (own.frags < cost.frags || state.gold < cost.gold) return;
   const pos = state.team.indexOf(id);
   let cx, cy;
-  if (pos >= 0) [cx, cy] = [teamSlots[pos].sx, teamSlots[pos].sy - 36];
+  if (teamFocus?.id === id) {
+    const c = $('#team-canvas'), k = c.clientWidth / CAMP_W, [x, y] = focusFront();
+    [cx, cy] = [c.offsetLeft + x * k, c.offsetTop + (y - 20) * k];
+  } else if (pos >= 0) [cx, cy] = [teamSlots[pos].sx, teamSlots[pos].sy - 36];
   else {
     const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(id)].getBoundingClientRect();
     [cx, cy] = [r.left + 26, r.top + r.height / 2];
@@ -737,6 +850,7 @@ async function upgrade(id) {
   sfx('levelUp');
   haptic(40);
   if (pos >= 0) slotFlash[pos] = performance.now() + 600;
+  slotFlash[3] = performance.now() + 600; // le héros au premier plan
   $('#scr-team').animate(Array.from({ length: 7 }, (_, j) => ({ translate: j === 6 ? '0 0' : `${Math.round(rr(-3, 3))}px ${Math.round(rr(-2, 2))}px` })), { duration: 300, easing: 'steps(7, end)' });
   sparks(cx, cy, '#fbe08a', 30, 2);
   refresh();
@@ -782,13 +896,13 @@ function layoutSummon() {
     fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
   }
   const k = c.clientWidth / CAMP_W, signsLeft = $('#s-info').getBoundingClientRect().left - 24 - BIG_SIGN_HOT;
-  const cx = Math.max(100, signsLeft / 2 + 8), cy = c.offsetTop + ALTAR_Y * k, R = Math.max(110, signsLeft - cx);
+  const cx = Math.max(100, signsLeft / 2 + 8), R = Math.max(110, signsLeft - cx);
   summonAltarX = (cx - c.offsetLeft) / k;
   drawRooms(false, 'summon');
   layoutSigns($('#s-menu'), null, [
     { ico: 'summon', mg: '#c08aff', label: 'Invoquer ×1', sub: `${GACHA.single} or`, showSub: true, off: state.gold < GACHA.single, go: () => ritual(1) },
     { ico: 'summon', mg: '#ffd86a', label: 'Invoquer ×10', sub: `${GACHA.multi} or · 1 Rare min.`, showSub: true, off: state.gold < GACHA.multi, go: () => ritual(10) },
-  ], cx, cy, R, 2 * Math.asin(Math.min(0.9, 58 / R)), 'big');
+  ], cx, (52 + innerHeight) / 2, R, 2 * Math.asin(Math.min(0.9, 58 / R)), 'big'); // centrées entre la barre du haut et le bas
 }
 
 // Rituel : la salle s'assombrit, la magie converge vers le cristal qui charge, la salle tremble,
@@ -1234,6 +1348,11 @@ function attachSigns(m) {
 attachSigns($('#b-menu'));
 attachSigns($('#s-menu'));
 attachSigns($('#t-menu'));
+// toucher à côté du héros au premier plan le renvoie à sa place
+$('#t-veil').addEventListener('pointerdown', (e) => {
+  e.stopPropagation();
+  unfocusHero();
+});
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {
