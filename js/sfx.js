@@ -12,27 +12,43 @@ export function setHaptics(on) {
 // iOS n'autorise l'audio qu'après un geste de l'utilisateur (touchend / click).
 // Par défaut Safari range le Web Audio en son « ambiant », coupé par le bouton silencieux :
 // le type « playback » le fait jouer comme un vrai jeu.
+// Quand le téléphone se verrouille ou que l'app passe en arrière-plan, iOS interrompt le contexte
+// audio et ne le relance pas toujours (il peut même se dire « running » en restant muet) :
+// on le marque comme périmé, et on en recrée un neuf au prochain geste.
+let stale = false;
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stale = true;
+});
+addEventListener('pagehide', () => (stale = true));
+
+function build() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  ctx = new AC();
+  master = ctx.createGain();
+  master.gain.value = 0.18;
+  master.connect(ctx.destination);
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  // Bruit « paliers » : on tient chaque valeur quelques échantillons, plus granuleux.
+  let v = 0;
+  for (let i = 0; i < d.length; i++) {
+    if (i % 6 === 0) v = Math.random() * 2 - 1;
+    d[i] = v;
+  }
+}
+
 export function unlock() {
   try {
     if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
   } catch (e) { /* non supporté */ }
-  if (!ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    ctx = new AC();
-    master = ctx.createGain();
-    master.gain.value = 0.18;
-    master.connect(ctx.destination);
-    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    // Bruit « paliers » : on tient chaque valeur quelques échantillons, plus granuleux.
-    let v = 0;
-    for (let i = 0; i < d.length; i++) {
-      if (i % 6 === 0) v = Math.random() * 2 - 1;
-      d[i] = v;
-    }
+  if (ctx && (stale || ctx.state === 'closed' || ctx.state === 'interrupted')) {
+    try { ctx.close(); } catch (e) { /* déjà fermé */ }
+    ctx = null;
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  stale = false;
+  if (!ctx) build();
+  if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
 }
 
 // Une note : fréquence, durée (s), départ relatif (s), forme, volume, glissement vers une autre fréquence.

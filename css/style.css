@@ -191,7 +191,12 @@ small { font-size: 12px; }
 .r-sign:nth-child(2n) { animation-delay: -.7s; }
 .r-sign:nth-child(3n) { animation-delay: -1.3s; }
 .r-sign.hot { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); translate: 6px 0; filter: drop-shadow(0 0 4px #ffd86a); }
-.r-sign.locked { color: #b8a080; cursor: default; }
+/* héros pas encore obtenu : avis de recherche en parchemin, un peu de travers */
+.r-sign.locked { color: var(--ink); text-shadow: none; cursor: default; rotate: -2deg; }
+.r-sign.locked:nth-child(2n) { rotate: 2deg; }
+.r-sign.locked canvas { opacity: .85; }
+.r-sign .wanted { display: block; font: 400 11px/1.1 'Jacquarda', serif; color: #8a1a28; }
+.r-sign.locked { gap: 4px; padding-right: 6px; }
 .r-sign.in-team:not(.hot) { opacity: .78; }
 /* pendant qu'on glisse un héros de l'équipe : la colonne devient la zone pour le retirer */
 #t-roster.drop-out { filter: drop-shadow(0 0 4px #ff6a6a); }

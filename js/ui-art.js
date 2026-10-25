@@ -287,3 +287,59 @@ export function signUrl(wCss, hCss, kind = 'normal', seed = 1) {
   }
   return signCache.get(key);
 }
+
+// ---------------------------------------------------------------- avis de recherche
+
+// Affiche de parchemin pour un héros pas encore obtenu : bords déchirés, taches, coins brunis,
+// un clou en haut. Dessinée à la taille exacte de l'élément, comme les pancartes.
+function drawPoster(g, W, H, seed) {
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  for (let y = 1; y < H - 1; y++)
+    for (let x = 1; x < W - 1; x++) {
+      // bord déchiré : quelques pixels manquants sur le pourtour
+      const edge = Math.min(x - 1, y - 1, W - 2 - x, H - 2 - y);
+      if (edge === 0 && rnd(x * 7 + seed, y) < 0.35) continue;
+      let c = '#e8d4a4';
+      if (edge <= 1) c = '#c8a870';
+      else if (edge <= 2 && rnd(x, y + seed) < 0.5) c = '#d8c08a';
+      // coins brunis et taches
+      const corner = Math.min(x, W - x) + Math.min(y, H - y);
+      if (corner < 7 && rnd(x + seed, y * 3) < 0.6) c = '#b89060';
+      if (rnd(Math.floor(x / 4) + seed * 5, Math.floor(y / 3)) < 0.08) c = '#d8c08a';
+      if (rnd(x * 3, y * 5 + seed) < 0.03) c = '#c8a870';
+      R(x, y, 1, 1, c);
+    }
+  // contour brun irrégulier
+  for (let x = 1; x < W - 1; x++) {
+    if (rnd(x, seed) > 0.3) R(x, 0, 1, 1, '#8a6a4a');
+    if (rnd(x, seed + 1) > 0.3) R(x, H - 1, 1, 1, '#8a6a4a');
+  }
+  for (let y = 1; y < H - 1; y++) {
+    if (rnd(seed, y) > 0.3) R(0, y, 1, 1, '#8a6a4a');
+    if (rnd(seed + 1, y) > 0.3) R(W - 1, y, 1, 1, '#8a6a4a');
+  }
+  // clou en haut au milieu
+  const nx = W >> 1;
+  R(nx - 1, 1, 3, 3, OUTLINE);
+  R(nx, 2, 1, 1, '#b9c6d2');
+  R(nx - 1, 4, 3, 1, '#a89060');
+}
+
+const posterCache = new Map();
+export function posterUrl(wCss, hCss, seed = 1) {
+  const W = Math.max(16, Math.round(wCss / U)), H = Math.max(12, Math.round(hCss / U)), key = `${W}x${H}-${seed}`;
+  if (!posterCache.has(key)) {
+    const art = document.createElement('canvas');
+    art.width = W;
+    art.height = H;
+    drawPoster(art.getContext('2d'), W, H, seed);
+    const k = U * DPR, big = document.createElement('canvas');
+    big.width = W * k;
+    big.height = H * k;
+    const bg = big.getContext('2d');
+    bg.imageSmoothingEnabled = false;
+    bg.drawImage(art, 0, 0, W * k, H * k);
+    posterCache.set(key, `url(${big.toDataURL()})`);
+  }
+  return posterCache.get(key);
+}

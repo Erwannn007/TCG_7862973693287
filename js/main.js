@@ -7,7 +7,7 @@ import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
 import { sceneBackground, drawRoomLayers, altar, ALTAR_Y, ALTAR_BASE, SH, CAMP_W, GATE } from './scene.js';
-import { installUiArt, iconSprite, signUrl, U } from './ui-art.js';
+import { installUiArt, iconSprite, signUrl, posterUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
 
@@ -450,7 +450,8 @@ function renderTeam() {
     const own = state.owned[id], pos = state.team.indexOf(id);
     const b = el('div', 'r-sign' + (id === selected ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
     b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
-    const nm = el('div', 'r-name', own ? HEROES[id].name : '???');
+    // héros pas encore obtenu : avis de recherche
+    const nm = el('div', 'r-name', own ? HEROES[id].name : '<span class="wanted">Recherché</span>???');
     nm.appendChild(starsRow(HEROES[id].rarity));
     b.appendChild(nm);
     if (pos >= 0) b.appendChild(el('div', 'badge team', String(pos + 1)));
@@ -573,7 +574,11 @@ function renderDetail(id) {
 // Place les trois socles entre la colonne et la fiche, leurs zones de dépôt, et la pancarte Améliorer.
 function layoutTeam() {
   if ($('#scr-team').classList.contains('hidden')) return;
-  $$('#t-roster .r-sign').forEach(paintSign);
+  $$('#t-roster .r-sign').forEach((b) => {
+    if (!b.classList.contains('locked')) return paintSign(b);
+    b.style.backgroundImage = posterUrl(b.offsetWidth, b.offsetHeight, b._seed);
+    b.style.backgroundSize = `${Math.round(b.offsetWidth / U) * U}px ${Math.round(b.offsetHeight / U) * U}px`;
+  });
   const info = $('#t-info');
   paintSign(info);
   const c = $('#team-canvas');
@@ -864,6 +869,12 @@ function beginDrag(id, from) {
   g.appendChild(lookCanvas(id, 3));
   document.body.appendChild(g);
   teamDrag = { id, from, over: null, ghost: g, last: null };
+  // ses pancartes ne servent à rien pendant qu'on le déplace : elles tombent
+  const m = $('#t-menu');
+  if (!m.classList.contains('hidden')) {
+    m.querySelectorAll('.act').forEach((a, i) => a.animate([{ opacity: 1 }, { translate: '0 calc(-50% + 30px)', rotate: i % 2 ? '8deg' : '-8deg', opacity: 0 }], { duration: 200, easing: 'steps(4, end)', fill: 'forwards' }));
+    setTimeout(() => teamDrag && m.classList.add('hidden'), 200);
+  }
   $('#t-slots').classList.add('dragging');
   $('#t-roster').classList.toggle('drop-out', from >= 0);
   sfx('hover');
@@ -946,7 +957,10 @@ function dragEnd(e, cancel) {
   })();
   const g = d.ghost, x0 = parseFloat(g.style.left), y0 = parseFloat(g.style.top);
   g.animate([{ left: x0 + 'px', top: y0 + 'px' }, { left: back[0] + 'px', top: back[1] + 'px', opacity: 0.3 }], { duration: 200, easing: 'steps(5, end)', fill: 'forwards' });
-  setTimeout(() => g.remove(), 210);
+  setTimeout(() => {
+    g.remove();
+    heroSigns(); // ses pancartes reviennent
+  }, 210);
 }
 
 // Le carrousel dessiné dans la salle : la salle un peu assombrie, les socles du fond d'abord
@@ -1929,6 +1943,8 @@ document.addEventListener('click', (e) => {
   haptic(8);
 }, true);
 addEventListener('touchend', unlock, { passive: true });
+// les pancartes et le glisser-déposer n'émettent pas de « click » : on débloque aussi au relâcher
+addEventListener('pointerup', unlock, { capture: true, passive: true });
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !$('#modal').classList.contains('hidden')) closeModal(screen !== 'battle');
   if (ROOMS.includes(screen) && !overlayOpen()) {

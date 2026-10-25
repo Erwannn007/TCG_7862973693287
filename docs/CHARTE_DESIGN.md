@@ -181,6 +181,8 @@ Quand on range ou place quelque chose (l'équipe), on le **prend avec le doigt**
 - au dépôt : flash blanc, étincelles et copeaux, son de bois, vibration ; un dépôt impossible
   fait trembler la zone et repartir l'objet d'où il vient ;
 - un simple toucher (moins de 8 px de mouvement) sélectionne au lieu de déplacer.
+- dès que le glisser commence, les pancartes de l'objet tombent (elles ne servent à rien pendant
+  le déplacement) ; elles reviennent s'il retourne d'où il vient.
 
 ## 7. Particules
 
