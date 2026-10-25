@@ -1,7 +1,7 @@
 // Interface du jeu (écran horizontal).
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
-import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
+import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
 import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
@@ -259,7 +259,10 @@ function drawRooms(fit, only) {
     }
     const g = c.getContext('2d'), sc = ROOM_SCENES[name];
     drawRoomLayers(sc, g, roomStep, roomPan[name], false);
-    if (name === 'camp') drawCampLife(g);
+    if (name === 'camp') {
+      drawDoor(g);
+      drawCampLife(g);
+    }
     if (name === 'summon') drawAltar(g);
     if (name === 'team') drawTeamLife(g);
     drawRoomLayers(sc, g, roomStep, roomPan[name], true);
@@ -303,29 +306,201 @@ function drawAltar(g) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Trois modes derrière la porte : l'histoire, la tour des épreuves, le mode infini. On passe de l'un
+// à l'autre en faisant glisser la porte de bas en haut (et de haut en bas pour revenir) : les
+// pancartes explosent en copeaux, les nouvelles tombent du ciel, et l'intérieur de la porte change.
+const CAMP_MODES = ['story', 'tower', 'endless'];
+let campMode = 'story';
+let towerPick = null; // choix en cours dans la tour : { room, hero }
+
+// Clés de la tour, rechargées chaque jour.
+function towerKeys() {
+  if (state.keysDay !== today()) {
+    state.keys = TOWER_KEYS;
+    state.keysDay = today();
+    save();
+  }
+  return state.keys;
+}
+
 function renderCamp() {
-  const next = stage(state.best + 1);
-  $('#fight-info').textContent = `Étape ${next.n} · ${next.chapter.name}${next.boss ? ' · Boss' : ''}`;
   $('#go-replay').classList.toggle('hidden', state.best === 0);
   $('#btn-daily').classList.toggle('hidden', state.lastDaily === today());
-  requestAnimationFrame(placeDoorSign);
+  campRibbon();
+  requestAnimationFrame(() => layoutCamp());
 }
 
-function placeDoorSign() {
-  const c = $('#camp-canvas'), [x, y] = toScreen(c, CAMP_W, 150, 40), s = $('#door-sign');
-  s.style.left = x + 'px';
-  s.style.top = y + 'px';
+function campRibbon() {
+  const next = stage(state.best + 1);
+  $('#fight-info').textContent = campMode === 'story'
+    ? `Étape ${next.n} · ${next.chapter.name}${next.boss ? ' · Boss' : ''}`
+    : campMode === 'tower' ? `Tour des épreuves · ${towerKeys()}/${TOWER_KEYS} clés` : `Mode infini · record : vague ${state.endlessBest}`;
+  $('#door-sign .hint').textContent = campMode === 'story' ? 'Touche la porte' : campMode === 'tower' ? 'Choisis une salle' : 'Jusqu’où descendras-tu ?';
+  $$('#c-modes .dots i').forEach((d, i) => d.classList.toggle('on', CAMP_MODES[i] === campMode));
 }
 
-// Toucher la porte : zoom vers la porte, son, fondu au noir, combat.
+// Les pancartes du mode, en arc à droite de la porte.
+function campItems() {
+  if (campMode === 'story') {
+    const next = stage(state.best + 1);
+    const items = [{ ico: 'fight', mg: '#ff8a4a', label: 'Combattre', sub: `Étape ${next.n}${next.boss ? ' · Boss' : ''}`, showSub: true, go: () => enterDoor() }];
+    if (state.best > 0) items.push({ ico: 'scroll', mg: '#d8c8b0', label: 'Rejouer', sub: 'une étape gagnée', showSub: true, go: () => $('#go-replay').onclick() });
+    return items;
+  }
+  if (campMode === 'endless') {
+    return [{ ico: 'fight', mg: '#c08aff', label: 'Descendre', sub: `record : vague ${state.endlessBest}`, showSub: true, go: () => { endlessRun = { wave: 1, gold: 0 }; enterDoor(endlessWave(1)); } }];
+  }
+  // tour des épreuves : salle → (héros) → difficulté
+  const keys = towerKeys(), back = { ico: 'back', mg: '#d8c8b0', label: 'Retour', go: () => { towerPick = null; swapCampSigns(); } };
+  if (!towerPick) {
+    return Object.entries(TOWER_ROOMS).map(([id, R]) => ({
+      ico: R.ico, mg: R.mg, label: R.short, sub: R.desc, showSub: true, off: keys <= 0,
+      go: () => { towerPick = { room: id }; swapCampSigns(); },
+    }));
+  }
+  if (towerPick.room === 'shards' && !towerPick.hero) {
+    const heroes = HERO_IDS.filter((id) => state.owned[id] && state.owned[id].rank < MAX_RANK);
+    return [...heroes.map((id) => ({
+      ico: id, mg: '#c08aff', label: HEROES[id].name, sub: `éclats ${state.owned[id].frags}/${UPGRADE[state.owned[id].rank - 1].frags}`, showSub: true,
+      go: () => { towerPick.hero = id; swapCampSigns(); },
+    })), back];
+  }
+  const R = TOWER_ROOMS[towerPick.room];
+  return [...TOWER_DIFF.map((D, d) => {
+    const rw = towerReward(towerPick.room, d, state.best);
+    const gain = rw.shards ? `+${rw.shards} éclat${rw.shards > 1 ? 's' : ''}` : rw.gold ? `+${rw.gold} or` : `+${rw.xp} XP`;
+    return {
+      ico: R.ico, mg: ['#9af098', '#ffd86a', '#ff6a6a'][d], label: D.name, sub: `niv ${D.lvl(state.best)} · ${gain}`, showSub: true, off: keys <= 0,
+      go: () => enterDoor(towerStage(towerPick.room, d, state.best, towerPick.hero)),
+    };
+  }), back];
+}
+
+function layoutCamp(enter = 'fan') {
+  if ($('#scr-camp').classList.contains('hidden')) return;
+  const c = $('#camp-canvas'), k = c.clientWidth / CAMP_W;
+  const [dx, dy] = toScreen(c, CAMP_W, 150, 40), s = $('#door-sign');
+  s.style.left = dx + 'px';
+  s.style.top = dy + 'px';
+  const [mx, my] = toScreen(c, CAMP_W, 150, 44), md = $('#c-modes');
+  md.style.left = mx + 'px';
+  md.style.top = my + 'px';
+  const items = campItems(), n = items.length;
+  // grand rayon, centre à gauche : un arc doux à droite de la porte ; écart vertical d'environ
+  // 70 px entre deux pancartes, resserré s'il y en a beaucoup pour rester à l'écran
+  const R = 170, gap = n > 1 ? Math.min(70, (innerHeight - 140) / (n - 1)) : 0, step = 2 * Math.asin(gap / 2 / R);
+  layoutSigns($('#c-menu'), null, items, dx + 18 * k + 24 - R, (60 + innerHeight) / 2, R, step, '', enter);
+}
+
+// Les pancartes du camp explosent en copeaux, puis les nouvelles tombent du ciel.
+function swapCampSigns() {
+  const m = $('#c-menu'), WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
+  [...m.querySelectorAll('.act')].forEach((a, i) => {
+    const r = a.getBoundingClientRect();
+    fx(Array.from({ length: 14 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2.5, 2.5), vy: rr(-3.5, -0.5), g: 0.25, life: rr(20, 34) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+    a.animate([{ scale: 1, filter: 'brightness(1)' }, { scale: 1.12, filter: 'brightness(2)', offset: 0.3 }, { scale: 0.3, opacity: 0 }], { duration: 260, delay: i * 50, easing: 'steps(5, end)', fill: 'forwards' });
+  });
+  sfx('wood');
+  haptic(12);
+  setTimeout(() => {
+    campRibbon();
+    layoutCamp('drop');
+    setTimeout(() => sfx('wood'), 420);
+  }, 300);
+}
+
+function switchCampMode(dir) {
+  const i = CAMP_MODES.indexOf(campMode) + dir;
+  if (i < 0 || i >= CAMP_MODES.length) {
+    // rien de ce côté : la porte résiste
+    sfx('denied');
+    $('#door-sign').animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '-50% -100%' : `-50% calc(-100% + ${k % 2 ? 4 : -4}px)` })), { duration: 200, easing: 'steps(5, end)' });
+    return;
+  }
+  campMode = CAMP_MODES[i];
+  towerPick = null;
+  doorFlash = performance.now();
+  sfx('zoom');
+  $('#scr-camp').animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '0 0' : `0 ${k % 2 ? -2 : 2}px` })), { duration: 180, easing: 'steps(5, end)' });
+  const c = $('#camp-canvas'), [x, y] = toScreen(c, CAMP_W, 150, 48);
+  sparks(x, y, campMode === 'tower' ? '#7ab0f0' : campMode === 'endless' ? '#c08aff' : '#ffb030', 26, 1.8);
+  swapCampSigns();
+}
+
+// L'intérieur de la porte selon le mode : obscurité (histoire), escalier de lumière bleue qui monte
+// (tour), tourbillon violet (infini). Flash blanc juste après un changement.
+let doorFlash = 0;
+function drawDoor(g) {
+  const now = performance.now(), x0 = 136, x1 = 164, y0 = 30, y1 = 73, cx = 150, cy = 50;
+  if (campMode === 'tower') {
+    g.fillStyle = '#16203a';
+    g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    for (let i = 0; i < 8; i++) {
+      const y = y1 - 4 - i * 5, x = x0 + 3 + (i % 2 ? 8 : 0);
+      g.fillStyle = '#4a6ab8';
+      g.fillRect(x, y, 14, 2);
+      g.fillStyle = '#a8c8ff';
+      g.fillRect(x, y, 14, 1);
+    }
+    for (let i = 0; i < 6; i++) {
+      const t = (roomStep + i * 4) % 22;
+      g.fillStyle = t < 12 ? '#c8e0ff' : '#6a8ad8';
+      g.fillRect(x0 + 4 + ((i * 7) % 22), y1 - 2 - t * 2, 1, 1);
+    }
+  } else if (campMode === 'endless') {
+    g.fillStyle = '#1a0e24';
+    g.fillRect(x0, y0, x1 - x0, y1 - y0);
+    for (let r = 3; r <= 14; r += 3)
+      for (let j = 0; j < 12; j++) {
+        const a = (j / 12) * Math.PI * 2 + roomStep * (0.5 - r * 0.02) + r;
+        const px = Math.round(cx + Math.cos(a) * r), py = Math.round(cy + Math.sin(a) * r * 1.3);
+        if (px <= x0 || px >= x1 || py <= y0 || py >= y1) continue;
+        g.fillStyle = r < 7 ? '#ffffff' : r < 11 ? '#c89af0' : '#7a3cc8';
+        g.fillRect(px, py, 1, 1);
+      }
+  }
+  if (now - doorFlash < 200) {
+    g.globalAlpha = 0.7;
+    g.fillStyle = '#ffffff';
+    g.fillRect(x0, y0 - 6, x1 - x0, y1 - y0 + 6);
+    g.globalAlpha = 1;
+  }
+}
+
+// Toucher la porte : combat de l'histoire (dans les autres modes, on passe par les pancartes).
 $('#camp-canvas').addEventListener('click', (e) => {
   if (screen !== 'camp' || moving) return;
   const [x, y] = toArt($('#camp-canvas'), CAMP_W, e);
-  if (x >= GATE.x0 && x <= GATE.x1 && y >= GATE.y0 && y <= GATE.y1) enterDoor();
-  else if (x >= 68 && x <= 104 && y >= 30 && y <= 58) goRoom(-1); // le panneau
+  if (x >= GATE.x0 && x <= GATE.x1 && y >= GATE.y0 && y <= GATE.y1) {
+    if (campMode === 'story') enterDoor();
+  } else if (x >= 68 && x <= 104 && y >= 30 && y <= 58) goRoom(-1); // le panneau
 });
 
-async function enterDoor() {
+// Glisser verticalement sur la porte change de mode, sans changer de pièce.
+(() => {
+  let start = null;
+  $('#camp-canvas').addEventListener('pointerdown', (e) => {
+    const [x, y] = toArt($('#camp-canvas'), CAMP_W, e);
+    if (x < GATE.x0 - 6 || x > GATE.x1 + 6 || y < GATE.y0 || y > GATE.y1 + 20) return;
+    e.stopPropagation();
+    start = { x: e.clientX, y: e.clientY };
+    $('#c-modes').classList.add('swiping');
+  });
+  addEventListener('pointerup', (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    start = null;
+    $('#c-modes').classList.remove('swiping');
+    if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx) * 1.3) {
+      swallowClick = true;
+      setTimeout(() => (swallowClick = false), 350);
+      switchCampMode(dy < 0 ? 1 : -1);
+    }
+  }, true);
+})();
+
+// Entrer : zoom vers la porte, son, fondu au noir, combat (étape suivante ou combat préparé).
+async function enterDoor(st = null) {
   if (moving) return;
   moving = true;
   const c = $('#camp-canvas'), [ox, oy] = toScreen(c, CAMP_W, 150, 48);
@@ -333,6 +508,7 @@ async function enterDoor() {
   haptic(30);
   c.style.transformOrigin = `${ox - c.offsetLeft}px ${oy - c.offsetTop}px`;
   $('#door-sign').classList.add('hidden');
+  $('#c-menu').classList.add('hidden');
   const f = $('#fader');
   f.classList.add('on');
   const steps = [[1.2, 0], [1.5, 0.1], [1.9, 0.3], [2.4, 0.55], [3, 0.8], [3.8, 1]];
@@ -344,7 +520,7 @@ async function enterDoor() {
   c.style.transform = '';
   $('#door-sign').classList.remove('hidden');
   moving = false;
-  startBattle(state.best + 1);
+  startBattle(st || state.best + 1);
   await wait(120);
   await fade(false);
 }
@@ -423,10 +599,30 @@ function skinCard(skinId, opts = {}) {
   if (opts.badge) c.appendChild(el('div', 'badge', opts.badge));
   return c;
 }
+// Monter de rang : il faut les éclats et être au niveau maximum du rang.
+const atCap = (o) => o.lvl >= LEVEL.cap(o.rank);
 const canUpgrade = (id) => {
   const o = state.owned[id];
-  return o && o.rank < 5 && o.frags >= UPGRADE[o.rank - 1].frags;
+  return o && o.rank < MAX_RANK && atCap(o) && o.frags >= UPGRADE[o.rank - 1].frags;
 };
+
+// Donne de l'XP aux héros ; renvoie ceux qui ont pris des niveaux : [{ id, lvl }].
+function giveXp(ids, amount) {
+  const ups = [];
+  for (const id of ids) {
+    const o = state.owned[id];
+    if (!o) continue;
+    const cap = LEVEL.cap(o.rank), from = o.lvl;
+    o.xp += amount;
+    while (o.lvl < cap && o.xp >= LEVEL.need(o.lvl)) {
+      o.xp -= LEVEL.need(o.lvl);
+      o.lvl++;
+    }
+    if (o.lvl >= cap) o.xp = 0; // au maximum du rang : l'XP ne s'accumule plus
+    if (o.lvl > from) ups.push({ id, lvl: o.lvl });
+  }
+  return ups;
+}
 
 // ---------------------------------------------------------------- équipe
 
@@ -559,8 +755,8 @@ function heroSigns() {
   }
   const cost = UPGRADE[own.rank - 1];
   layoutSigns(m, null, [
-    own.rank < 5
-      ? { ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${cost.frags} · ${cost.gold} or`, showSub: true, off: !canUpgrade(id) || state.gold < cost.gold, go: () => upgrade(id) }
+    own.rank < MAX_RANK
+      ? { ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: atCap(own) ? `éclats ${own.frags}/${cost.frags} · ${cost.gold} or` : `niveau ${own.lvl}/${LEVEL.cap(own.rank)} requis`, showSub: true, off: !canUpgrade(id) || state.gold < cost.gold, go: () => upgrade(id) }
       : { ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true },
     { ico: 'skin', mg: '#ff8ad8', label: 'Skin', sub: 'vestiaire', showSub: true, go: () => enterSkins(id) },
   ], hx, hy, 90, 0.9);
@@ -570,7 +766,7 @@ function heroSigns() {
 function renderDetail(id) {
   const box = $('#t-info');
   box.innerHTML = '';
-  const h = HEROES[id], own = state.owned[id], rank = own ? own.rank : 1, st = heroStats(id, rank), pos = state.team.indexOf(id);
+  const h = HEROES[id], own = state.owned[id], rank = own ? own.rank : 1, st = heroStats(id, rank, own ? own.lvl : 1), pos = state.team.indexOf(id);
   box.appendChild(el('div', 'd-name', own ? h.name : '???'));
   const l1 = el('div', 'd-line', `${h.cls} · <b>${RARITY[h.rarity].name}</b>`);
   l1.appendChild(starsRow(h.rarity));
@@ -579,17 +775,21 @@ function renderDetail(id) {
     const l2 = el('div', 'd-line', `Rang ${rank} · ${RANK_NAMES[rank - 1]}`);
     l2.appendChild(rankGems(rank));
     box.appendChild(l2);
+    // niveau et XP (le rang fixe le niveau maximum)
+    const cap = LEVEL.cap(rank), lv = el('div', 'stat lvl');
+    lv.append(el('span', '', `Niv ${own.lvl}`), segBar(own.lvl >= cap ? 1 : own.xp / LEVEL.need(own.lvl), 'xp'), el('span', '', own.lvl >= cap ? 'MAX' : `/${cap}`));
+    box.appendChild(lv);
   }
   box.appendChild(el('div', 'd-place' + (pos >= 0 ? ' on' : ''), !own ? 'À obtenir à l’autel d’invocation'
     : pos >= 0 ? `Dans l’équipe · socle ${pos + 1}` : 'Glisse-le sur un socle pour l’ajouter'));
-  for (const [label, val, max, cls] of [['PV', st.hp, 260, 'hp'], ['ATQ', st.atk, 75, ''], ['DÉF', st.def, 25, ''], ['VIT', st.spd, 25, '']]) {
+  for (const [label, val, max, cls] of [['PV', st.hp, 600, 'hp'], ['ATQ', st.atk, 150, ''], ['DÉF', st.def, 50, ''], ['VIT', st.spd, 30, '']]) {
     const s = el('div', 'stat');
     s.append(el('span', '', label), segBar(val / max, cls), el('span', '', String(val)));
     box.appendChild(s);
   }
   box.appendChild(el('div', 'skill-line', `<b>${h.skill.name}</b> · recharge ${h.skill.cd} tours<br>${h.skill.desc}`));
   const ranks = el('div', 'ranks');
-  for (let r = 1; r <= 5; r++) {
+  for (let r = 1; r <= MAX_RANK; r++) {
     const rd = el('div');
     rd.appendChild(own && r <= rank ? heroCanvas(id, r, 1) : lockedCanvas(id, r, 1));
     rd.appendChild(el('span', '', `R${r}`));
@@ -1140,7 +1340,7 @@ function drawGuest(g, sk, now) {
 // Monter de rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
 async function upgrade(id) {
   const own = state.owned[id], cost = UPGRADE[own.rank - 1];
-  if (own.frags < cost.frags || state.gold < cost.gold) return;
+  if (!canUpgrade(id) || state.gold < cost.gold) return;
   const pos = state.team.indexOf(id);
   let cx, cy;
   if (pos >= 0) [cx, cy] = [teamSlots[pos].sx, teamSlots[pos].sy - 36];
@@ -1380,7 +1580,7 @@ function pull(count) {
     const pool = HERO_IDS.filter((id) => HEROES[id].rarity === rar);
     const id = pool[Math.floor(Math.random() * pool.length)];
     const isNew = !state.owned[id];
-    if (isNew) state.owned[id] = { rank: 1, frags: 0 };
+    if (isNew) state.owned[id] = { rank: 1, frags: 0, lvl: 1, xp: 0 };
     else state.owned[id].frags++;
     results.push({ id, rar, isNew });
   }
@@ -1494,8 +1694,9 @@ function placeBattleCanvas(cv, w, h, s) {
   cv.style.position = 'absolute';
 }
 
-function startBattle(n) {
-  const st = stage(n);
+// n : numéro d'étape (histoire) ou combat déjà préparé (tour, mode infini) ; carry : PV gardés.
+function startBattle(n, carry = null) {
+  const st = typeof n === 'number' ? stage(n) : n;
   closeModal(false);
   hideEnd();
   show('battle');
@@ -1507,10 +1708,11 @@ function startBattle(n) {
   cv.width = width;
   cv.height = height;
   placeBattleCanvas(cv, width, height, s);
-  $('#b-stage').textContent = `Étape ${n} · ${st.chapter.name}`;
+  $('#b-stage').textContent = st.label;
   battle = new Battle({
     // zoom caméra d'un pixel d'écran de plus par pixel d'art : reste net (plafonné pour les petites échelles)
     look: (id, rank) => look(id, rank),
+    carry,
     canvas: cv, width, height, zoom: Math.min((s + 1) / s, 1.2), team: state.team, stage: st, owned: state.owned,
     ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
@@ -1831,6 +2033,7 @@ attachSigns($('#b-menu'));
 attachSigns($('#s-menu'));
 attachSigns($('#t-menu'));
 attachSigns($('#b-end-menu'));
+attachSigns($('#c-menu'));
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {
@@ -1862,36 +2065,95 @@ async function closeBattle() {
 }
 
 // Fin de combat, dans le style du jeu : le décor s'assombrit, une plaque de bois tombe du ciel
-// (dorée pour une victoire) avec le titre, l'équipe qui saute de joie (ou grise et tête basse) et
-// l'or gagné qui se compte ; les choix sortent ensuite de la plaque en pancartes.
+// (dorée pour une victoire) avec le titre, l'équipe qui saute de joie (ou grise et tête basse),
+// les récompenses qui se comptent ; les choix sortent ensuite de la plaque en pancartes.
+// Les récompenses dépendent du mode : histoire, tour des épreuves, mode infini.
+let endlessRun = null; // descente en cours : { wave, gold }
+
 function endBattle(st, res) {
-  const win = res === 'win', first = win && st.n > state.best, gain = win ? st.gold + (first ? st.firstGold : 0) : 0;
-  if (win) {
-    state.gold += gain;
-    if (first) state.best = st.n;
-    save();
+  const win = res === 'win', team = state.team.slice();
+  let gold = 0, xp = xpFor(st.n, win), notes = [], title = win ? 'Victoire !' : 'Défaite…', signs;
+  if (st.mode === 'tower') {
+    const R = st.reward;
+    if (win) {
+      state.keys = Math.max(0, towerKeys() - 1);
+      if (R.gold) gold = R.gold;
+      if (R.xp) xp = R.xp;
+      if (R.shards) {
+        state.owned[R.hero].frags += R.shards;
+        notes.push(`+${R.shards} éclat${R.shards > 1 ? 's' : ''} de ${HEROES[R.hero].name}`);
+      }
+    } else notes.push('Aucune clé dépensée.');
+    const again = { ico: 'fight', mg: TOWER_ROOMS[st.room].mg, label: win ? 'Recommencer' : 'Réessayer', sub: `${towerKeys()} clé${towerKeys() > 1 ? 's' : ''} restante${towerKeys() > 1 ? 's' : ''}`, showSub: true, off: towerKeys() <= 0, go: () => nextBattle(towerStage(st.room, st.diff, state.best, st.hero)) };
+    signs = [again, { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle }];
+  } else if (st.mode === 'endless') {
+    if (win) {
+      gold = st.reward.gold;
+      xp = st.reward.xp;
+      endlessRun.gold += gold;
+      state.endlessBest = Math.max(state.endlessBest, st.wave);
+      title = `Vague ${st.wave} franchie !`;
+      notes.push(`Total de la descente : ${endlessRun.gold} or · record : vague ${state.endlessBest}`);
+      // les PV restent d'une vague à l'autre, avec 25 % de soin
+      const carry = {};
+      for (const u of battle.heroes) carry[u.id] = u.alive ? u.hp / u.max + 0.25 : 0;
+      signs = [
+        { ico: 'fight', mg: '#c08aff', label: 'Vague suivante', sub: `Vague ${st.wave + 1}`, showSub: true, go: () => nextBattle(endlessWave(st.wave + 1), carry) },
+        { ico: 'back', mg: '#d8c8b0', label: 'Remonter', sub: 'garder le butin', showSub: true, go: closeBattle },
+      ];
+    } else {
+      xp = Math.round(xp * 0.5);
+      title = 'Fin de la descente';
+      state.endlessBest = Math.max(state.endlessBest, st.wave - 1);
+      notes.push(`Vague ${st.wave} · butin : ${endlessRun ? endlessRun.gold : 0} or · record : vague ${state.endlessBest}`);
+      signs = [
+        { ico: 'fight', mg: '#c08aff', label: 'Redescendre', sub: 'depuis la vague 1', showSub: true, go: () => { endlessRun = { wave: 1, gold: 0 }; nextBattle(endlessWave(1)); } },
+        { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
+      ];
+    }
+  } else {
+    const first = win && st.n > state.best;
+    if (win) {
+      gold = st.gold + (first ? st.firstGold : 0);
+      if (first) state.best = st.n;
+      if (first) notes.push('bonus du premier passage');
+    } else notes.push('Améliore tes héros, ou entraîne-toi à la tour des épreuves.');
+    signs = win ? [
+      { ico: 'fight', mg: '#ffd86a', label: 'Étape suivante', sub: `Étape ${state.best + 1}`, showSub: true, go: () => nextBattle(state.best + 1) },
+      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
+    ] : [
+      { ico: 'fight', mg: '#ff8a4a', label: 'Réessayer', sub: `Étape ${st.n}`, showSub: true, go: () => nextBattle(st.n) },
+      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
+    ];
   }
+  state.gold += gold;
+  const ups = giveXp(team, xp);
+  save();
+  showEnd({ win, title, gold, xp, ups, notes, signs });
+}
+
+function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   sfx(win ? 'win' : 'lose');
   haptic(win ? 40 : 20);
   const end = $('#b-end'), veil = $('#b-veil'), pl = $('#b-plaque');
   pl.innerHTML = '';
   pl.className = win ? 'win' : 'lose';
-  pl.appendChild(el('div', 'end-title', win ? 'Victoire !' : 'Défaite…'));
+  pl.appendChild(el('div', 'end-title' + (title.length > 12 ? ' long' : ''), title));
   const team = el('div', 'end-team');
   state.team.forEach((id) => team.appendChild(lookCanvas(id, 3)));
   pl.appendChild(team);
-  if (win) {
-    const g = el('div', 'end-gold');
-    g.appendChild(spriteCanvas('coin', coinSprite, 2));
+  const row = el('div', 'end-gold');
+  if (gold) {
+    row.appendChild(spriteCanvas('coin', coinSprite, 2));
     const n = el('b', '', '+0');
-    g.append(n, el('span', '', 'or'));
-    pl.appendChild(g);
-    if (first) pl.appendChild(el('div', 'end-note', 'bonus du premier passage'));
+    row.append(n, el('span', '', 'or'));
     // l'or se compte par paliers
-    for (let i = 1; i <= 12; i++) setTimeout(() => { n.textContent = '+' + Math.round((gain * i) / 12); if (i % 3 === 0) sfx('coin'); }, 520 + i * 50);
-  } else {
-    pl.appendChild(el('div', 'end-note', 'Améliore tes héros ou change d’équipe.'));
+    for (let i = 1; i <= 12; i++) setTimeout(() => { n.textContent = '+' + Math.round((gold * i) / 12); if (i % 3 === 0) sfx('coin'); }, 520 + i * 50);
   }
+  row.appendChild(el('span', 'end-xp', `+${xp} XP`));
+  pl.appendChild(row);
+  if (ups.length) pl.appendChild(el('div', 'end-up', ups.map((u) => `${HEROES[u.id].name} niv ${u.lvl} !`).join(' · ')));
+  for (const t of notes) pl.appendChild(el('div', 'end-note', t));
   end.classList.remove('hidden');
   $('#b-end-menu').classList.add('hidden');
   for (const [o, ms] of [[0.2, 0], [0.4, 60], [0.6, 120]]) setTimeout(() => (veil.style.opacity = o), ms);
@@ -1910,15 +2172,10 @@ function endBattle(st, res) {
     } else {
       fx(Array.from({ length: 16 }, () => ({ x: rr(r.left, r.right), y: r.bottom, vx: rr(-1.2, 1.2), vy: rr(-1.2, -0.2), g: 0.03, life: rr(20, 34) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 })));
     }
+    if (ups.length) setTimeout(() => sfx('levelUp'), 300);
     sfx('wood');
     $('#scr-battle').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -3 : 3}px` })), { duration: 160, easing: 'steps(5, end)' });
-    layoutSigns($('#b-end-menu'), null, win ? [
-      { ico: 'fight', mg: '#ffd86a', label: 'Étape suivante', sub: `Étape ${state.best + 1}`, showSub: true, go: () => nextBattle(state.best + 1) },
-      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
-    ] : [
-      { ico: 'fight', mg: '#ff8a4a', label: 'Réessayer', sub: `Étape ${st.n}`, showSub: true, go: () => nextBattle(st.n) },
-      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
-    ], r.right - 64, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
+    layoutSigns($('#b-end-menu'), null, signs, r.right - 64, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
   }, 480);
 }
 
@@ -1928,12 +2185,12 @@ function hideEnd() {
   $('#b-veil').style.opacity = 0;
 }
 
-async function nextBattle(n) {
+async function nextBattle(n, carry = null) {
   closeModal(false);
   await fade(true);
   battle?.stop();
   hideMenu();
-  startBattle(n);
+  startBattle(n, carry);
   await fade(false);
 }
 

@@ -4,9 +4,12 @@ const KEY = 'pixel-gacha-save-v1';
 function fresh() {
   return {
     gold: 1000,
-    owned: { kael: { rank: 1, frags: 0 } },
+    owned: { kael: { rank: 1, frags: 0, lvl: 1, xp: 0 } },
     team: ['kael'],
     skins: {}, // tenues obtenues : { idDuSkin: true }
+    keys: 5, // clés de la tour des épreuves (rechargées chaque jour)
+    keysDay: '',
+    endlessBest: 0, // meilleure vague du mode infini
     wear: {}, // tenue portée par héros : { idDuHéros: idDuSkin }
     best: 0, // meilleure étape gagnée
     pulls: 0,
@@ -22,7 +25,15 @@ export const state = load();
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...fresh(), ...JSON.parse(raw) };
+    if (raw) {
+      const s = { ...fresh(), ...JSON.parse(raw) };
+      // anciennes sauvegardes : les héros commencent au niveau 1
+      for (const o of Object.values(s.owned)) {
+        o.lvl ??= 1;
+        o.xp ??= 0;
+      }
+      return s;
+    }
   } catch (e) { /* stockage indisponible */ }
   return fresh();
 }

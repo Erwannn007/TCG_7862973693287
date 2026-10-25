@@ -29,7 +29,8 @@ const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 export class Battle {
   // look(id, rang) → { key, make } : l'apparence du héros (son skin s'il en porte un)
-  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, height = H, zoom = 1, look = null }) {
+  // carry : PV gardés d'un combat à l'autre (mode infini), { idDuHéros: fraction des PV max }
+  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, height = H, zoom = 1, look = null, carry = null }) {
     this.g = canvas.getContext('2d');
     this.canvas = canvas;
     this.ui = ui;
@@ -63,7 +64,7 @@ export class Battle {
 
     const hs = SLOT_ORDER[team.length];
     this.heroes = team.map((id, i) => {
-      const rank = owned[id].rank, st = heroStats(id, rank);
+      const rank = owned[id].rank, st = heroStats(id, rank, owned[id].lvl || 1);
       const lk = look ? look(id, rank) : { key: `h-${id}-${rank}`, make: () => heroSprite(id, rank) };
       return this.unit('h', { id, rank, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]], lk.key, lk.make);
     });
@@ -72,6 +73,14 @@ export class Battle {
     this.enemies = stage.enemies.map((e, i) =>
       this.unit('e', { ...e }, big ? BOSS_SLOT : ENEMY_SLOTS[es[i]], `e-${e.kind}-${e.variant}`, () => enemySprite(e.kind, e.variant)));
     this.turns = 0;
+    if (carry) for (const u of this.heroes) {
+      const f = carry[u.id] ?? 1;
+      u.hp = u.trailHp = Math.round(u.max * Math.min(1, f));
+      if (u.hp <= 0) {
+        u.hp = 0;
+        u.alive = false;
+      }
+    }
 
     canvas.onpointerdown = (ev) => this.tap(ev);
     this.raf = requestAnimationFrame((t) => this.draw(t));
@@ -484,7 +493,7 @@ export class Battle {
   }
 
   async run() {
-    this.log(`Étape ${this.stage.n} — ${this.stage.chapter.name}`);
+    this.log(this.stage.label || `Étape ${this.stage.n} — ${this.stage.chapter.name}`);
     await this.wait(700);
     while (!this.over) {
       this.turns++;

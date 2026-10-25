@@ -29,6 +29,7 @@
 html, body { height: 100%; overflow: hidden; background: #1a1114; }
 body {
   font: 400 16px/1.25 'Pixelify', ui-monospace, monospace;
+  font-variant-ligatures: none; /* sinon « fi » devient une ligature illisible en pixel */
   color: var(--cream);
   -webkit-font-smoothing: none;
   -webkit-user-select: none; user-select: none;
@@ -131,6 +132,14 @@ small { font-size: 12px; }
   transform: translate(-50%, -100%); pointer-events: none; text-align: center;
 }
 #door-sign .ribbon { font-size: 14px; }
+/* sous la porte : on peut la faire glisser de bas en haut pour changer de mode (histoire, tour, infini) */
+#c-modes { position: absolute; z-index: 2; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; white-space: nowrap; }
+#c-modes .hint { font-size: 13px; animation: none; }
+#c-modes .dots { display: flex; align-items: center; gap: 8px; height: 12px; }
+#c-modes .dots i { width: 6px; height: 6px; background: #6a6068; box-shadow: 0 0 0 2px var(--line); }
+#c-modes .dots i.on { background: #a8a0a8; }
+#c-modes.swiping .dots i { width: 10px; height: 10px; background: #f2eef4; box-shadow: 0 0 0 2px var(--line), 0 0 6px #ffffff; }
+#c-modes.swiping .dots i.on { background: #ffffff; }
 .hint {
   font-size: 14px; font-weight: 700; color: var(--gold-hi); animation: blink 1.2s steps(1) infinite;
   text-shadow: 1px 0 0 var(--line), -1px 0 0 var(--line), 0 1px 0 var(--line), 0 -1px 0 var(--line), 2px 2px 0 var(--line);
@@ -413,6 +422,7 @@ small { font-size: 12px; }
   background: no-repeat center; image-rendering: pixelated;
 }
 #b-plaque.win { color: var(--ink); text-shadow: var(--txt-gold); }
+.end-title.long { font-size: 30px; }
 .end-title { font: 400 40px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
 #b-plaque.win .end-title { color: #8a1a28; text-shadow: 2px 2px 0 #fbe08a, 3px 3px 0 var(--line); }
 #b-plaque.lose .end-title { color: #c8a870; }
@@ -425,6 +435,11 @@ small { font-size: 12px; }
 .end-gold { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; }
 .end-gold b { color: #8a1a28; }
 .end-note { font-size: 14px; font-weight: 700; }
+.end-xp { margin-left: 10px; font-size: 18px; color: #2e7a34; }
+#b-plaque.lose .end-xp { color: #9af098; }
+.end-up { font-size: 14px; font-weight: 700; color: #8a1a28; animation: blink .5s steps(1) 6; }
+#b-plaque.lose .end-up { color: #fbe08a; }
+.seg.xp i.on { background: #5ab4ff; box-shadow: inset 0 2px 0 #b8e0ff, inset 0 -2px 0 #2f78d0; }
 
 /* ================================================================ surcouches */
 .overlay {

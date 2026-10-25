@@ -21,10 +21,14 @@ on les améliore avec les doublons, on monte une équipe de 3 et on enchaîne le
 ## 3. Boucle de jeu
 
 ```
-Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / obtenir des éclats
-        ↑                                                        ↓
-        └──────────── étapes plus dures ← améliorer le rang ←────┘
+Combattre (histoire, tour, infini) → or + XP (+ éclats à la tour) → invoquer / monter de niveau
+        ↑                                                                  ↓
+        └──────── étapes plus dures ← monter de rang (éclats + niveau max) ←┘
 ```
+
+**Rythme visé : moyen-rapide.** On n'est jamais bloqué : si une étape résiste (le dragon…), la
+tour des épreuves donne des éclats, de l'or et de l'XP à une difficulté qu'on choisit, et le
+mode infini rapporte de l'or et de l'XP.
 
 ## 4. Personnages (version 1 : 5 personnages × 5 rangs)
 
@@ -40,7 +44,15 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Chaque compétence a un temps de recharge (en tours).
 - **Rangs 1 → 5** : chaque rang multiplie les stats (×1 / ×1,2 / ×1,45 / ×1,75 / ×2,2)
   et change visiblement le sprite.
-- Monter de rang coûte des **éclats** (doublons) + de l'or :
+- **Niveaux (XP)** : chaque combat donne de l'XP à tous les héros de l'équipe (30 + 6 × niveau
+  du combat ; 40 % en cas de défaite). Chaque niveau ajoute **+2,5 %** aux stats. Le rang fixe le
+  **niveau maximum : 10 × rang** (10, 20, 30, 40, 50). Passer du niveau L au suivant coûte
+  20 + 10 × L XP.
+- **Rang max actuel : 5. Trois rangs de plus sont prévus (jusqu'au rang 8)** : niveau max 80,
+  rangs 6 et 7 en mythril et obsidienne (palettes déjà prêtes), rang 8 à définir. Tout est
+  paramétré par `MAX_RANK`, `RANK_MULT`, `RANK_NAMES`, `UPGRADE` (`js/data.js`).
+- Monter de rang demande d'être au **niveau maximum du rang**, plus des **éclats** (doublons à
+  l'invocation, ou salle des éclats de la tour) et de l'or :
 
   | Passage | Éclats | Or |
   |---|---|---|
@@ -112,6 +124,22 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Ennemis : Slime, Gobelin, Squelette — variantes = même dessin, autre palette.
 - Les ennemis gagnent +10 % de stats par étape.
 
+## 7 bis. Modes de jeu
+
+Derrière la porte du camp, trois modes. On passe de l'un à l'autre en **faisant glisser la porte
+de bas en haut** (de haut en bas pour revenir) : l'intérieur de la porte change, les pancartes
+explosent en copeaux et celles du nouveau mode tombent du ciel. Sous le ruban, trois points
+grisâtres montrent le mode affiché ; ils grossissent et blanchissent sous le doigt.
+
+| Mode | Porte | Principe |
+|---|---|---|
+| **Histoire** | obscurité | les étapes à la suite (toucher la porte, ou « Combattre ») ; « Rejouer » une étape gagnée |
+| **Tour des épreuves** | escalier de lumière bleue | salles rejouables : **éclats** (d'un héros au choix, +1/+2/+3), **trésor** (or), **entraînement** (beaucoup d'XP). Difficulté Facile (niveau ≈ moitié de la meilleure étape), Normal (meilleure étape), Difficile (+4). **5 clés par jour**, une clé dépensée par victoire seulement |
+| **Mode infini** | tourbillon violet | des vagues sans fin, de plus en plus dures (golem toutes les 5, dragon toutes les 10) ; les PV restent d'une vague à l'autre (+25 % de soin) ; or et XP à chaque vague ; « Remonter » garde le butin ; record enregistré |
+
+Les choix (salle, héros, difficulté) se font en pancartes, avec la même explosion / chute entre
+chaque étape. La fin de combat affiche l'or, l'XP, les montées de niveau et les récompenses du mode.
+
 ## 8. Écrans
 
 Ambiance : donjon en pixel art, chaleureux (pierre, bois, torches, parchemin).
@@ -163,4 +191,4 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
 ## 9. Hors périmètre (plus tard)
 
 Nouveaux personnages et classes (fantasy, moderne, imaginaire : aucune limite),
-rangs 6–7 (mythril, obsidienne), équipements, événements, sons.
+rangs 6 à 8 (mythril, obsidienne…), équipements, événements, nouvelles salles de tour.

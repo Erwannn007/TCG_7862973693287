@@ -39,11 +39,25 @@ export const UPGRADE = [
   { frags: 5, gold: 1000 },
 ];
 
-export function heroStats(id, rank) {
-  const h = HEROES[id], k = RANK_MULT[rank - 1];
+// Rang maximal actuel ; trois rangs de plus sont prévus (jusqu'à 8 : mythril, obsidienne…).
+// Pour les ajouter : RANK_MULT, RANK_NAMES, UPGRADE et les dessins des rangs (js/sprites.js).
+export const MAX_RANK = 5;
+
+// Niveaux (XP) : on progresse en jouant. Le rang fixe le niveau maximum (10 par rang) ;
+// chaque niveau ajoute 2,5 % aux stats ; monter de rang demande d'être au niveau maximum.
+export const LEVEL = {
+  cap: (rank) => 10 * rank,
+  need: (lvl) => 20 + 10 * lvl, // XP pour passer du niveau lvl au suivant
+  bonus: 0.025,
+};
+// XP gagnée par chaque héros d'un combat de niveau n (40 % en cas de défaite).
+export const xpFor = (n, win) => Math.round((30 + 6 * n) * (win ? 1 : 0.4));
+
+export function heroStats(id, rank, lvl = 1) {
+  const h = HEROES[id], k = RANK_MULT[rank - 1] * (1 + LEVEL.bonus * (lvl - 1));
   return {
     hp: Math.round(h.hp * k), atk: Math.round(h.atk * k),
-    def: Math.round(h.def * k), spd: h.spd + (rank - 1),
+    def: Math.round(h.def * k), spd: h.spd + (rank - 1) + Math.floor((lvl - 1) / 10),
   };
 }
 
@@ -106,6 +120,64 @@ export function stage(n) {
   }
   return {
     n, chapter: ch, enemies, boss: n % 5 === 0,
-    gold: 30 + 12 * n, firstGold: 100 + (n % 5 === 0 ? 150 : 0),
+    gold: 30 + 12 * n, firstGold: 100 + (n % 5 === 0 ? 150 : 0), mode: 'story', label: `Étape ${n} · ${ch.name}`,
+  };
+}
+
+// ---------------------------------------------------------------- tour des épreuves
+
+// Des salles rejouables, avec une difficulté au choix : on n'est jamais bloqué.
+// Clés : TOWER_KEYS par jour, une clé dépensée par victoire.
+export const TOWER_KEYS = 5;
+export const TOWER_ROOMS = {
+  shards: { name: 'Salle des éclats', short: 'Éclats', ico: 'summon', mg: '#c08aff', desc: 'pour monter de rang' },
+  gold: { name: 'Salle du trésor', short: 'Trésor', ico: 'chest', mg: '#ffd86a', desc: 'beaucoup d’or' },
+  xp: { name: 'Salle d’entraînement', short: 'Entraînement', ico: 'fight', mg: '#5ae0ee', desc: 'beaucoup d’XP' },
+};
+// lvl : niveau des ennemis selon la meilleure étape gagnée ; k : multiplicateur de récompense.
+export const TOWER_DIFF = [
+  { name: 'Facile', lvl: (b) => Math.max(1, Math.round(b * 0.5)), k: 1, count: 2 },
+  { name: 'Normal', lvl: (b) => Math.max(1, b), k: 1.6, count: 3 },
+  { name: 'Difficile', lvl: (b) => b + 4, k: 2.4, count: 3 },
+];
+
+export function towerReward(room, d, best) {
+  const D = TOWER_DIFF[d], n = D.lvl(best);
+  if (room === 'shards') return { shards: d + 1 };
+  if (room === 'gold') return { gold: Math.round((80 + 25 * n) * D.k) };
+  return { xp: Math.round(xpFor(n, true) * (1 + D.k)) };
+}
+
+export function towerStage(room, d, best, hero = null) {
+  const D = TOWER_DIFF[d], n = D.lvl(best), ch = chapterOf(n), r = rng(Math.floor(Math.random() * 1e6));
+  const enemies = Array.from({ length: D.count }, () => {
+    const [k, v] = ch.pool[Math.floor(r() * ch.pool.length)];
+    return enemy(k, v, n);
+  });
+  return {
+    n, chapter: ch, enemies, boss: false, mode: 'tower', room, diff: d, hero,
+    reward: { ...towerReward(room, d, best), hero }, label: `${TOWER_ROOMS[room].name} · ${D.name}`,
+  };
+}
+
+// ---------------------------------------------------------------- mode infini
+
+// Des vagues de plus en plus dures, sans fin ; les PV des héros passent d'une vague à l'autre
+// (+25 % de soin entre deux vagues). Un golem toutes les 5 vagues, un dragon toutes les 10.
+export function endlessWave(w) {
+  const ch = CHAPTERS[Math.floor((w - 1) / 5) % CHAPTERS.length];
+  let enemies;
+  if (w % 10 === 0) enemies = [enemy('dragon', ch.dragon, w)];
+  else if (w % 5 === 0) enemies = [enemy('golem', ch.golem, w)];
+  else {
+    const r = rng(w * 7919 + Math.floor(Math.random() * 1e6)), count = Math.min(3, 1 + Math.floor(w / 2));
+    enemies = Array.from({ length: count }, () => {
+      const [k, v] = ch.pool[Math.floor(r() * ch.pool.length)];
+      return enemy(k, v, w);
+    });
+  }
+  return {
+    n: w, wave: w, chapter: ch, enemies, boss: w % 5 === 0, mode: 'endless',
+    reward: { gold: 20 + 10 * w, xp: Math.round(xpFor(w, true) * 0.7) }, label: `Mode infini · Vague ${w}`,
   };
 }
