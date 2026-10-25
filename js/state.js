@@ -42,6 +42,27 @@ export function save() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* ignoré */ }
 }
 
+// Mode admin : la vraie partie est mise de côté avant le premier « tout débloquer », et peut être
+// remise telle quelle ensuite.
+const BACKUP = KEY + '-avant-admin';
+export function hasBackup() {
+  try { return !!localStorage.getItem(BACKUP); } catch (e) { return false; }
+}
+export function backupSave() {
+  try { if (!localStorage.getItem(BACKUP)) localStorage.setItem(BACKUP, JSON.stringify(state)); } catch (e) { /* ignoré */ }
+}
+export function restoreBackup() {
+  try {
+    const raw = localStorage.getItem(BACKUP);
+    if (!raw) return false;
+    for (const k of Object.keys(state)) delete state[k];
+    Object.assign(state, fresh(), JSON.parse(raw));
+    localStorage.removeItem(BACKUP);
+    save();
+    return true;
+  } catch (e) { return false; }
+}
+
 export function resetSave() {
   try { localStorage.removeItem(KEY); } catch (e) { /* ignoré */ }
   Object.assign(state, fresh());

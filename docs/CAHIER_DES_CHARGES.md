@@ -267,6 +267,13 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    converge, tremblement, éclair) puis la révélation : dos en bois frappés du cristal, faces
    en pancartes verticales (héros dans une fenêtre, nom sur un ruban), éclat selon la rareté.
 
+### Mode admin (Options → Admin)
+
+Pour tester : **Tout débloquer** (tous les héros au rang 5 et niveau max, toutes les tenues,
+999 999 or, clés pleines), **Rang des héros** (tous au rang 1 à 5, pour voir chaque dessin),
+**+100 000 or**, **Clés**. La vraie partie est mise de côté avant la première triche :
+**Ma partie** la remet telle quelle.
+
 ## 9. Hors périmètre (plus tard)
 
 Rangs 6 à 8 (mythril, obsidienne…), équipements, événements, nouvelles salles de tour.

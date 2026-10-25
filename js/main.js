@@ -4,7 +4,7 @@
 import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
 import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
-import { state, save, resetSave } from './state.js';
+import { state, save, resetSave, hasBackup, backupSave, restoreBackup } from './state.js';
 import { Battle, W, H } from './battle.js';
 import { sceneBackground, drawRoomLayers, campFireFront, altar, ALTAR_Y, ALTAR_BASE, SH, CAMP_W, GATE } from './scene.js';
 import { installUiArt, iconSprite, signUrl, posterUrl, U } from './ui-art.js';
@@ -672,12 +672,43 @@ function openOptions() {
   openBoard('Options', [
     { ico: 'auto', mg: '#ffd86a', label: 'Sons', sub: on('sound'), showSub: true, go: () => { state.sound = !state.sound; setSound(state.sound); save(); openOptions(); } },
     { ico: 'auto', mg: '#5ae0ee', label: 'Vibration', sub: `${state.haptics ? 'activée' : 'coupée'} · pas sur iPhone récent`, showSub: true, go: () => { state.haptics = !state.haptics; setHaptics(state.haptics); save(); openOptions(); } },
+    { ico: 'gear', mg: '#c08aff', label: 'Admin', sub: 'tout débloquer pour tester', showSub: true, go: openAdmin },
     { ico: 'cancel', mg: '#ff6a6a', label: 'Effacer', sub: 'toute la partie', showSub: true, go: () => openBoard('Tout effacer ?', [
       { ico: 'cancel', mg: '#ff6a6a', label: 'Oui', sub: 'recommencer à zéro', showSub: true, go: () => { closeBoard(); resetSave(); show('camp'); } },
       { ico: 'back', mg: '#d8c8b0', label: 'Non', sub: 'garder ma partie', showSub: true, go: openOptions },
     ]) },
     { ico: 'back', mg: '#d8c8b0', label: 'Fermer', go: closeBoard },
   ]);
+}
+
+// Mode admin (pour tester) : tout débloquer, choisir le rang de tous les héros, de l'or à volonté.
+// La vraie partie est sauvegardée à part avant la première triche, et « Ma partie » la remet.
+function openAdmin() {
+  const cheat = (f) => () => { backupSave(); f(); save(); sfx('legend'); openAdmin(); };
+  const allRank = (r) => {
+    for (const id of HERO_IDS) {
+      const o = (state.owned[id] ||= { rank: 1, frags: 0, lvl: 1, xp: 0 });
+      o.rank = r; o.lvl = LEVEL.cap(r); o.xp = 0;
+    }
+  };
+  const maxed = HERO_IDS.every((id) => state.owned[id]?.rank === MAX_RANK);
+  const items = [
+    { ico: 'chest', mg: '#ffd86a', label: 'Tout débloquer', sub: maxed ? 'déjà fait' : 'héros rang 5, tenues, or, clés', showSub: true, go: cheat(() => {
+      allRank(MAX_RANK);
+      for (const sk of SKINS) state.skins[sk.id] = true;
+      state.gold = Math.max(state.gold, 999999);
+      state.keys = TOWER_KEYS;
+    }) },
+    { ico: 'team', mg: '#5ae0ee', label: 'Rang des héros', sub: 'tous au même rang', showSub: true, go: () => openBoard('Rang de tous', [
+      ...[1, 2, 3, 4, 5].map((r) => ({ ico: 'speed', mg: '#c08aff', label: `Rang ${r}`, sub: RANK_NAMES[r - 1] || '', showSub: true, go: cheat(() => allRank(r)) })),
+      { ico: 'back', mg: '#d8c8b0', label: 'Retour', go: openAdmin },
+    ], 3) },
+    { ico: 'chest', mg: '#ffd86a', label: '+100 000 or', sub: `${state.gold} or`, showSub: true, go: cheat(() => { state.gold += 100000; }) },
+    { ico: 'fight', mg: '#ff6a6a', label: 'Clés', sub: 'recharger la tour', showSub: true, go: cheat(() => { state.keys = TOWER_KEYS; }) },
+  ];
+  if (hasBackup()) items.push({ ico: 'scroll', mg: '#9af098', label: 'Ma partie', sub: 'revenir à avant l’admin', showSub: true, go: () => { restoreBackup(); sfx('coin'); openAdmin(); } });
+  items.push({ ico: 'back', mg: '#d8c8b0', label: 'Retour', go: openOptions });
+  openBoard('Admin', items);
 }
 
 // Rejouer une étape gagnée : 6 étapes par page, de la plus récente à la plus ancienne.
