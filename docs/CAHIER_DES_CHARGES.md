@@ -61,6 +61,8 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 
 ### Tenues (skins)
 
+> Thèmes, pop culture et méthode pour en créer : voir [`SKINS.md`](SKINS.md).
+
 - Une tenue **remplace entièrement le dessin** d'un héros, **quel que soit son rang** (rang 1 ou
   rang 5 : même allure). Aucune limite de thème : chevalier en slip, mineur cubique, samouraï…
 - Elles s'obtiennent à l'**autel des tenues** : sur la page Invocation, on fait glisser la pierre

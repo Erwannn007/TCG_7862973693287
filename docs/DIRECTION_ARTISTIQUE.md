@@ -150,6 +150,7 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - On garde un trait reconnaissable du héros quand c'est possible (cheveux de Kael, barbe d'Elio,
   mèches dorées de Séra), pour qu'on sache qui la porte.
 - Les Légendaires ont droit à quelques étincelles et à une cape.
+- Thèmes sans limite, pop culture comprise : voir [`SKINS.md`](SKINS.md).
 
 ### 2.8 À éviter
 
@@ -221,6 +222,9 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - Cadres **9-slice** dessinés en code (`js/ui-art.js`) : bois, parchemin, pierre,
   boutons bois / or / rouge, ruban. Les coins ne sont jamais étirés et les images sont
   générées directement à la taille des pixels de l'écran (aucun flou).
+- **Lisibilité** : texte clair sur bois ou décor = contour sombre de 1 px tout autour
+  (`--txt-out`) ; texte sombre sur bois doré ou parchemin = liseré clair (`--txt-gold`) ;
+  jamais moins de 12 px, en gras pour les petites tailles.
 - Polices pixel (licence OFL, `fonts/`) : **Pixelify Sans** pour le texte, et
   **Jacquarda Bastarda 9** (gothique) pour les titres d'écran uniquement, car elle est
   moins lisible.

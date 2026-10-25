@@ -189,7 +189,7 @@ const WOOD = {
     hi: '#b8814a', lo: '#5a3820', frame: ['#4e3019', '#6a4228'], frameHi: '#8a5a32', metal: ['#2a262e', '#7a7480', '#c4c0c8'],
   },
   hot: {
-    planks: ['#d49a4e', '#dca458', '#c88e44'], grain: '#a8743a', grain2: '#ecc078', gap: '#5a3818',
+    planks: ['#d8a052', '#dea85a', '#d29a4c'], grain: '#c08a44', grain2: '#e8b868', gap: '#5a3818',
     hi: '#f8d690', lo: '#9a6630', frame: ['#7a4a12', '#a87a20'], frameHi: '#e0a93a', metal: ['#5a3408', '#e0a93a', '#fff4c0'],
   },
   // bois laqué rouge : actions dangereuses (fuir, effacer la partie)

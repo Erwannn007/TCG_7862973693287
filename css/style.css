@@ -5,6 +5,10 @@
 @font-face { font-family: 'Jacquarda'; src: url('../fonts/jacquarda-bastarda-9.woff2') format('woff2'); font-display: block; }
 
 :root {
+  /* contour de 1 px tout autour : texte clair lisible sur le bois et le décor */
+  --txt-out: 1px 0 0 var(--line), -1px 0 0 var(--line), 0 1px 0 var(--line), 0 -1px 0 var(--line), 1px 1px 0 var(--line);
+  /* texte sombre sur bois doré ou parchemin : liseré clair */
+  --txt-gold: 1px 1px 0 var(--gold-hi), -1px 0 0 #fff4c0;
   --ink: #3a2416;
   --ink-soft: #7a5a3a;
   --cream: #f2e2b8;
@@ -104,9 +108,9 @@ small { font-size: 12px; }
 .btn {
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 48px; padding: 12px 20px; color: var(--cream); font-weight: 700;
-  text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  text-shadow: var(--txt-out);
 }
-.btn.gold { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.btn.gold { color: var(--ink); text-shadow: var(--txt-gold); }
 .btn:disabled { filter: grayscale(.8) brightness(.7); }
 .btn small { display: block; font-weight: 400; }
 .btn .ico { display: flex; }
@@ -117,7 +121,8 @@ small { font-size: 12px; }
 }
 .h { font: 400 18px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); margin-bottom: 6px; }
 .parch .h { color: #8a1a28; text-shadow: none; }
-.muted { color: #b8a080; }
+.muted { color: #e8d4a4; text-shadow: var(--txt-out); }
+.parch .muted, #b-log .muted { text-shadow: none; }
 .parch .muted { color: var(--ink-soft); }
 
 /* ================================================================ camp et navigation */
@@ -163,7 +168,7 @@ small { font-size: 12px; }
 .card.locked { filter: brightness(.7) saturate(.6); }
 .card:active { transform: translateY(2px); }
 .card .name { white-space: nowrap; overflow: hidden; max-width: 100%; }
-.card .rank { font-size: 11px; font-weight: 400; color: var(--gold-hi); }
+.card .rank { font-size: 12px; font-weight: 700; color: var(--gold-hi); text-shadow: var(--txt-out); }
 .stars { display: flex; gap: 2px; justify-content: center; }
 .gems { display: flex; gap: 2px; }
 .badge { position: absolute; top: -12px; right: -10px; z-index: 2; padding: 0 4px; font-size: 12px; color: #fff; background: var(--gem); box-shadow: 0 0 0 2px var(--line); }
@@ -180,22 +185,22 @@ small { font-size: 12px; }
 }
 .r-sign {
   position: relative; touch-action: none; cursor: grab; display: flex; align-items: center; gap: 8px; height: 52px; flex-shrink: 1; min-height: 44px; padding: 4px 10px;
-  font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out);
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2s steps(1) infinite;
 }
 .r-sign:nth-child(2n) { animation-delay: -.7s; }
 .r-sign:nth-child(3n) { animation-delay: -1.3s; }
-.r-sign.hot { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); translate: 6px 0; filter: drop-shadow(0 0 4px #ffd86a); }
+.r-sign.hot { color: var(--ink); text-shadow: var(--txt-gold); translate: 6px 0; filter: drop-shadow(0 0 4px #ffd86a); }
 /* héros pas encore obtenu : avis de recherche en parchemin, un peu de travers */
 .r-sign.locked { color: var(--ink); text-shadow: none; cursor: default; rotate: -2deg; }
 .r-sign.locked:nth-child(2n) { rotate: 2deg; }
 .r-sign.locked canvas { opacity: .85; }
-.r-sign .wanted { display: block; font: 400 11px/1.1 'Jacquarda', serif; color: #8a1a28; }
+.r-sign .wanted { display: block; font: 700 11px/1.1 'Pixelify', monospace; color: #8a1a28; letter-spacing: 1px; text-transform: uppercase; }
 .r-sign.locked { gap: 4px; padding-right: 6px; }
 .r-sign.in-team { cursor: not-allowed; color: #a8a090; }
 .r-sign.in-team canvas { filter: brightness(.6) saturate(.6); }
-.r-sign .on-slot { font-size: 11px; font-weight: 400; color: #e8c070; }
+.r-sign .on-slot { font-size: 12px; font-weight: 700; color: #fbe08a; text-shadow: var(--txt-out); }
 /* pendant qu'on glisse un héros de l'équipe : la colonne devient la zone pour le retirer */
 #t-roster.drop-out { filter: drop-shadow(0 0 4px #ff6a6a); }
 #t-roster.drop-out.hot { filter: drop-shadow(0 0 8px #ff6a6a) brightness(1.1); }
@@ -213,11 +218,11 @@ small { font-size: 12px; }
   bottom: -32px; padding: 0 6px; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
   border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
 }
-.t-slot .cap { bottom: -50px; font-size: 12px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 var(--line); }
+.t-slot .cap { bottom: -50px; font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out); }
 .t-slot.empty .cap { color: #b8a080; }
-.t-slot.sel .num { border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.t-slot.sel .num { border-image-source: var(--f-gold); color: var(--ink); text-shadow: var(--txt-gold); }
 #t-slots.dragging .t-slot .num { animation: blink .6s steps(1) infinite; }
-#t-slots .t-slot.hot .num { animation: none; scale: 1.25; border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+#t-slots .t-slot.hot .num { animation: none; scale: 1.25; border-image-source: var(--f-gold); color: var(--ink); text-shadow: var(--txt-gold); }
 #t-hint { position: absolute; z-index: 2; translate: -50% 0; white-space: nowrap; pointer-events: none; }
 /* le héros qu'on déplace, sous le doigt, qui se balance un peu */
 .t-ghost {
@@ -235,7 +240,7 @@ small { font-size: 12px; }
 #t-info, #t-skins {
   position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 4px); right: var(--safe-r); width: 270px;
   display: flex; flex-direction: column; justify-content: space-between; gap: 2px; padding: 10px 18px 12px; overflow: hidden;
-  font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  font-size: 14px; color: var(--cream); text-shadow: var(--txt-out);
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2.2s steps(1) infinite;
 }
@@ -257,7 +262,7 @@ small { font-size: 12px; }
 .sk-row.soon { opacity: .55; }
 .sk-row:active:not(.soon) { translate: 0 2px; }
 .sk-txt { display: flex; flex-direction: column; gap: 2px; }
-.sk-txt small { font-size: 11px; font-weight: 400; color: #e8d4a4; }
+.sk-txt small { font-size: 12px; font-weight: 700; color: #fbe08a; text-shadow: var(--txt-out); }
 .sk-actions { display: flex; gap: 8px; }
 .d-name { font: 400 24px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); }
 .d-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
@@ -271,11 +276,11 @@ small { font-size: 12px; }
 .seg i.on { background: var(--gold); box-shadow: inset 0 2px 0 var(--gold-hi), inset 0 -2px 0 #a87a20; }
 .seg.hp i.on { background: #5cc85a; box-shadow: inset 0 2px 0 #9af098, inset 0 -2px 0 #3a8e3e; }
 .seg.pity i.on { background: #9a5ad8; box-shadow: inset 0 2px 0 #c89af0, inset 0 -2px 0 #62349a; }
-.skill-line { margin-top: 2px; font-size: 12px; line-height: 1.2; }
-.d-place { font-size: 12px; color: #e8d4a4; }
+.skill-line { margin-top: 2px; font-size: 13px; line-height: 1.25; }
+.d-place { font-size: 13px; font-weight: 700; color: #f2e2b8; }
 .d-place.on { color: var(--gold-hi); }
 .skill-line b { color: var(--gold-hi); }
-.ranks { display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; margin-top: 2px; }
+.ranks { display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; font-weight: 700; margin-top: 2px; }
 .ranks div { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 
 /* invocation : même langage que le combat — pancartes en arc autour du cristal,
@@ -283,16 +288,16 @@ small { font-size: 12px; }
 #s-info {
   position: absolute; z-index: 2; top: calc(var(--safe-t) + 50px); bottom: calc(var(--safe-b) + 4px); right: var(--safe-r); width: 264px;
   display: flex; flex-direction: column; justify-content: space-evenly; gap: 3px; padding: 12px 18px 14px;
-  font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  font-size: 14px; color: var(--cream); text-shadow: var(--txt-out);
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2.2s steps(1) infinite;
 }
 #s-info .h { margin-bottom: 0; }
-#s-info .muted { color: #e8d4a4; font-size: 12px; }
+#s-info .muted { color: #f2e2b8; font-size: 13px; }
 #s-veil { position: absolute; inset: 0; z-index: 3; background: #0e080b; opacity: 0; pointer-events: none; }
 /* sous la pierre : on peut la faire glisser pour passer à l'autel des tenues */
 #s-hint { position: absolute; z-index: 2; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; white-space: nowrap; }
-#s-hint .hint { font-size: 12px; }
+#s-hint .hint { font-size: 13px; }
 #s-hint .dots { display: flex; align-items: center; gap: 8px; height: 12px; }
 /* deux points grisâtres (l'autel affiché un peu plus clair) ; sous le doigt, ils grossissent et blanchissent */
 #s-hint .dots i { width: 6px; height: 6px; background: #6a6068; box-shadow: 0 0 0 2px var(--line); }
@@ -318,9 +323,9 @@ small { font-size: 12px; }
 .b-tools { display: flex; gap: 6px; }
 .tool {
   display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 8px 14px;
-  font-size: 14px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  font-size: 14px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out);
 }
-.tool.on { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.tool.on { color: var(--ink); text-shadow: var(--txt-gold); }
 #b-log {
   position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 58px); z-index: 3;
   min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 8px 16px 6px;
@@ -343,7 +348,7 @@ small { font-size: 12px; }
 .signs .act {
   --mg: #f2e2b8; --px: 0px; --py: 0px;
   position: absolute; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 8px 18px;
-  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out);
   background: no-repeat center; image-rendering: pixelated;
   translate: var(--px) calc(-50% + var(--py)); rotate: var(--tilt, 0deg);
   animation: levitate 1.6s steps(1) infinite, aura 1.6s steps(1) infinite;
@@ -371,7 +376,7 @@ small { font-size: 12px; }
 .signs .motes i:nth-child(2) { left: 74%; animation-delay: -1.5s; }
 .signs .motes i:nth-child(n + 3) { display: none; }
 .signs .act.hot {
-  width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
+  width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: var(--txt-gold);
   translate: calc(6px + var(--px)) calc(-50% + var(--py)); rotate: 0deg; z-index: 2;
   --mg: #ffd86a;
   animation: levitate 1.6s steps(1) infinite, aura-hot .8s steps(1) infinite;
@@ -387,10 +392,10 @@ small { font-size: 12px; }
 .signs.big .act small { font-size: 13px; }
 .signs .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
 .signs .act.off .motes, .signs .act.off::before { display: none; }
-.signs .act small { display: none; font-size: 12px; font-weight: 400; }
+.signs .act small { display: none; font-size: 13px; font-weight: 700; }
 /* sub : le sous-titre (prix…) reste affiché même quand la pancarte n'est pas visée */
-.signs .act.sub small { display: block; color: #e8d4a4; }
-.signs .act.hot small { display: block; color: #5a3a22; }
+.signs .act.sub small { display: block; color: #fbe08a; }
+.signs .act.hot small { display: block; color: var(--ink); }
 .signs .cd {
   position: absolute; right: 2px; top: -4px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
   background: var(--line); box-shadow: 0 0 0 2px #8a8088;
@@ -404,10 +409,10 @@ small { font-size: 12px; }
 #b-plaque {
   position: absolute; left: calc(50% - 130px); top: 50%; translate: -50% -50%; width: 300px;
   display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 22px 20px;
-  color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414; text-align: center;
+  color: var(--cream); text-shadow: var(--txt-out); text-align: center;
   background: no-repeat center; image-rendering: pixelated;
 }
-#b-plaque.win { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+#b-plaque.win { color: var(--ink); text-shadow: var(--txt-gold); }
 .end-title { font: 400 40px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
 #b-plaque.win .end-title { color: #8a1a28; text-shadow: 2px 2px 0 #fbe08a, 3px 3px 0 var(--line); }
 #b-plaque.lose .end-title { color: #c8a870; }
@@ -419,7 +424,7 @@ small { font-size: 12px; }
 @keyframes hop { 0% { translate: 0 0; } 50% { translate: 0 -6px; } }
 .end-gold { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; }
 .end-gold b { color: #8a1a28; }
-.end-note { font-size: 13px; }
+.end-note { font-size: 14px; font-weight: 700; }
 
 /* ================================================================ surcouches */
 .overlay {
@@ -431,10 +436,10 @@ small { font-size: 12px; }
 /* fenêtres (options, coffre du jour, confirmation, rejouer) : une plaque de bois */
 #modal-box {
   width: min(460px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
-  padding: 22px 26px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  padding: 22px 26px; color: var(--cream); text-shadow: var(--txt-out);
 }
 #modal-box p { text-align: center; }
-#modal-box .muted { color: #e8d4a4; }
+#modal-box .muted { color: #f2e2b8; }
 #modal-box .big-title { font: 400 34px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
 #modal-box .row { display: flex; gap: 8px; }
 #modal-box .row .btn { flex: 1; }
@@ -446,7 +451,7 @@ small { font-size: 12px; }
 #reveal-grid { display: grid; gap: 12px 10px; }
 #reveal-grid.grid1 { grid-template-columns: 172px; }
 #reveal-grid.grid10 { grid-template-columns: repeat(5, 92px); }
-#reveal-grid .card { min-height: 148px; font-size: 12px; }
+#reveal-grid .card { min-height: 148px; font-size: 13px; }
 #reveal-grid.grid1 .card { min-height: 246px; font-size: 15px; }
 /* face de carte : pancarte en hauteur, héros dans une fenêtre, nom sur un ruban */
 .card.face {
@@ -454,7 +459,7 @@ small { font-size: 12px; }
   background: no-repeat center; image-rendering: pixelated;
 }
 .card.face.r-R { filter: drop-shadow(0 0 4px var(--R)); }
-.card.face.r-L { filter: drop-shadow(0 0 6px var(--gold-hi)); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.card.face.r-L { filter: drop-shadow(0 0 6px var(--gold-hi)); color: var(--ink); text-shadow: var(--txt-gold); }
 .card .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px #c8a870; }
 .card.r-R .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--R); }
 .card.r-L .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--gold-hi); }
@@ -463,7 +468,7 @@ small { font-size: 12px; }
   border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
 }
 .card.face .rank { font-size: .85em; }
-.card.face.r-L .rank { color: #5a3a22; }
+.card.face.r-L .rank { color: var(--ink); text-shadow: var(--txt-gold); }
 .card.back {
   min-height: 120px; justify-content: center; border-image: none; background: no-repeat center; image-rendering: pixelated;
 }
