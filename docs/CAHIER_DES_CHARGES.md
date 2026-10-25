@@ -116,8 +116,8 @@ en tête des nouveaux héros dans `js/data.js`.
   et **fait évoluer le héros à sa façon** : chaque héros a ses 5 rangs à lui, avec un nom propre
   (Recrue → Lame de feu pour Kael, Renardeau → Kyūbi pour Kitsune, Toshinori → Golden Age pour
   All Might…) et un dessin qui raconte son histoire. Aucun ajout commun à tous (plus de métal du
-  rang, d'épaulières, de couronne ni d'ailes pour tout le monde) ; au rang 5, chacun a un grand
-  décor à lui derrière lui. Détail : [direction artistique](DIRECTION_ARTISTIQUE.md#4-progression-des-rangs).
+  rang, d'épaulières, de couronne ni d'ailes pour tout le monde) ; le rang 5 est sa forme ultime,
+  une amélioration du héros lui-même, sans aucun décor. Détail : [direction artistique](DIRECTION_ARTISTIQUE.md#4-progression-des-rangs).
 - **Niveaux (XP)** : chaque combat donne de l'XP à tous les héros de l'équipe (30 + 6 × niveau
   du combat ; 40 % en cas de défaite). Chaque niveau ajoute **+2,5 %** aux stats. Le rang fixe le
   **niveau maximum : 10 × rang** (10, 20, 30, 40, 50). Passer du niveau L au suivant coûte

@@ -13,7 +13,7 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
 - Chaque sprite est une grille, dessinée pixel par pixel avec la classe `Spr`
   (`js/spr.js`) :
   - **24×24** pour les héros jouables (rangs 1 à 4) et les boss moyens ;
-  - **28×28** pour le rang 5 des héros (le héros et son grand décor personnel derrière lui) ;
+  - **28×28** pour le rang 5 des héros (sa forme ultime : la place en plus sert à ce qui lui appartient et dépasse, ailes, queues, cape, grande arme ; jamais de décor) ;
   - **20×20** pour les ennemis de base ;
   - jusqu'à **~28×27** pour les gros boss.
 - Méthodes de dessin :
@@ -207,7 +207,7 @@ Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `j
 4. Partir de `body(s, {…})`, puis dessiner la coiffe, l'arme et 2 ou 3 détails propres au héros.
 5. Dessiner ses **5 rangs à lui** (voir la [progression des rangs](#4-progression-des-rangs)) :
    une histoire en 5 étapes, avec un nom par rang dans `RANK_TITLES` (`js/data.js`), et au rang 5
-   un grand décor personnel avec `grand()`.
+   sa forme ultime avec `grand()` (jamais de décor).
 6. Vérifier sur la planche (`node tools/sheet.mjs`) : lisible en petit, sans taches, sans trop de
    pixels vifs, et la silhouette tient seule.
 
@@ -365,80 +365,82 @@ Age), et chaque rang a son nom (`RANK_TITLES`, `js/data.js`), affiché sur sa fi
 
 - **Rangs 1 à 4** (24×24) : le héros reste reconnaissable du premier coup d'œil (même silhouette,
   même couleur signature), et chaque rang ajoute 1 à 3 changements bien visibles, à lui.
-- **Rang 5** (28×28) : sa forme ultime, et derrière lui un **grand décor personnel** dessiné avec
-  `grand(s, (b) => …)` (`js/chibi.js`) : le dessin est décalé de 2 à droite et 4 vers le bas, et le
-  décor se dessine derrière lui avec `b.under(…)`, sans jamais recouvrir le héros.
+- **Rang 5** (28×28) : **la forme ultime du héros lui-même**, jamais un décor. Sa tenue, sa
+  coiffe et son arme atteignent leur version la plus puissante ; seul ce qui lui appartient peut
+  dépasser de sa silhouette (ailes qui lui poussent, queues, cape, grande arme), dessiné avec
+  `grand(s, (b) => …)` (`js/chibi.js`, le dessin est décalé de 2 à droite et 4 vers le bas) et
+  `capeBack(b, …)` pour une cape. Pas de mur, d'arbre, de lune, de cercle ni d'aura derrière lui.
 - Les effets de combat gardent les couleurs du héros à tous les rangs.
 - Les palettes **mythril** et **obsidienne** (`js/sprites.js`) servent aux variantes de boss.
 - Les variantes d'ennemis sont **le même dessin avec une autre palette**.
 
-| Héros | Rangs 1 → 5 | Décor du rang 5 |
+| Héros | Rangs 1 → 5 | Forme ultime (rang 5) |
 |---|---|---|
-| Kael | Recrue → Écuyer → Chevalier → Champion → Lame de feu | cape de flammes |
-| Lyra | Chasseuse → Éclaireuse → Rôdeuse → Gardienne des bois → Esprit de la forêt | bois de cerf de lumière |
-| Elio | Apprenti → Mage → Sorcier → Archimage → Maître des astres | lune et constellation |
-| Séra | Novice → Prêtresse → Sainte → Grande prêtresse → Ange gardien | ses ailes roses, cœur de lumière |
-| Volt | Initié → Ninja → Ombre néon → Maître cyber → Fantôme de données | deux doubles holographiques |
-| Brann | Écuyer → Garde → Chevalier → Bastion → Rempart éternel | mur crénelé, bannière |
-| Mira | Chanteuse des rues → Ménestrelle → Troubadour → Virtuose → Muse | grande lyre de lumière, notes |
-| Nina | Stagiaire → Infirmière → Urgentiste → Cheffe de service → Ange blanc | grande croix de lumière |
-| Pip | Pickpocket → Voleur → Monte-en-l'air → Maître voleur → Prince des voleurs | tas d'or, couronne volée |
-| Gus | Apprenti → Mineur → Foreur → Chef de mine → Roi des profondeurs | wagonnet de gemmes |
-| Lenny | Volontaire → Pompier → Sergent → Capitaine → Héros du feu | grande échelle, gerbe d'eau |
-| Vex | Rejeton → Vampire → Comte → Seigneur de la nuit → Roi vampire | ailes de chauve-souris, lune de sang |
-| Gideon | Novice → Croisé → Paladin → Templier → Saint guerrier | soleil rayonnant |
-| Aurélia | Bouclière → Valkyrie → Chevaucheuse → Reine valkyrie → Élue d'Asgard | grandes ailes blanches, aurore |
-| Nova | Justicière → Héroïne → Super-héroïne → Icône → Légende cosmique | ciel d'étoiles, étoile filante |
-| Rok | Apprenti → Bûcheron → Forestier → Géant des bois → Roi des forêts | grand sapin |
-| Tobo | Commis → Cuisinier → Chef → Grand chef → Chef étoilé | pièce montée |
-| Hugo | Amateur → Boxeur → Poids lourd → Champion → Légende du ring | cordes du ring, projecteur |
-| Kiki | Gamine du ranch → Cow-girl → Adjointe → Shérif → Légende de l'Ouest | soleil couchant, cactus |
-| Bjorn | Pillard → Viking → Berserker → Jarl → Héros du Valhalla | proue de drakkar |
-| Sven | Moussaillon → Pêcheur → Marin → Capitaine → Vieux loup de mer | baleine qui sort de la vague |
-| Astra | Cadette → Astronaute → Pilote → Commandante → Exploratrice des étoiles | planète à anneaux |
-| Nyx | Initiée → Nécromancienne → Invocatrice → Liche → Reine des morts | âmes qui flottent |
-| Ignis | Étincelle → Pyromancien → Mage de feu → Seigneur des flammes → Avatar du feu | cercle de flammes |
-| Drakon | Écuyer draconique → Chevalier dragon → Dompteur → Seigneur dragon → Dragon incarné | grand dragon vert |
-| Tess | Fille de ferme → Fermière → Éleveuse → Maîtresse du domaine → Déesse des moissons | champ de blé, tournesols |
-| Doc | Apothicaire → Médecin de peste → Alchimiste → Docteur noir → Fléau | corbeaux, miasme vert |
-| Ozzy | Garage band → Rockeur → Star du punk → Idole → Dieu du rock | mur d'amplis, éclairs |
-| Yuki | Flocon → Cryomancienne → Mage du givre → Impératrice glaciale → Reine des neiges | palais de glace |
-| Sylva | Novice sylvestre → Archère elfique → Sentinelle → Gardienne de la lune → Étoile des elfes | arbre blanc aux feuilles d'argent |
-| Thorn | Graine → Druide → Gardien des bois → Archidruide → Esprit de la nature | cercle de menhirs |
-| Gorm | Brute → Orc barbare → Chef de guerre → Seigneur orc → Fléau des terres | bannière de guerre, crânes |
-| Zara | Danseuse de rue → Danseuse → Étoile du bazar → Danseuse royale → Déesse de la danse | rubans de soie en tourbillon |
-| Kitsune | Renardeau → Kitsune → Renarde mystique → Renarde céleste → Kyūbi | torii, neuf queues |
-| Sybil | Diseuse → Voyante → Oracle → Prophétesse → Œil du destin | cercle de cartes de tarot |
-| Grumli | Apprenti forgeron → Nain → Gardien de la forge → Thane → Roi sous la montagne | forge qui rougeoie |
-| Spike | Bouture → Cactus → Mariachi épineux → Cactus en fleur → Roi du désert | immense fleur de cactus |
-| Bip | Prototype → Bip → Bip 2.0 → Méga Bip → Bip Ultime | le grand robot qu'il pilote |
-| Lulu | Mitronne → Boulangère → Pâtissière → Maîtresse boulangère → Fée des gâteaux | four à pain |
-| DJ Max | Ambianceur → DJ → DJ résident → Star des platines → Légende de la nuit | boule à facettes, lasers |
-| Pablo | Coursier → Facteur → Postier en chef → Messager royal → Messager des vents | boîte aux lettres, lettres qui volent |
-| Bob | Mort-vivant → Bob → Zombie costaud → Zombie chic → Roi des zombies | tombes, mains qui sortent de terre |
-| Zip | Débutant → Skateur → Pro du skate → Champion du park → Roi de la rampe | rampe à graffitis |
-| Rexy | Bébé dino → Rexy → Petit T-rex → Dino-tyran → Roi des dinos | volcan |
-| Léo | Lionceau → Homme-lion → Guerrier lion → Roi lion → Lion solaire | tête de lion dorée |
-| Tonnerre | Acolyte → Capitaine Tonnerre → Super-héros → Héros de la ville → Dieu de la foudre | nuage d'orage |
-| Ramsès | Momie → Pharaon → Pharaon d'or → Dieu-roi → Fils du soleil | pyramide, disque solaire |
-| Elixa | Préparatrice → Alchimiste → Maîtresse des potions → Grande alchimiste → Pierre philosophale | cercle de transmutation |
-| Mako | Bébé requin → Homme-requin → Requin-tigre → Grand requin blanc → Mégalodon | gueule de mégalodon |
-| Pixel | Codeuse → Hackeuse → Pirate du net → Cyber-reine → Fantôme du réseau | pluie de code |
-| Lumi | Padawan → Chevalière → Gardienne → Maîtresse → Légende de la Force | aura de la Force, rochers qui flottent |
-| Kero | Têtard → Kero → Ninja des marais → Maître ninja → Grenouille légendaire | crapaud géant invoqué |
-| Atlas | Drone → Méca-gardien → Sentinelle → Colosse → Titan | dôme de boucliers hexagonaux |
-| Pyra | Étincelle → Phénix → Oiseau de feu → Phénix royal → Phénix éternel | immense oiseau de feu |
-| Mortis | Squelette → Liche → Roi-liche → Seigneur de l'hiver → Roi de l'hiver éternel | trône de glace |
-| Shoto | Élève de Yuei → Costume de héros → Glace et feu → Flamme ardente → Héros Shoto | mur de glace et flammes |
-| Bakugo | Élève de Yuei → Costume de héros → Grenadier → AP Shot → Howitzer Impact | énorme explosion |
-| Red Riot | Élève de Yuei → Costume de héros → Durcissement → Unbreakable → Roc indestructible | mur de roches |
-| Deku | Élève de Yuei → Costume de héros → Full Cowl → Costume bêta → One For All 100 % | orage d'éclairs verts |
-| All Might | Toshinori → Young Age → Bronze Age → Silver Age → Golden Age | onde de choc du smash |
-| Gon | Examen Hunter → Tour céleste → Greed Island → Fourmis-chimères → Gon adulte | aura de nen en flammes |
-| Kirua | Examen Hunter → Yo-yo → Assassin → Kanmuru → Godspeed | orage d'éclairs bleus |
-| Hisoka | Joueur → Magicien → Bungee Gum → Joker → Magicien suprême | toile de Bungee Gum, cartes |
-| Netero | Moine → Maître → Président → Cent mains → Hyakushiki Kannon | auréole et cent mains dorées |
-| Meruem | Nouveau-né → Roi qui grandit → Roi des fourmis → Roi couronné → Roi éveillé | ailes sombres, aura violette |
+| Kael | Recrue → Écuyer → Chevalier → Champion → Lame de feu | armure de plates rouge, épaulières de flammes, l'épée s'embrase et s'allonge, cape de flammes qui tombe de ses épaules |
+| Lyra | Chasseuse → Éclaireuse → Rôdeuse → Gardienne des bois → Esprit de la forêt | capuche de feuilles d'où poussent de petits bois de cerf, cape de feuilles, arc de lumière à flèche encochée |
+| Elio | Apprenti → Mage → Sorcier → Archimage → Maître des astres | robe de nuit étoilée, barbe jusqu'au sol, chapeau à croissant de lune, bâton coiffé d'une petite galaxie |
+| Séra | Novice → Prêtresse → Sainte → Grande prêtresse → Ange gardien | ses propres ailes roses lui poussent dans le dos, robe blanche et or, bâton au grand cristal en cœur |
+| Volt | Initié → Ninja → Ombre néon → Maître cyber → Fantôme de données | armure cyber intégrale à lignes néon, visière pleine, deux lames plasma, pans du bandeau en néon |
+| Brann | Écuyer → Garde → Chevalier → Bastion → Rempart éternel | armure de plates turquoise et acier, heaume fermé à grande crête, pavois géant à la tour qui brille, masse à pointes |
+| Mira | Chanteuse des rues → Ménestrelle → Troubadour → Virtuose → Muse | robe longue à notes brodées, couronne de laurier dorée, cheveux jusqu'aux pieds, grande lyre d'or aux cordes de lumière |
+| Nina | Stagiaire → Infirmière → Urgentiste → Cheffe de service → Ange blanc | longue blouse blanche, petites ailes sur la coiffe, croix verte qui brille sur la poitrine, seringue géante qui luit |
+| Pip | Pickpocket → Voleur → Monte-en-l'air → Maître voleur → Prince des voleurs | couronne volée penchée sur la capuche, cape de velours violet, deux dagues d'or, sac de butin qui déborde |
+| Gus | Apprenti → Mineur → Foreur → Chef de mine → Roi des profondeurs | des cristaux lui poussent sur les épaules et le casque, lampe en gemme, barbe tressée de cristaux, pioche de cristal géante |
+| Lenny | Volontaire → Pompier → Sergent → Capitaine → Héros du feu | combinaison ignifugée argentée, masque à oxygène, casque blanc à grand insigne, deux lances qui arrosent |
+| Vex | Rejeton → Vampire → Comte → Seigneur de la nuit → Roi vampire | ses ailes de chauve-souris lui sortent du dos, couronne noire à rubis, cape doublée de sang, rapière rouge |
+| Gideon | Novice → Croisé → Paladin → Templier → Saint guerrier | armure blanche et or, heaume solaire à grands rayons, tabard au grand soleil, marteau sacré qui rayonne |
+| Aurélia | Bouclière → Valkyrie → Chevaucheuse → Reine valkyrie → Élue d'Asgard | ses grandes ailes de valkyrie, armure aux plumes d'argent, casque aux ailes immenses, lance de lumière |
+| Nova | Justicière → Héroïne → Super-héroïne → Icône → Légende cosmique | combinaison bleu nuit semée d'étoiles, cape immense, étoile au front, poing qui brille comme une étoile |
+| Rok | Apprenti → Bûcheron → Forestier → Géant des bois → Roi des forêts | armure d'écorce, couronne de feuilles sur la peau d'ours, barbe tressée, immense hache double gravée de feuilles |
+| Tobo | Commis → Cuisinier → Chef → Grand chef → Chef étoilé | toque immense ornée de trois étoiles, veste à boutons d'or et médaille, wok de cuivre qui flambe, couteau de chef |
+| Hugo | Amateur → Boxeur → Poids lourd → Champion → Légende du ring | peignoir de champion à capuche, ceinture de champion géante, gants dorés qui flambent |
+| Kiki | Gamine du ranch → Cow-girl → Adjointe → Shérif → Légende de l'Ouest | long cache-poussière, chapeau à plumes et à cordon, étoile d'or, deux revolvers dorés, éperons |
+| Bjorn | Pillard → Viking → Berserker → Jarl → Héros du Valhalla | casque aux cornes géantes et aux ailes, armure de runes qui luisent, cape de fourrure, deux haches |
+| Sven | Moussaillon → Pêcheur → Marin → Capitaine → Vieux loup de mer | grand manteau de capitaine aux boutons d'or, jambe de bois, perroquet sur l'épaule, harpon à corde |
+| Astra | Cadette → Astronaute → Pilote → Commandante → Exploratrice des étoiles | combinaison renforcée aux plaques orange, visière dorée pleine, réacteur dorsal à ailerons, fusil plasma |
+| Nyx | Initiée → Nécromancienne → Invocatrice → Liche → Reine des morts | couronne et armure d'os, robe d'ombre aux runes vertes, yeux qui brûlent, faux d'os à flamme verte |
+| Ignis | Étincelle → Pyromancien → Mage de feu → Seigneur des flammes → Avatar du feu | il devient flamme, cheveux en brasier, bras de feu, robe de lave qui craque, deux énormes boules de feu |
+| Drakon | Écuyer draconique → Chevalier dragon → Dompteur → Seigneur dragon → Dragon incarné | ses ailes de dragon et sa queue lui poussent, armure d'écailles, casque-dragon aux cornes immenses, lance qui crache le feu |
+| Tess | Fille de ferme → Fermière → Éleveuse → Maîtresse du domaine → Déesse des moissons | couronne d'épis et de tournesols, robe dorée comme le blé, faux d'or |
+| Doc | Apothicaire → Médecin de peste → Alchimiste → Docteur noir → Fléau | manteau de plumes de corbeau, masque à bec noir et argent, lanterne de feu vert, un corbeau sur chaque épaule |
+| Ozzy | Garage band → Rockeur → Star du punk → Idole → Dieu du rock | crête en flammes, veste à pointes et chaînes, guitare à double manche qui flambe |
+| Yuki | Flocon → Cryomancienne → Mage du givre → Impératrice glaciale → Reine des neiges | robe de glace scintillante, très haute couronne de cristaux, longue traîne de givre, sceptre-flocon géant |
+| Sylva | Novice sylvestre → Archère elfique → Sentinelle → Gardienne de la lune → Étoile des elfes | armure d'argent ciselée, diadème à étoile, longue cape de feuilles d'argent, grand arc-croissant et flèche de lumière |
+| Thorn | Graine → Druide → Gardien des bois → Archidruide → Esprit de la nature | son corps devient écorce, ses bois immenses se couvrent de fleurs, le bâton est un jeune arbre |
+| Gorm | Brute → Orc barbare → Chef de guerre → Seigneur orc → Fléau des terres | armure à pointes, crâne cornu sur la tête, peintures de guerre rouges, couperet géant ensanglanté |
+| Zara | Danseuse de rue → Danseuse → Étoile du bazar → Danseuse royale → Déesse de la danse | parure d'or et de joyaux, voile qui tombe du diadème, longs rubans de soie aux bras, deux cimeterres d'or |
+| Kitsune | Renardeau → Kitsune → Renarde mystique → Renarde céleste → Kyūbi | ses neuf queues en grand éventail, kimono blanc et rouge brodé d'or, masque de renard sur la tête, feux follets autour d'elle |
+| Sybil | Diseuse → Voyante → Oracle → Prophétesse → Œil du destin | le troisième œil s'ouvre et luit, voile d'étoiles jusqu'au sol, cartes de tarot en éventail, grande boule de cristal |
+| Grumli | Apprenti forgeron → Nain → Gardien de la forge → Thane → Roi sous la montagne | heaume-couronne d'or, armure à runes de feu, barbe jusqu'au sol aux anneaux d'or, marteau-enclume qui rougeoie |
+| Spike | Bouture → Cactus → Mariachi épineux → Cactus en fleur → Roi du désert | couronne de grandes fleurs roses sur le sombrero, bras couverts de fleurs, maracas d'or |
+| Bip | Prototype → Bip → Bip 2.0 → Méga Bip → Bip Ultime | armure de méca, réacteurs-ailes dans le dos, double canon, visière et cœur qui brillent |
+| Lulu | Mitronne → Boulangère → Pâtissière → Maîtresse boulangère → Fée des gâteaux | petites ailes de sucre, toque-gâteau à la cerise, robe à volants roses, fouet magique qui saupoudre du sucre |
+| DJ Max | Ambianceur → DJ → DJ résident → Star des platines → Légende de la nuit | blouson néon, énormes écouteurs lumineux, lunettes LED, deux vinyles lumineux, chaîne en or massive |
+| Pablo | Coursier → Facteur → Postier en chef → Messager royal → Messager des vents | casquette et sandales ailées, cape de messager, sacoche dorée, lettre d'or scellée |
+| Bob | Mort-vivant → Bob → Zombie costaud → Zombie chic → Roi des zombies | couronne de travers, cape royale en lambeaux, sceptre-os, médailles de fer |
+| Zip | Débutant → Skateur → Pro du skate → Champion du park → Roi de la rampe | planche-hover néon, casque à visière, casque audio, baskets lumineuses |
+| Rexy | Bébé dino → Rexy → Petit T-rex → Dino-tyran → Roi des dinos | grosse capuche de T-rex à mâchoire immense, couronne, grandes pointes sur la queue, griffes |
+| Léo | Lionceau → Homme-lion → Guerrier lion → Roi lion → Lion solaire | crinière immense et dorée, couronne-soleil, armure à tête de lion, griffes d'or |
+| Tonnerre | Acolyte → Capitaine Tonnerre → Super-héros → Héros de la ville → Dieu de la foudre | couronne de foudre, cape violette zébrée d'éclairs, yeux qui brillent, foudre dans les deux mains |
+| Ramsès | Momie → Pharaon → Pharaon d'or → Dieu-roi → Fils du soleil | disque solaire et cobra sur la coiffe, masque d'or, collier ailé, crosse et fouet d'or, pagne doré |
+| Elixa | Préparatrice → Alchimiste → Maîtresse des potions → Grande alchimiste → Pierre philosophale | robe brodée du grand cercle, bandoulière de fioles, pierre rouge qui flotte au-dessus de sa main, lunettes qui luisent |
+| Mako | Bébé requin → Homme-requin → Requin-tigre → Grand requin blanc → Mégalodon | tête de requin à mâchoire immense, armure de corail, aileron géant, trident de corail |
+| Pixel | Codeuse → Hackeuse → Pirate du net → Cyber-reine → Fantôme du réseau | casque de réalité virtuelle, combinaison à circuits néon, écrans holographiques qui tournent autour de ses mains |
+| Lumi | Padawan → Chevalière → Gardienne → Maîtresse → Légende de la Force | robe de maître à capuche, ceinture de cuir, sabre double à deux lames vertes |
+| Kero | Têtard → Kero → Ninja des marais → Maître ninja → Grenouille légendaire | manteau d'ermite rouge, marques de sage autour des yeux, grand parchemin dans le dos, shuriken géant |
+| Atlas | Drone → Méca-gardien → Sentinelle → Colosse → Titan | armure lourde blanche et or, ailes-réacteurs, double canon, bouclier d'énergie géant |
+| Pyra | Étincelle → Phénix → Oiseau de feu → Phénix royal → Phénix éternel | ailes de feu immenses, longues plumes de queue, couronne de flammes, robe de braises |
+| Mortis | Squelette → Liche → Roi-liche → Seigneur de l'hiver → Roi de l'hiver éternel | immense couronne de glace, armure de givre, cape de glace qui traîne, sceptre au grand cristal |
+| Shoto | Élève de Yuei → Costume de héros → Glace et feu → Flamme ardente → Héros Shoto | tout le côté gauche se couvre d'une armure de glace, le côté droit brûle, la cicatrice rougeoie |
+| Bakugo | Élève de Yuei → Costume de héros → Grenadier → AP Shot → Howitzer Impact | gantelets énormes qui explosent, flammes dans les paumes, masque d'explosion, costume de pro |
+| Red Riot | Élève de Yuei → Costume de héros → Durcissement → Unbreakable → Roc indestructible | tout son corps est roche hérissée de pointes |
+| Deku | Élève de Yuei → Costume de héros → Full Cowl → Costume bêta → One For All 100 % | des éclairs verts le parcourent tout entier, yeux qui brillent, Blackwhip qui jaillit des bras |
+| All Might | Toshinori → Young Age → Bronze Age → Silver Age → Golden Age | carrure encore plus énorme, cape de héros rouge, poing qui fume, grand sourire |
+| Gon | Examen Hunter → Tour céleste → Greed Island → Fourmis-chimères → Gon adulte | ses cheveux poussent jusqu'au sol, musculature d'adulte, poing de nen énorme qui brûle |
+| Kirua | Examen Hunter → Yo-yo → Assassin → Kanmuru → Godspeed | cheveux dressés et bleutés par la foudre, éclairs qui lui parcourent tout le corps, griffes d'assassin |
+| Hisoka | Joueur → Magicien → Bungee Gum → Joker → Magicien suprême | cheveux dressés plus haut, Bungee Gum enroulé aux deux mains, éventail de cartes et joker, costume de bouffon |
+| Netero | Moine → Maître → Président → Cent mains → Hyakushiki Kannon | gi blanc de combat, ses mains dorées deviennent plus grandes et plus nombreuses, chapelet de grosses perles |
+| Meruem | Nouveau-né → Roi qui grandit → Roi des fourmis → Roi couronné → Roi éveillé | ses ailes d'insecte se déploient, carapace plus massive, couronne, queue au dard violet |
 
 ## 5. Animation
 

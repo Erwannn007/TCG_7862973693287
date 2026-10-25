@@ -93,12 +93,25 @@ export function tiara(s, y, x0 = 8, x1 = 15) {
   s.p(11, y - 2, C.goldHi, true);
 }
 
-// Rang 5 : la grille passe à 28×28 (le héros est décalé de 2 à droite et 4 vers le bas) ; back
-// dessine derrière lui (s.under) et autour de lui son grand décor personnel, en coordonnées 28×28.
-export function grand(s, back) {
+// Rang 5 : la grille passe à 28×28 (le héros est décalé de 2 à droite et 4 vers le bas) pour
+// laisser de la place à ce qui lui appartient et dépasse (ailes, queues, cape, grande arme) ;
+// attach le dessine en coordonnées 28×28 (s.under pour passer derrière lui). Jamais de décor.
+export function grand(s, attach) {
   const b = s.grow(28, 28, 2, 4);
-  back(b);
+  attach?.(b);
   return b;
+}
+
+// Cape du rang 5, derrière le héros (grille 28×28) : part des épaules et s'évase jusqu'au sol,
+// avec des plis (c2) et un ourlet découpé.
+export function capeBack(b, c, c2 = c, hem = c2) {
+  for (let y = 16; y <= 27; y++) {
+    const w = 5 + Math.round((y - 16) * 0.5);
+    for (let x = 14 - w; x <= 13 + w; x++) {
+      if (y === 27 && (x + 1) % 3 === 0) continue;
+      b.under(x, y, y >= 26 ? hem : (x - 14 + w) % 3 === 1 ? c2 : c);
+    }
+  }
 }
 
 // Bottes selon le rang : cuir puis métal.

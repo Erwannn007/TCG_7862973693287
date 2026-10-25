@@ -1,9 +1,9 @@
 // Les nouveaux héros (après les cinq premiers de js/sprites.js). Même gabarit chibi 24×24 (`body`),
 // mêmes règles : docs/DIRECTION_ARTISTIQUE.md. Chaque héros a ses couleurs (NEW_CLASS) et ses
-// 5 rangs à lui : à chaque rang sa tenue, sa coiffe et son arme évoluent à sa façon, et le rang 5
-// (28×28, voir grand() dans js/chibi.js) ajoute derrière lui un grand décor personnel.
+// 5 rangs à lui : à chaque rang sa tenue, sa coiffe et son arme évoluent à sa façon ; le rang 5
+// (28×28, voir grand() dans js/chibi.js) est sa forme ultime, sans aucun décor.
 import { Spr } from './spr.js';
-import { C, BLUSH, body, grand } from './chibi.js';
+import { C, BLUSH, body, grand, capeBack } from './chibi.js';
 
 // main : couleur signature ; dark : ombre et ourlet ; trim : col, broderies ; pants : jambes.
 export const NEW_CLASS = {
@@ -75,7 +75,8 @@ const W = '#f2eef4';
 
 // Brann, chevalier : écuyer au bonnet de cuir et au bouclier rond en bois, garde au heaume et à
 // l'écu, chevalier à la crête et à la tour brodée, bastion au grand pavois ; rang 5, le rempart
-// éternel : un mur crénelé se dresse derrière lui, bannière au vent.
+// éternel : armure de plates turquoise et acier, heaume fermé à grande crête, pavois géant à la
+// tour qui brille, masse à pointes.
 function brann(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.brann, ST = '#b9c6d2', SH = '#e4ecf3', SD = '#8e99a4', LT = '#8a6a4a', LH = '#a8865f', WD = '#9a7048';
   const steel = rank >= 2;
@@ -123,19 +124,18 @@ function brann(rank) {
     }
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 5, '#b9c6d2'); s.hl(8, 15, 14, '#e4ecf3'); s.r(10, 15, 4, 3, K.main); s.p(11, 16, K.trim, true);
+  s.hl(8, 15, 10, SD); s.hl(8, 15, 11, '#b9c6d2'); s.p(10, 10, K.trim, true); s.p(13, 10, K.trim, true);
+  s.r(3, 11, 2, 6, '#c8fff8', true); s.p(3, 11, '#ffffff', true);
   return grand(s, (b) => {
-    // mur crénelé de pierre derrière lui, bannière turquoise
-    for (let y = 12; y <= 25; y++) for (let x = 1; x <= 26; x++) {
-      if (y < 15 && (x % 5 === 3 || x % 5 === 4)) continue;
-      b.under(x, y, (y % 4 === 0) || ((x + (Math.floor(y / 4) % 2) * 2) % 5 === 0) ? '#6a6070' : y % 4 === 1 ? '#a8a0b0' : '#8a8090');
-    }
-    b.v(24, 2, 13, '#5a3f2e'); for (let y = 2; y <= 7; y++) b.hl(25, y < 7 ? 27 : 26, y, y === 2 ? K.trim : K.main); b.p(26, 4, K.trim, true);
+    for (let y = 0; y <= 4; y++) b.under(14, y, K.main); b.under(13, 1, K.main); b.under(15, 2, K.trim); b.under(12, 2, K.main);
   });
 }
 
 // Mira, barde : chanteuse des rues au petit luth, ménestrelle à la broche, troubadour à la double
-// plume et au luth enrubanné, virtuose à la lyre ; rang 5, la muse : une grande lyre de lumière
-// derrière elle et des notes qui tournent.
+// plume et au luth enrubanné, virtuose à la lyre ; rang 5, la muse : robe longue à notes brodées,
+// couronne de laurier dorée, cheveux jusqu'aux pieds, grande lyre d'or aux cordes de lumière.
 function mira(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.mira, H = '#e8c070', HH = '#fff0b0', NT = '#ffd890', LY = '#e8b84a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a3a22', bootsHi: '#8a5a32', sole: '#2a1a12', cape: rank >= 3 && K.dark, bracers: rank >= 2 && '#6a3a22' });
@@ -167,17 +167,20 @@ function mira(rank) {
     for (const [x, y] of [[20, 4], [21, 9], [19, 12]]) { s.p(x, y, NT, true); s.p(x + 1, y - 1, NT, true); s.p(x + 1, y - 2, NT, true); }
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 4, K.main); s.hl(8, 15, 21, '#e8b84a'); s.p(10, 19, NT, true); s.p(13, 20, NT, true);
+  for (const x of [7, 16]) s.v(x, 14, 21, H);
+  for (const [x, y] of [[8, 4], [9, 3], [14, 3], [15, 4]]) s.p(x, y, '#7ab84a');
+  for (const x of [2, 4]) s.v(x, 11, 17, '#fff0a0', true);
   return grand(s, (b) => {
-    // grande lyre de lumière derrière elle, notes qui tournent
-    for (const d of [-1, 1]) { const x = 14 + d * 11; b.v(x, 6, 22, '#fff0a0'); b.p(x - d, 5, '#fff0a0'); b.p(x - d * 2, 4, '#ffffff'); b.p(x + d, 23, '#e8b84a'); }
-    b.hl(4, 24, 22, '#e8b84a');
-    for (const [x, y] of [[1, 3], [26, 1], [0, 13], [27, 26], [2, 26]]) { b.p(x, y, NT, true); b.p(x + 1, y - 1, NT, true); }
+    b.v(2, 9, 12, LY); b.v(9, 9, 12, LY); b.p(1, 8, LY); b.p(10, 8, LY); b.p(1, 7, '#fff0a0', true); b.p(10, 7, '#fff0a0', true);
   });
 }
 
 // Nina, infirmière : stagiaire à la petite seringue, infirmière au stéthoscope, urgentiste à la
-// trousse, cheffe de service à la blouse et au miroir frontal ; rang 5, l'ange blanc : une grande
-// croix de lumière derrière elle, pansements et pilules qui flottent.
+// trousse, cheffe de service à la blouse et au miroir frontal ; rang 5, l'ange blanc : longue
+// blouse blanche, petites ailes sur la coiffe, croix verte qui brille sur la poitrine, seringue
+// géante qui luit.
 function nina(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.nina, H = '#8a4a2a', HH = '#b06a40', R = '#e2334a', GL = '#d8f0ff', LQ = rank >= 4 ? '#7af0b0' : '#5ae0a0';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#f2eef4', bootsHi: '#ffffff', sole: '#c8c0d0', robe: true, cape: rank >= 4 && '#e8e4ee', bracers: rank >= 4 && '#c8c0d0' });
@@ -199,20 +202,17 @@ function nina(rank) {
   s.hl(17, 21, 17, '#b9c6d2'); s.v(19, 18, 19, '#8e99a4'); s.hl(18, 20, 20, '#b9c6d2');
   if (rank >= 4) { s.r(21, top + 3, 2, 2, '#f2eef4'); s.p(21, top + 3, R, true); } // manomètre
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(10, 15, 4, 3, '#f2eef4'); s.v(11, 15, 17, '#5ae0a0', true); s.v(12, 15, 17, '#5ae0a0', true); s.hl(10, 13, 16, '#5ae0a0', true); s.p(11, 16, '#ffffff', true);
+  for (const d of [-1, 1]) { const x = d < 0 ? 8 : 15; s.p(x + d, 3, W); s.p(x + 2 * d, 2, W); s.p(x + d, 4, W); s.p(x + 2 * d, 3, '#c8c0d0'); }
   return grand(s, (b) => {
-    // grande croix de lumière, pansements et pilules
-    for (let y = 1; y <= 22; y++) for (let x = 3; x <= 24; x++) {
-      const inV = x >= 11 && x <= 16, inH = y >= 8 && y <= 13;
-      if (inV || inH) b.under(x, y, (inV && (x === 11 || x === 16)) || (inH && (y === 8 || y === 13)) ? '#ff8a9a' : '#ffd0d8');
-    }
-    for (const [x, y] of [[1, 3], [25, 20]]) { b.r(x, y, 3, 1, '#f0d8b8', true); b.p(x + 1, y, '#c8a888', true); }
-    for (const [x, y] of [[25, 2], [1, 22]]) { b.p(x, y, R, true); b.p(x + 1, y, '#ffffff', true); }
+    b.v(21, 0, 3, '#d8f0ff'); b.v(21, 0, 2, '#7af0b0', true); b.p(21, 0, '#ffffff', true);
   });
 }
 
 // Pip, voleur : pickpocket à la dague unique, voleur aux deux dagues et au foulard, monte-en-l'air
-// au grappin, maître voleur au loup et au sac de butin ; rang 5, le prince des voleurs : une
-// couronne volée penchée et un tas d'or derrière lui.
+// au grappin, maître voleur au loup et au sac de butin ; rang 5, le prince des voleurs : couronne
+// volée penchée sur la capuche, cape de velours violet, deux dagues d'or, sac de butin qui déborde.
 function pip(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.pip, H = '#8a3a2a', R = '#c8323c', ST = '#b9c6d2', SH = '#e4ecf3', GD = '#e0a93a', HOOD = rank >= 4 ? '#3a3040' : K.main;
   if (rank >= 4) { s.r(15, 9, 5, 7, '#a8865f'); s.hl(16, 18, 8, '#8a6a4a'); s.p(16, 10, '#c8a870', true); s.p(18, 8, GD, true); } // sac de butin dans le dos
@@ -233,18 +233,19 @@ function pip(rank) {
   s.hl(17, 19, 18, C.grip); s.v(18, 19, 20, C.grip); if (rank >= 4) s.p(18, 18, R, true);
   if (rank >= 2) { s.hl(4, 6, 18, C.grip); s.sline(5, 19, 4, rank >= 3 ? 22 : 21, ST); s.p(5, 19, SH, true); }
   if (rank < 5) return s;
-  s.r(9, 2, 5, 2, GD); s.p(9, 1, GD); s.p(11, 1, GD); s.p(13, 1, GD); s.p(11, 2, R, true); s.p(9, 2, '#fbe08a', true); // couronne volée
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 2, 5, 2, GD); s.p(9, 1, GD); s.p(11, 1, GD); s.p(13, 1, GD); s.p(11, 2, R, true); s.p(9, 2, '#fbe08a', true);
+  s.v(18, 8, 17, GD); s.p(18, 8, '#fbe08a', true); s.p(19, 9, GD); s.sline(5, 19, 4, 22, GD);
+  s.p(16, 7, GD, true); s.p(18, 7, '#fbe08a', true); s.p(17, 8, GD, true);
   return grand(s, (b) => {
-    // tas d'or et de trésors derrière lui
-    for (let y = 14; y <= 25; y++) { const w = Math.round((y - 13) * 1.1); for (let x = 14 - w; x <= 13 + w; x++) b.under(x, y, (x * 3 + y * 5) % 7 === 0 ? '#fbe08a' : (x + y) % 3 ? GD : '#b07a20'); }
-    for (const [x, y] of [[3, 22], [22, 20]]) { b.r(x, y, 2, 2, R, true); b.p(x, y, '#ff8a9a', true); }
-    for (const [x, y] of [[2, 8], [25, 6], [26, 14]]) b.spark(x, y, '#fbe08a');
+    capeBack(b, '#5a2a7a', '#7a3a9a', GD);
   });
 }
 
-// Gus, mineur : apprenti à la lampe et à la pioche de bois, mineur à la pioche de fer, foreur à
-// la lampe qui éclaire et à la pioche double, chef de mine au casque serti de cristaux et à la
-// pioche de cristal ; rang 5, le roi des profondeurs : un wagonnet plein de gemmes derrière lui.
+// Gus, mineur : apprenti à la lampe et à la pioche de bois, mineur à la pioche de fer, foreur à la
+// lampe qui éclaire et à la pioche double, chef de mine au casque serti de cristaux et à la pioche
+// de cristal ; rang 5, le roi des profondeurs : des cristaux lui poussent sur les épaules et le
+// casque, lampe en gemme, barbe tressée de cristaux, pioche de cristal géante.
 function gus(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.gus, H = '#6b4428', Y = '#f0c030', YD = '#c89020', SH = '#c8503a', ST = '#8e99a4', SL = '#b9c6d2', CR = '#c87af0', CL = '#f0c8ff';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a4a32', bootsHi: '#8a6a4a', sole: '#2a1e16', mouth: false });
@@ -268,19 +269,18 @@ function gus(rank) {
   s.hl(4 - w, 4 + w, y0, head); s.p(4 - w - 1, y0 + 1, head); s.p(4 + w + 1, y0 + 1, head); s.hl(5 - w, 3 + w, y0, hi, true);
   if (rank >= 3) { s.p(4 - w - 1, y0 + 2, head); s.p(4 + w + 1, y0 + 2, head); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[5, 12], [6, 11], [17, 12], [18, 11], [5, 13], [18, 13]]) { s.p(x, y, CR); }
+  s.p(6, 11, CL, true); s.p(18, 11, CL, true); s.r(11, 4, 2, 2, '#5ae0ff', true); s.p(11, 4, '#ffffff', true);
+  s.p(10, 16, CR, true); s.p(13, 15, CR, true); s.hl(0, 8, 3, CR); s.p(0, 4, CR); s.p(8, 4, CR); s.hl(1, 7, 3, CL, true);
   return grand(s, (b) => {
-    // wagonnet plein de gemmes derrière lui, rails
-    for (let x = 0; x < 28; x++) { b.under(x, 26, '#6a4a32'); if (x % 4 === 1) b.under(x, 27, '#4a3020'); }
-    for (let y = 15; y <= 23; y++) for (let x = 17; x <= 27; x++) b.under(x, y, y === 15 ? '#b9c6d2' : y % 3 === 0 ? '#5a5a6a' : '#6a6a7a');
-    for (const [x, y, c] of [[19, 13, CR], [21, 12, '#5ae0ff'], [23, 13, '#ff5a6a'], [25, 12, CR], [26, 14, '#7af06a'], [22, 14, '#fbe08a']]) { b.under(x, y, c); b.under(x + 1, y, c); b.under(x, y + 1, c); b.p(x, y, c === CR ? CL : '#ffffff', true); }
-    for (const x of [19, 25]) { b.under(x, 24, '#3a3a4a'); b.under(x + 1, 24, '#3a3a4a'); b.under(x, 25, '#3a3a4a'); b.under(x + 1, 25, '#3a3a4a'); }
-    b.spark(2, 6, CL); b.spark(25, 4, '#ffffff');
+    b.under(2, 6, CR); b.under(10, 6, CR); b.under(2, 7, CR); b.under(10, 7, CR);
   });
 }
 
 // Lenny, pompier : volontaire au seau, pompier à la lance, sergent à la bouteille d'air et à la
-// hache, capitaine au casque blanc et à la lance qui arrose ; rang 5, le héros du feu : une grande
-// échelle rouge derrière lui et une gerbe d'eau.
+// hache, capitaine au casque blanc et à la lance qui arrose ; rang 5, le héros du feu : combinaison
+// ignifugée argentée, masque à oxygène, casque blanc à grand insigne, deux lances qui arrosent.
 function lenny(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.lenny, H = C.hair, RD = rank >= 4 ? '#f2eef4' : '#c8302a', RDD = rank >= 4 ? '#c8c0d0' : '#8c1f20', HOSE = '#c8302a', ST = '#b9c6d2', WA = '#8ae0ff';
   if (rank >= 3) { s.r(15, 10, 3, 7, ST); s.p(15, 10, '#e4ecf3', true); s.hl(15, 17, 9, '#8e99a4'); } // bouteille d'air
@@ -306,16 +306,16 @@ function lenny(rank) {
   s.hl(19, 21, 21, HOSE); s.hl(19, 22, 22, '#8c1f20'); s.p(21, 20, HOSE); s.p(18, 19, '#e85a50', true);
   if (rank >= 4) for (const [x, y] of [[18, 2], [19, 1], [20, 0], [17, 1], [21, 2], [22, 1]]) s.p(x, y, (x + y) % 2 ? WA : '#ffffff', true);
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // grande échelle rouge derrière lui, en biais, et gerbe d'eau
-    for (let i = 0; i < 26; i++) { const x = 2 + Math.round(i * 0.5), y = 26 - i; b.under(x, y, '#c8302a'); b.under(x + 5, y, '#c8302a'); if (i % 4 === 0) b.hl(x, x + 5, y, '#8c1f20'); }
-    for (let i = 0; i < 9; i++) { const x = 20 + Math.round(Math.sin(i * 0.5) * 4), y = 8 - i; b.p(x, y + 8, i % 2 ? WA : '#ffffff', true); b.p(x + 3, y + 10, WA, true); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 5, '#c8ccd8'); s.hl(8, 15, 16, '#f0c030'); s.hl(8, 15, 18, '#f0c030'); s.r(6, 14, 2, 3, '#c8ccd8'); s.r(16, 14, 2, 3, '#c8ccd8');
+  s.r(10, 12, 4, 2, '#4a4a5a'); s.p(11, 12, '#8ae0ff', true); s.r(9, 2, 4, 4, '#e0a93a'); s.p(10, 3, '#ffffff', true);
+  s.v(4, 8, 14, '#b9c6d2'); s.p(4, 7, '#8ae0ff', true); s.p(3, 6, '#8ae0ff', true); s.p(5, 5, '#ffffff', true);
+  return grand(s);
 }
 
 // Vex, vampire : rejeton à la petite cape, vampire à la broche de rubis, comte aux chauves-souris,
-// seigneur de la nuit au col en pointes et aux yeux rouges ; rang 5, le roi vampire : grandes
-// ailes de chauve-souris et lune de sang.
+// seigneur de la nuit au col en pointes et aux yeux rouges ; rang 5, le roi vampire : ses ailes de
+// chauve-souris lui sortent du dos, couronne noire à rubis, cape doublée de sang, rapière rouge.
 function vex(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.vex, H = '#2a2234', HH = '#4a3e5a', R = K.trim, ST = '#b9c6d2', RB = '#e2334a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#2a2234', bootsHi: '#4a3e5a', sole: '#140d11', mouth: false, cape: rank >= 2 && '#8c1f2e', bracers: rank >= 3 && '#8c1f2e' });
@@ -340,21 +340,17 @@ function vex(rank) {
   if (rank >= 4) s.p(20, top + 6, RB, true);
   const out = s.recolor({ [C.skin]: '#f0d8cc', [C.skinSh]: '#c8a8a8' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.hl(9, 14, 3, '#2a2234'); for (const x of [9, 11, 12, 14]) out.p(x, 2, '#2a2234'); out.p(11, 3, RB, true); out.p(12, 3, RB, true);
+  out.v(20, 1, 16, '#c83a4a'); out.v(20, 2, 5, '#ff8a9a', true);
   return grand(out, (b) => {
-    // lune de sang, ailes de chauve-souris
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if ((x - 3.5) ** 2 + (y - 3.5) ** 2 < 14) b.under(x + 20, y, (x + y) % 5 ? '#c83a4a' : '#e85a5a');
-    for (const d of [-1, 1]) {
-      const c = d < 0 ? 7 : 20;
-      for (let i = 0; i < 7; i++) { b.sline(c, 12, c + d * (2 + i), 6 + i, '#3a2a4a'); }
-      for (const k of [0, 3, 6]) b.under(c + d * (3 + k), 13 + k / 2, '#2a1a34');
-      b.sline(c + d * 2, 6, c + d * 8, 12, '#5a3a6a');
-    }
+    for (const d of [-1, 1]) { const c = d < 0 ? 7 : 20; for (let i = 0; i < 6; i++) b.sline(c, 14, c + d * (2 + i), 8 + i, '#3a2a4a'); b.sline(c + d * 2, 8, c + d * 7, 13, '#5a3a6a'); for (const k of [0, 3]) b.under(c + d * (3 + k), 15, '#2a1a34'); }
   });
 }
 
 // Gideon, paladin : novice à la calotte et au maillet de bois, croisé au marteau de fer, paladin à
-// la crête et au tabard, templier au heaume solaire ; rang 5, le saint guerrier : un grand soleil
-// rayonne derrière lui.
+// la crête et au tabard, templier au heaume solaire ; rang 5, le saint guerrier : armure blanche et
+// or, heaume solaire à grands rayons, tabard au grand soleil, marteau sacré qui rayonne.
 function gideon(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.gideon, P = '#3a5ab8', PH = '#6a8ae0', ST = '#b9c6d2', SH = '#e4ecf3', SD = '#8e99a4', SUN = '#f0c030', SUH = '#fff0a0';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: rank >= 2 ? SD : '#8a6a4a', bootsHi: rank >= 2 ? SH : '#a8865f', sole: '#3a2a22', cape: rank >= 4 && P, bracers: rank >= 2 ? ST : '#8a6a4a' });
@@ -381,19 +377,19 @@ function gideon(rank) {
   if (rank >= 3) s.p(19, y0 + 1, SUN, true);
   if (rank >= 4) { s.r(18, y0 + 1, 3, 1, SUN, true); s.p(19, y0 + 1, SUH, true); s.p(16, y0 + 1, ST); s.p(22, y0 + 1, ST); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 5, '#f2eef4'); s.r(10, 14, 4, 5, P); s.r(11, 15, 2, 2, SUN, true); s.p(11, 15, SUH, true); s.p(10, 16, SUN, true); s.p(13, 15, SUN, true);
+  for (const [x, y] of [[6, 2], [17, 2], [12, 0], [5, 4], [18, 4]]) s.p(x, y, SUN);
+  s.r(17, 3, 5, 3, '#f2eef4'); s.r(18, 4, 3, 1, SUN, true); s.p(19, 4, '#ffffff', true);
   return grand(s, (b) => {
-    // grand soleil rayonnant derrière lui
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) {
-      const dx = x - 13.5, dy = y - 9, r = Math.sqrt(dx * dx + dy * dy), a = Math.atan2(dy, dx);
-      if (r < 8) b.under(x, y, r < 5 ? SUH : SUN);
-      else if (r < 13 && Math.abs(Math.sin(a * 6)) > 0.85) b.under(x, y, r < 10 ? SUN : '#e0a93a');
-    }
+    for (const [x, y] of [[19, 5], [25, 5], [22, 3], [22, 10]]) b.p(x, y, SUH, true);
   });
 }
 
-// Aurélia, valkyrie : bouclière au petit casque ailé, valkyrie aux longues tresses, chevaucheuse
-// à la lance à fanion, reine valkyrie aux grandes ailes de casque et à la lance de lumière ;
-// rang 5, l'élue d'Asgard : ses propres grandes ailes blanches à pointes bleues, aurore boréale.
+// Aurélia, valkyrie : bouclière au petit casque ailé, valkyrie aux longues tresses, chevaucheuse à
+// la lance à fanion, reine valkyrie aux grandes ailes de casque et à la lance de lumière ; rang 5,
+// l'élue d'Asgard : ses grandes ailes de valkyrie, armure aux plumes d'argent, casque aux ailes
+// immenses, lance de lumière.
 function aurelia(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.aurelia, H = '#f0c860', HH = '#fff0b0', CP = '#3a5aa8', ST = '#b9c6d2', SH = '#e4ecf3', LI = '#c8f0ff';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: ST, bootsHi: SH, sole: '#3a3a4a', cape: rank >= 2 && CP, bracers: rank >= 3 ? K.trim : ST });
@@ -420,20 +416,19 @@ function aurelia(rank) {
   if (rank >= 3) { s.r(21, top + 5, 2, 3, CP); s.p(22, top + 8, CP); s.p(21, top + 5, '#6a8ae0', true); }
   if (rank >= 4) for (const [x, y] of [[22, 2], [18, 1]]) s.spark(x, y, LI);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 4, '#e4ecf3'); for (const x of [9, 11, 13]) { s.p(x, 15, W, true); s.p(x + 1, 16, '#c8d0e0'); }
+  s.v(20, 0, 3, LI, true); s.p(20, 0, '#ffffff', true);
   return grand(s, (b) => {
-    // grandes ailes blanches à pointes bleues, aurore derrière
-    for (let x = 0; x < 28; x++) { const y = 2 + Math.round(Math.sin(x * 0.35) * 2); b.under(x, y, '#5ae0b0'); b.under(x, y + 1, '#3ab8c8'); }
-    const wing = [[8, 1, 9], [9, 0, 9], [10, 0, 9], [11, 1, 9], [12, 1, 9], [13, 2, 9], [14, 2, 9], [15, 3, 9], [16, 4, 9], [17, 5, 9], [18, 7, 9]];
-    for (const [y, x0, x1] of wing) for (let x = x0; x <= x1; x++) {
-      const c = x < x0 + 2 ? '#6a8ae0' : (x + y) % 4 === 0 ? '#e4ecf3' : '#ffffff';
-      b.under(x, y, c); b.under(27 - x, y, c);
-    }
+    const wing = [[10, 1, 9], [11, 0, 9], [12, 0, 9], [13, 1, 9], [14, 1, 9], [15, 2, 9], [16, 3, 9], [17, 4, 9], [18, 6, 9]];
+    for (const [y, x0, x1] of wing) for (let x = x0; x <= x1; x++) { const c = x < x0 + 2 ? '#6a8ae0' : (x + y) % 4 === 0 ? '#e4ecf3' : '#ffffff'; b.under(x, y, c); b.under(27 - x, y, c); }
   });
 }
 
 // Nova, super-héroïne : justicière à la petite cape, héroïne au loup, super-héroïne aux bottes
 // rouges et au poing qui brille, icône à l'étoile sur le front et à la cape immense ; rang 5, la
-// légende cosmique : un ciel d'étoiles et une étoile filante derrière elle.
+// légende cosmique : combinaison bleu nuit semée d'étoiles, cape immense, étoile au front, poing
+// qui brille comme une étoile.
 function nova(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.nova, H = '#f0c050', HH = '#fff0a0', CP = '#d8323c', CD = '#9a1e2a', GL = rank >= 3 ? '#fff8c0' : W;
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: rank >= 3 ? CP : K.dark, bootsHi: rank >= 3 ? '#ff6a6a' : K.main, sole: '#1a1e4a', cape: CP, belt: CP, buckle: K.trim });
@@ -456,19 +451,21 @@ function nova(rank) {
   if (rank >= 2) { s.hl(8, 15, 10, K.dark); s.p(10, 10, '#ffffff', true); s.p(13, 10, '#ffffff', true); s.p(10, 11, C.eye, true); s.p(13, 11, C.eye, true); } // loup
   if (rank >= 4) { s.p(12, 6, K.trim, true); s.p(11, 7, K.trim, true); s.p(13, 7, K.trim, true); s.p(12, 5, K.trim, true); } // étoile au front
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 4, '#1a1e4a'); for (const [x, y] of [[9, 15], [14, 16], [10, 17]]) s.p(x, y, '#ffffff', true);
+  s.p(12, 15, K.trim, true); s.p(11, 16, K.trim, true); s.p(12, 16, K.trim, true); s.p(11, 17, K.trim, true);
+  s.r(17, 6, 3, 3, '#fff8c0', true); s.p(18, 5, '#ffffff', true); s.p(20, 7, '#ffffff', true); s.p(16, 7, '#ffffff', true); s.p(18, 9, '#ffffff', true);
   return grand(s, (b) => {
-    // ciel d'étoiles, étoile filante
-    for (let y = 0; y < 24; y++) for (let x = 0; x < 28; x++) if ((x * 13 + y * 7) % 23 === 0) b.p(x, y, (x + y) % 2 ? '#ffffff' : '#c8d8ff', true);
-    for (let i = 0; i < 10; i++) b.p(1 + i, 2 + Math.round(i * 0.6), i > 7 ? '#ffffff' : i > 4 ? HH : '#e0a93a', true);
-    for (const [x, y] of [[24, 8], [3, 14]]) b.spark(x, y, HH);
+    capeBack(b, CP, CD, '#fff0a0'); for (const [x, y] of [[6, 22], [20, 24], [9, 26]]) b.under(x, y, '#ffffff');
   });
 }
 
 // ---------------------------------------------------------------- vague 2
 
 // Rok, bûcheron : apprenti à la hachette, bûcheron à la hache et aux bretelles, forestier à la
-// hache double, géant des bois à la peau d'ours sur les épaules ; rang 5, le roi des forêts : un
-// grand sapin derrière lui, feuilles qui tombent.
+// hache double, géant des bois à la peau d'ours sur les épaules ; rang 5, le roi des forêts :
+// armure d'écorce, couronne de feuilles sur la peau d'ours, barbe tressée, immense hache double
+// gravée de feuilles.
 function rok(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.rok, B = '#8a4a22', BH = '#b06a34', G = '#3a6a3a', ST = '#b9c6d2', SH = '#e4ecf3', FU = '#6a4a32', FH = '#8a6a4a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#5a3a22', bootsHi: '#7a5a3a', sole: '#2a1a12', mouth: false, bracers: rank >= 3 && '#5a3a22' });
@@ -498,17 +495,19 @@ function rok(rank) {
   if (rank >= 3) { s.r(16, y0 + 1, 2, hh - 1, ST); s.p(16, y0 + 1, SH, true); if (big) s.v(15, y0 + 2, y0 + 4, ST); }
   if (big) s.p(20, y0 + 3, '#4a8a3a', true); // feuille gravée
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 3, '#6a4a32'); for (const [x, y] of [[9, 15], [12, 14], [14, 16]]) s.p(x, y, '#8a6a4a'); s.p(10, 16, '#4a8a3a', true);
+  for (const [x, y] of [[8, 1], [10, 0], [13, 0], [15, 1], [11, 1]]) s.p(x, y, '#4a8a3a'); s.p(10, 0, '#7ac85a', true);
+  s.p(11, 17, '#4a8a3a'); s.p(12, 17, '#4a8a3a');
   return grand(s, (b) => {
-    // grand sapin derrière lui, feuilles qui tombent
-    for (let y = 0; y <= 24; y++) { const w = 2 + Math.round((y % 8) * 0.9) + Math.floor(y / 8) * 2; for (let x = 13 - w; x <= 14 + w; x++) b.under(x, y, (x + y) % 4 ? '#2f6a3a' : '#3a8a4a'); }
-    b.under(13, 25, '#6a4226'); b.under(14, 25, '#6a4226');
-    for (const [x, y] of [[2, 6], [25, 10], [3, 19], [24, 23]]) { b.p(x, y, '#e8803a', true); b.p(x + 1, y + 1, '#c8502a', true); }
+    b.under(21, 2, '#b9c6d2'); b.under(22, 3, '#b9c6d2'); b.under(16, 3, '#b9c6d2'); b.under(22, 9, '#b9c6d2'); b.under(21, 10, '#b9c6d2');
   });
 }
 
-// Tobo, chef cuisinier : commis à la petite toque, cuisinier à l'œuf au plat, chef à la cuillère
-// en bois et au steak, grand chef à la médaille et au wok qui flambe ; rang 5, le chef étoilé :
-// une pièce montée derrière lui.
+// Tobo, chef cuisinier : commis à la petite toque, cuisinier à l'œuf au plat, chef à la cuillère en
+// bois et au steak, grand chef à la médaille et au wok qui flambe ; rang 5, le chef étoilé : toque
+// immense ornée de trois étoiles, veste à boutons d'or et médaille, wok de cuivre qui flambe,
+// couteau de chef.
 function tobo(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.tobo, H = '#3a2a22', R = '#e2334a', ST = '#8e99a4', CU = '#c8703a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.dark, pants: K.pants, boots: '#2a2a32', bootsHi: '#4a4a52', sole: '#141418', mouth: false });
@@ -533,16 +532,18 @@ function tobo(rank) {
   if (rank === 3) { s.r(18, y0 + 1, 3, 2, '#8a3a2a', true); s.p(18, y0 + 1, '#c86a4a', true); }
   if (rank >= 4) for (const [x, y] of [[18, y0 - 1], [19, y0 - 2], [20, y0 - 1], [19, y0 - 1], [21, y0 - 2]]) s.p(x, y, (x + y) % 2 ? '#ff8a2a' : '#fbe08a', true);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const x of [9, 12, 15]) s.p(x, 2, '#f0c030', true);
+  for (const y of [15, 17]) { s.p(10, y, '#e0a93a'); s.p(13, y, '#e0a93a'); }
+  s.v(4, 14, 18, '#b9c6d2'); s.v(5, 15, 18, '#e4ecf3', true); s.hl(4, 5, 19, '#2a2a32');
   return grand(s, (b) => {
-    // pièce montée à trois étages, cerises
-    for (const [y0b, y1, x0, x1] of [[17, 25, 3, 24], [10, 16, 6, 21], [4, 9, 9, 18]]) for (let y = y0b; y <= y1; y++) for (let x = x0; x <= x1; x++) b.under(x, y, y === y0b ? '#ffffff' : y === y0b + 1 && x % 2 ? '#ffffff' : (y - y0b) % 4 === 3 ? '#e88ab8' : '#f8e0c0');
-    for (const x of [11, 13, 16]) { b.under(x, 3, R); b.under(x, 2, '#3a8a3a'); }
+    for (const [x, y] of [[20, 7], [21, 6], [22, 7], [19, 6], [23, 6], [21, 5]]) b.p(x, y, (x + y) % 2 ? '#ff8a2a' : '#fbe08a', true);
   });
 }
 
 // Hugo, boxeur : amateur au bandeau, boxeur au casque de protection, poids lourd aux mains bandées
-// et au short rayé, champion à la ceinture et au peignoir ; rang 5, la légende du ring : les cordes
-// du ring et un projecteur derrière lui.
+// et au short rayé, champion à la ceinture et au peignoir ; rang 5, la légende du ring : peignoir
+// de champion à capuche, ceinture de champion géante, gants dorés qui flambent.
 function hugo(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.hugo, H = '#2a2234', GL = '#d8323c', GH = '#ff8a8a', BLT = '#e0a93a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#f2eef4', bootsHi: '#ffffff', sole: '#8a8a9a', cape: rank >= 4 && '#d8323c', belt: rank >= 4 ? BLT : '#f2eef4', buckle: rank >= 4 ? '#fbe08a' : '#c8c0d0' });
@@ -567,17 +568,17 @@ function hugo(rank) {
   else s.v(6, 16, 17, C.skin);
   if (rank >= 4) { s.p(18, 15, '#fbe08a', true); s.p(19, 16, '#fbe08a', true); s.p(4, 13, '#fbe08a', true); s.p(5, 14, '#fbe08a', true); }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // cordes du ring, poteaux, projecteur
-    for (const y of [12, 16, 20]) for (let x = 0; x < 28; x++) b.under(x, y, y === 16 ? '#f2eef4' : '#d8323c');
-    for (const x of [0, 27]) for (let y = 10; y <= 25; y++) b.under(x, y, '#8e99a4');
-    for (let y = 0; y < 9; y++) { b.under(14 - y, y, '#fff8c0'); b.under(15 + y, y, '#fff8c0'); } b.under(14, 0, '#ffffff'); b.under(15, 0, '#ffffff');
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 2, 5, '#d8323c'); s.r(14, 14, 2, 5, '#d8323c'); s.hl(8, 15, 14, '#ff8a8a');
+  s.r(9, 16, 6, 3, BLT); s.r(10, 17, 4, 1, '#fbe08a', true); s.p(12, 17, '#e2334a', true);
+  for (const [x, y] of [[3, 11], [4, 10], [17, 13], [19, 12], [20, 13]]) s.p(x, y, '#ff8a2a', true);
+  s.r(3, 12, 4, 4, BLT); s.r(17, 14, 4, 4, BLT); s.p(3, 12, '#fbe08a', true); s.p(17, 14, '#fbe08a', true);
+  return grand(s);
 }
 
-// Kiki, cow-girl : gamine du ranch au lasso, cow-girl à l'étoile d'adjointe, deux revolvers et tresse
-// au rang 3, shérif au cache-poussière et aux éperons ; rang 5, la légende de l'Ouest : soleil
-// couchant et cactus derrière elle.
+// Kiki, cow-girl : gamine du ranch au lasso, cow-girl à l'étoile d'adjointe, deux revolvers et
+// tresse au rang 3, shérif au cache-poussière et aux éperons ; rang 5, la légende de l'Ouest : long
+// cache-poussière, chapeau à plumes et à cordon, étoile d'or, deux revolvers dorés, éperons.
 function kiki(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.kiki, H = '#c8502a', HH = '#e8803a', HT = '#8a5a32', HTD = '#6a4226', ST = '#8e99a4', SH = '#b9c6d2', STAR = rank >= 4 ? '#e0a93a' : SH;
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a4226', bootsHi: '#8a5a32', sole: '#2a1a12', cape: rank >= 4 && '#a8784a', bracers: rank >= 3 && HTD });
@@ -601,16 +602,17 @@ function kiki(rank) {
   if (rank === 1) { s.hl(19, 21, 10, R); s.hl(19, 21, 12, R); s.p(18, 11, R); s.p(22, 11, R); s.v(18, 13, 17, R); }
   else { s.hl(3, 5, 17, R); s.v(2, 18, 20, R); s.v(6, 18, 20, R); s.hl(3, 5, 21, R); s.p(4, 19, '#a88a50'); }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // soleil couchant et cactus
-    for (let y = 0; y < 14; y++) for (let x = 0; x < 28; x++) { const d = (x - 14) ** 2 + (y - 13) ** 2; if (d < 130) b.under(x, y, d < 50 ? '#fbe08a' : d < 90 ? '#ff8a2a' : '#e2552a'); }
-    for (const cx of [1, 25]) { for (let y = 12; y <= 26; y++) b.under(cx, y, '#3a8a4a'); for (let y = 15; y <= 18; y++) b.under(cx + 1, y, '#3a8a4a'); b.under(cx + 2, 15, '#3a8a4a'); b.under(cx + 2, 14, '#3a8a4a'); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(6, 14, 2, 8, '#a8784a'); s.r(16, 14, 2, 8, '#a8784a');
+  s.p(15, 4, '#e2334a'); s.p(16, 3, '#e2334a'); s.p(17, 2, '#ffffff'); s.hl(9, 14, 5, '#e0a93a');
+  s.hl(18, 22, 15, '#e0a93a'); s.hl(0, 3, 15, '#e0a93a'); s.p(19, 15, '#fbe08a', true); s.p(2, 15, '#fbe08a', true);
+  return grand(s);
 }
 
 // Bjorn, viking : pillard aux petites cornes, viking au bouclier rond dans le dos, berserker aux
 // peintures de guerre et à la peau d'ours, jarl à la barbe perlée et à la hache runique ; rang 5,
-// le héros du Valhalla : la proue en tête de dragon de son drakkar derrière lui.
+// le héros du Valhalla : casque aux cornes géantes et aux ailes, armure de runes qui luisent, cape
+// de fourrure, deux haches.
 function bjorn(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.bjorn, B = '#e8b048', BH = '#fff0a0', F = '#8a6a4a', FH = '#a8865f', HO = '#efe6cf', ST = '#b9c6d2', SH = '#e4ecf3', SD = '#8e99a4', RU = '#5ae0ff';
   if (rank >= 2) { for (const [y, a, b2] of [[9, 15, 18], [10, 14, 19], [11, 14, 19], [12, 14, 19], [13, 15, 18]]) s.hl(a, b2, y, '#a83a2a'); s.p(16, 11, ST); s.p(17, 11, ST); } // bouclier rond dans le dos
@@ -636,19 +638,19 @@ function bjorn(rank) {
   if (rank >= 3) { s.r(5, y0 + 1, 2, 3, ST); s.p(7, y0 + 2, ST); }
   if (rank >= 4) { s.p(2, y0 + 2, RU, true); s.p(2, y0 + 4, RU, true); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 14, 6, 2, '#8e99a4'); s.p(10, 15, RU, true); s.p(13, 14, RU, true);
+  for (const d of [-1, 1]) { const x = d < 0 ? 7 : 16; s.p(x, 3, '#f2eef4'); s.p(x + d, 2, '#f2eef4'); s.p(x + d, 3, '#c8c0d0'); }
+  s.r(19, 4, 3, 4, ST); s.p(22, 5, ST); s.p(22, 6, ST); s.p(20, 3, ST); s.v(19, 4, 19, '#8a5a32'); s.p(21, 5, RU, true);
   return grand(s, (b) => {
-    // proue de drakkar : col en S et tête de dragon, coque, bouclier
-    for (let y = 2; y <= 26; y++) { const x = 22 + Math.round(Math.sin(y * 0.25) * 2); b.under(x, y, '#8a5a32'); b.under(x + 1, y, '#6a4226'); b.under(x + 2, y, '#8a5a32'); }
-    for (const [x, y] of [[20, 2], [21, 1], [22, 1], [23, 0], [24, 1], [25, 2]]) b.under(x, y, '#8a5a32');
-    b.p(21, 2, '#e2334a', true);
-    for (let x = 0; x <= 26; x++) for (let y = 22; y <= 26; y++) b.under(x, y, y === 22 ? '#a87a4a' : (x + y) % 6 ? '#8a5a32' : '#6a4226');
-    for (const x of [3, 9, 15]) { b.under(x, 21, '#a83a2a'); b.under(x + 1, 21, '#a83a2a'); }
+    capeBack(b, '#5a3a22', '#7a5a3a', FH);
   });
 }
 
 // Sven, pêcheur : moussaillon à la canne simple, pêcheur à la pipe et au moulinet, marin au filet
-// et au gros poisson, capitaine à la casquette à ancre et au harpon ; rang 5, le vieux loup de
-// mer : une baleine sort de la vague derrière lui.
+// et au gros poisson, capitaine à la casquette à ancre et au harpon ; rang 5, le vieux loup de mer
+// : grand manteau de capitaine aux boutons d'or, jambe de bois, perroquet sur l'épaule, harpon à
+// corde.
 function sven(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.sven, B = '#c8c0b8', BS = '#9a928a', NV = '#2a3a6a', ST = '#b9c6d2', NET = '#c8a870';
   if (rank >= 3) for (let y = 9; y <= 16; y++) for (let x = 3; x <= 7; x++) if ((x + y) % 2 === 0) s.p(x, y, NET); // filet sur l'épaule
@@ -682,17 +684,17 @@ function sven(rank) {
     if (rank === 3) { s.hl(21, 23, fy + 2, F); s.p(23, fy + 3, F); }
   }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // la baleine qui sort de la vague, jet d'eau
-    for (let y = 4; y <= 16; y++) for (let x = 0; x < 28; x++) { const d = ((x - 14) / 13) ** 2 + ((y - 16) / 12) ** 2; if (d < 1) b.under(x, y, y > 13 ? '#c8d8e8' : '#3a5a8a'); }
-    for (let i = 0; i < 6; i++) { b.p(13 + (i % 2), 3 - (i >> 1), '#8ae0ff', true); b.p(11 + i, 0, i % 2 ? '#ffffff' : '#8ae0ff', true); }
-    for (let x = 0; x < 28; x++) for (let y = 21 + Math.round(Math.sin(x * 0.7)); y <= 26; y++) b.under(x, y, y < 23 ? '#8ae0ff' : '#3a7ab8');
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 6, NV); s.v(10, 15, 19, '#e0a93a'); s.v(13, 15, 19, '#e0a93a'); s.r(6, 14, 2, 4, NV); s.r(16, 14, 2, 4, NV);
+  s.r(13, 20, 2, 4, null); s.v(14, 20, 23, '#8a5a32');
+  s.r(16, 10, 2, 3, '#3ab84a'); s.p(18, 10, '#e0a93a'); s.p(16, 10, '#e2334a'); s.p(17, 10, '#21182a', true); s.p(16, 13, '#3a64c8');
+  return grand(s);
 }
 
 // Astra, astronaute : cadette au petit laser, astronaute au réacteur dorsal, pilote à la visière
 // dorée et au fusil, commandante au casque à ailerons et à l'écusson ; rang 5, l'exploratrice des
-// étoiles : une planète à anneaux derrière elle.
+// étoiles : combinaison renforcée aux plaques orange, visière dorée pleine, réacteur dorsal à
+// ailerons, fusil plasma.
 function astra(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.astra, GL = rank >= 3 ? '#f0c860' : '#a8d8f0', H = '#3a2a22', O = K.trim, ST = '#8e99a4', SH = '#b8c2cc';
   // sac de survie, puis réacteur dorsal (flammes au rang 3)
@@ -717,17 +719,19 @@ function astra(rank) {
   s.hl(18, 18 + L, 15, ST); s.p(18, 16, '#4a4a5a'); s.p(18, 17, '#4a4a5a'); s.p(19 + L, 15, C.neon, true); s.p(19, 15, SH, true);
   if (rank >= 3) { s.hl(19, 21, 14, O); s.p(18, 14, ST); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 3, '#e4e4ee'); s.hl(8, 15, 15, O); s.r(9, 8, 6, 5, '#f0c860'); s.p(10, 9, '#ffffff', true); s.p(9, 8, '#fff0a0', true);
+  s.hl(18, 24, 15, '#8e99a4'); s.p(24, 15, '#c87af0', true); s.hl(19, 22, 14, O);
   return grand(s, (b) => {
-    // planète à anneaux derrière elle, étoiles
-    for (let y = 0; y < 12; y++) for (let x = 15; x < 28; x++) { const d = (x - 22) ** 2 + (y - 5) ** 2; if (d < 22) b.under(x, y, (x + y) % 5 ? '#e8803a' : '#c8603a'); }
-    for (let x = 13; x < 28; x++) { const y = 6 + Math.round((x - 22) * -0.35); if (Math.abs(x - 22) > 3) { b.under(x, y, '#f0d8a0'); b.under(x, y + 1, '#c8a870'); } }
-    for (const [x, y] of [[1, 2], [26, 3], [2, 20], [25, 22]]) b.spark(x, y, '#ffffff');
+    b.sline(5, 16, 1, 12, O); b.sline(5, 17, 1, 14, O); b.sline(22, 16, 26, 12, O); b.sline(22, 17, 26, 14, O);
+    for (const x of [5, 7]) { b.p(x, 26, '#ff8a2a', true); b.p(x, 27, '#fbe08a', true); }
   });
 }
 
 // Nyx, nécromancienne : initiée au petit bâton à crâne, nécromancienne à la flamme verte et à la
 // ceinture d'os, invocatrice au crâne volant, liche à la couronne d'os et aux yeux verts ; rang 5,
-// la reine des morts : un grand crâne spectral et des âmes derrière elle.
+// la reine des morts : couronne et armure d'os, robe d'ombre aux runes vertes, yeux qui brûlent,
+// faux d'os à flamme verte.
 function nyx(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.nyx, HW = '#e8e4f0', GR = K.trim, BO = '#e8e0cc', GH = '#c8ffb8';
   body(s, { tunic: K.main, dark: K.dark, trim: '#9a6ad0', pants: K.pants, boots: '#2a1e30', bootsHi: '#4a3a50', sole: '#140d18', robe: true, cape: rank >= 4 && K.dark });
@@ -754,20 +758,19 @@ function nyx(rank) {
   }
   const out = s.recolor({ [C.skin]: '#e8d4d8', [C.skinSh]: '#b8a0b0' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 2, BO); out.hl(9, 14, 16, BO); for (const x of [9, 11, 13]) out.p(x, 17, BO);
+  out.p(9, 20, GR, true); out.p(14, 19, GR, true); out.p(11, 21, GR, true);
+  out.hl(0, 4, 3, BO); out.p(0, 4, BO); out.p(1, 5, BO); out.p(4, 2, GR, true);
   return grand(out, (b) => {
-    // grand crâne spectral, âmes qui tournent
-    // âmes : petits fantômes verts aux yeux sombres qui flottent autour d'elle
-    for (const [x, y] of [[0, 3], [22, 1], [23, 13], [0, 16]]) {
-      b.r(x + 1, y, 3, 1, GH); b.r(x, y + 1, 5, 3, '#a8f0a0'); b.p(x, y + 4, '#a8f0a0'); b.p(x + 2, y + 4, '#a8f0a0'); b.p(x + 4, y + 4, '#a8f0a0');
-      b.p(x + 1, y + 2, '#2a1e30', true); b.p(x + 3, y + 2, '#2a1e30', true);
-    }
-    for (let x = 4; x < 24; x++) b.under(x, 26, x % 3 ? '#3a8a4a' : GR);
+    for (const d of [-1, 1]) for (let i = 0; i < 4; i++) b.under(d < 0 ? 7 - i : 20 + i, 15 + i, BO);
   });
 }
 
 // Ignis, pyromancien : étincelle à la petite flamme, pyromancien à l'ourlet de feu, mage de feu à
 // deux boules de feu, seigneur des flammes à la robe de lave et à la couronne de feu ; rang 5,
-// l'avatar du feu : un cercle de flammes tourne derrière lui.
+// l'avatar du feu : il devient flamme, cheveux en brasier, bras de feu, robe de lave qui craque,
+// deux énormes boules de feu.
 function ignis(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.ignis, F1 = '#ff8a2a', F2 = '#fbe08a', F3 = '#e2334a', LV = '#3a2a2a';
   body(s, { tunic: rank >= 4 ? LV : K.main, dark: rank >= 4 ? '#2a1a1a' : K.dark, trim: K.trim, pants: K.pants, boots: '#3a2a2a', bootsHi: '#5a4a4a', sole: '#1a1010', robe: true, cape: rank >= 4 && '#8c1f2e' });
@@ -791,18 +794,19 @@ function ignis(rank) {
   else ball(19, rank >= 4 ? 11 : 13, rank >= 3);
   if (rank >= 3) ball(4, rank >= 4 ? 11 : 13, rank >= 4);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[6, 14], [7, 15], [16, 14], [17, 15], [6, 16], [17, 16]]) s.p(x, y, (x + y) % 2 ? F1 : F2, true);
+  s.sline(9, 16, 10, 20, F1); s.sline(14, 15, 13, 20, F1); s.p(12, 18, F2, true);
+  for (const [x, y] of [[8, 0], [10, 0], [12, 0], [14, 0], [16, 1], [6, 2]]) s.p(x, y, F2, true);
   return grand(s, (b) => {
-    // cercle de flammes derrière lui
-    for (let i = 0; i < 40; i++) {
-      const a = (i / 40) * Math.PI * 2, x = Math.round(14 + Math.cos(a) * 12), y = Math.round(13 + Math.sin(a) * 12);
-      b.under(x, y, i % 3 ? F1 : F2); b.under(x, y - 1, F3); if (i % 2) b.under(x, y - 2, F1);
-    }
+    for (const [x, y] of [[21, 9], [22, 8], [5, 9], [4, 8], [21, 7], [5, 7]]) b.p(x, y, (x + y) % 2 ? F1 : F2, true);
   });
 }
 
 // Drakon, chevalier dragon : écuyer au petit casque-dragon et à la lance courte, chevalier aux
 // cornes et au fanion, dompteur aux petites ailes, seigneur dragon à la lance enflammée ; rang 5,
-// le dragon incarné : un grand dragon vert déploie ses ailes derrière lui.
+// le dragon incarné : ses ailes de dragon et sa queue lui poussent, armure d'écailles, casque-
+// dragon aux cornes immenses, lance qui crache le feu.
 function drakon(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.drakon, HO = '#efe6cf', CP = '#a82a2a', SC = '#4aa86a', ST = '#b9c6d2', SH = '#e4ecf3';
   if (rank >= 3) for (const d of [-1, 1]) { const x = d < 0 ? 5 : 18; s.sline(x, 14, x + d * 3, 9, K.main); s.sline(x, 15, x + d * 3, 11, K.dark); s.p(x + d * 3, 9, SC); if (rank >= 4) { s.sline(x + d, 15, x + d * 4, 8, K.main); s.p(x + d * 4, 7, SC); } } // ailes
@@ -824,20 +828,20 @@ function drakon(rank) {
   if (rank >= 4) { s.p(19, 0, '#ff8a2a', true); s.p(21, 0, '#fbe08a', true); s.p(21, 1, '#ff8a2a', true); }
   s.hl(18, 22, 18, ST);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 4, K.main); for (const [x, y] of [[9, 14], [11, 15], [13, 14], [10, 16], [14, 16]]) s.p(x, y, SC, true);
+  s.p(19, 0, '#ff8a2a', true); s.p(20, 0, '#fbe08a', true); s.p(21, 0, '#ff8a2a', true); s.p(22, 1, '#ff8a2a', true);
   return grand(s, (b) => {
-    // grand dragon vert : ailes déployées, cou et tête au-dessus de lui
-    for (const d of [-1, 1]) for (let i = 0; i < 12; i++) { const x = 14 + d * (3 + i), y0 = 3 + Math.round(i * 0.4); for (let y = y0; y <= y0 + 10 - Math.round(i * 0.6); y++) b.under(x, y, y === y0 ? SC : (y - y0) % 3 === 2 ? K.dark : K.main); }
-    for (let y = 0; y <= 6; y++) { b.under(13, y, K.main); b.under(14, y, K.main); }
-    for (const [x, y] of [[10, 0], [11, 0], [12, 0], [15, 0], [16, 0], [17, 1]]) b.under(x, y, K.main);
-    b.p(11, 0, '#ff5a3a', true);
+    for (const d of [-1, 1]) for (let i = 0; i < 7; i++) { const x = 14 + d * (5 + i), y0 = 8 + Math.round(i * 0.4); for (let y = y0; y <= y0 + 8 - i; y++) b.under(x, y, y === y0 ? SC : (y - y0) % 3 === 2 ? K.dark : K.main); }
+    for (let i = 0; i < 6; i++) { b.under(9 - i, 24 + (i >> 1), K.main); b.under(9 - i, 25 + (i >> 1), K.dark); } b.under(3, 26, SC);
   });
 }
 
 // ---------------------------------------------------------------- vague 3
 
 // Tess, fermière : fille de ferme au râteau de bois, fermière à la fourche, éleveuse au poussin,
-// maîtresse du domaine au tournesol et à la faux ; rang 5, la déesse des moissons : un champ de
-// blé et de grands tournesols derrière elle.
+// maîtresse du domaine au tournesol et à la faux ; rang 5, la déesse des moissons : couronne d'épis
+// et de tournesols, robe dorée comme le blé, faux d'or.
 function tess(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.tess, H = '#8a5a34', HH = '#b07a48', ST = '#e8c860', STD = '#c8a040', MT = '#b9c6d2', SF = '#f0c030', SFD = '#6a4226';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a4226', bootsHi: '#8a5a32', sole: '#2a1a12', mouth: false, bracers: rank >= 3 && '#c8a870' });
@@ -866,20 +870,17 @@ function tess(rank) {
     s.hl(14, 19, 1, MT); s.hl(15, 18, 2, MT); s.p(13, 2, MT); s.hl(15, 18, 1, '#e4ecf3', true); s.p(18, 9, '#8a5a32'); s.p(17, 9, '#8a5a32');
   }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // champ de blé et grands tournesols
-    for (let x = 0; x < 28; x++) { const t = 17 + ((x * 3) % 4); for (let y = t; y <= 26; y++) b.under(x, y, y === t ? '#fff0a0' : (x + y) % 3 ? ST : STD); }
-    for (const [cx, cy] of [[3, 6], [24, 4], [21, 11]]) {
-      for (let y = cy + 3; y < 20; y++) b.under(cx, y, '#3a8a4a');
-      for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-1, -1], [1, -1], [-1, 1], [1, 1]]) b.under(cx + dx, cy + dy, SF);
-      b.under(cx, cy, SFD); b.under(cx - 1, cy, SFD); b.under(cx + 1, cy, SFD); b.under(cx, cy - 1, SFD); b.under(cx, cy + 1, SFD);
-    }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 5, '#e8c860'); s.hl(8, 15, 14, '#fff0a0'); s.p(10, 16, '#c8a040'); s.p(13, 17, '#c8a040');
+  for (const x of [6, 9, 12, 16, 18]) { s.p(x, 6, '#f0c030'); s.p(x, 5, '#fff0a0', true); }
+  s.hl(14, 19, 1, '#e0a93a'); s.hl(15, 18, 2, '#e0a93a'); s.hl(15, 18, 1, '#fbe08a', true);
+  return grand(s);
 }
 
 // Doc, médecin de peste : apothicaire à la canne, médecin de peste à l'encensoir, alchimiste au
-// corbeau sur l'épaule, docteur noir au chapeau à plume et aux sangles ; rang 5, le fléau : une
-// nuée de corbeaux et un miasme vert derrière lui.
+// corbeau sur l'épaule, docteur noir au chapeau à plume et aux sangles ; rang 5, le fléau : manteau
+// de plumes de corbeau, masque à bec noir et argent, lanterne de feu vert, un corbeau sur chaque
+// épaule.
 function doc(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.doc, BK = '#e8e0cc', BKD = '#b8ac90', GL = '#8a6a4a', MT = '#8e99a4', GR = '#7af06a', CW = '#2a2234';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#2a2234', bootsHi: '#4a4250', sole: '#140d11', robe: true, mouth: false, cape: rank >= 4 && '#1a161e' });
@@ -909,16 +910,17 @@ function doc(rank) {
   s.p(1, top - 1, '#9af098', true); s.p(2, top - 2, '#c8ffb8', true); s.p(0, top - 3, '#9af098', true);
   if (rank >= 4) { s.p(1, top - 4, '#9af098', true); s.p(0, top + 1, '#9af098', true); }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // miasme vert qui monte, nuée de corbeaux
-    for (let x = 0; x < 28; x++) { const t = 18 + Math.round(Math.sin(x * 0.6) * 2 + Math.sin(x * 1.7)); for (let y = t; y < 28; y++) b.under(x, y, y === t ? '#9af098' : y < t + 3 ? '#5a8a4a' : '#3a6a3a'); }
-    for (const [x, y] of [[2, 2], [7, 0], [21, 1], [25, 6], [1, 10], [24, 13]]) { b.hl(x - 1, x + 1, y + 1, CW); b.p(x, y, CW); b.p(x - 2, y, CW); b.p(x + 2, y, CW); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[8, 16], [10, 18], [13, 17], [15, 19], [9, 20], [14, 21]]) s.p(x, y, '#3a3040');
+  s.hl(16, 20, 11, '#8e99a4'); s.p(21, 12, '#8e99a4'); s.hl(16, 19, 12, '#6a7480');
+  s.r(4, 12, 3, 2, CW); s.p(3, 11, CW); s.p(3, 12, '#e0a93a'); s.p(5, 12, '#ffffff', true);
+  s.r(0, 11, 3, 3, '#2a3a2a'); s.p(1, 12, GR, true); s.p(1, 11, '#c8ffb8', true);
+  return grand(s);
 }
 
 // Ozzy, rockeur : garage band à la petite crête, rockeur au blouson clouté, star du punk aux
 // lunettes noires et à l'ampli, idole aux épaulettes à pointes et à la guitare en feu ; rang 5, le
-// dieu du rock : un mur d'amplis et des éclairs derrière lui.
+// dieu du rock : crête en flammes, veste à pointes et chaînes, guitare à double manche qui flambe.
 function ozzy(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.ozzy, MO = '#e2338a', MOH = '#ff8ac8', GT = '#d83a3a', MT = '#b9c6d2';
   if (rank >= 3) { s.r(18, 16, 5, 6, '#2a2234'); s.r(19, 17, 3, 3, '#4a4250'); s.p(20, 18, '#1a1320', true); s.hl(18, 22, 21, '#4a3a42'); s.p(22, 16, MT, true); } // ampli
@@ -942,19 +944,17 @@ function ozzy(rank) {
   s.sline(6, 17, 4, nt + 1, '#3a2a22'); s.sline(7, 17, 5, nt + 1, '#3a2a22'); s.hl(3, 5, nt, MT); s.p(3, nt - 1, '#e4ecf3', true);
   if (rank >= 4) for (const [x, y] of [[0, 15], [1, 14], [0, 18], [3, 15], [0, 21]]) s.p(x, y, (x + y) % 2 ? '#ff8a2a' : '#fbe08a', true);
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // mur d'amplis, éclairs
-    for (const [x0, y0] of [[0, 8], [0, 16], [21, 8], [21, 16], [5, 18], [17, 18]]) for (let y = y0; y < y0 + 8 && y < 28; y++) for (let x = x0; x < x0 + 7; x++) {
-      const edge = x === x0 || y === y0 || x === x0 + 6, cone = (x - x0 - 3) ** 2 + (y - y0 - 4) ** 2 < 5;
-      b.under(x, y, edge ? '#4a4250' : cone ? '#1a1320' : '#2a2234');
-    }
-    for (const x0 of [3, 23]) { b.sline(x0, 0, x0 - 2, 3, '#fbe08a'); b.sline(x0 - 2, 3, x0 + 1, 4, '#fbe08a'); b.sline(x0 + 1, 4, x0 - 1, 7, '#fbe08a'); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[10, 0], [11, 0], [12, 0], [13, 1], [10, 1]]) s.p(x, y, (x + y) % 2 ? '#ff8a2a' : '#fbe08a', true);
+  s.hl(9, 14, 18, MT); s.p(10, 19, MT); s.p(13, 19, MT);
+  s.sline(8, 17, 6, 7, '#3a2a22'); s.hl(5, 7, 6, MT);
+  return grand(s);
 }
 
-// Yuki, cryomancienne : flocon au petit bâton, cryomancienne au diadème de glace, mage du givre à la
-// cape de glace, impératrice glaciale à la haute couronne et aux éclats qui flottent ; rang 5, la
-// reine des neiges : les flèches de son palais de glace derrière elle, neige qui tombe.
+// Yuki, cryomancienne : flocon au petit bâton, cryomancienne au diadème de glace, mage du givre à
+// la cape de glace, impératrice glaciale à la haute couronne et aux éclats qui flottent ; rang 5,
+// la reine des neiges : robe de glace scintillante, très haute couronne de cristaux, longue traîne
+// de givre, sceptre-flocon géant.
 function yuki(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.yuki, H = '#e8f4ff', HS = '#b8d0e8', IC = '#8ae8ff', ID = '#4ab8d8';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#e8f4ff', bootsHi: '#ffffff', sole: '#8ab0c8', robe: true, cape: rank >= 3 && (rank >= 4 ? '#c8f0ff' : '#3a8ab0') });
@@ -974,18 +974,19 @@ function yuki(rank) {
   s.p(cx, cy, '#ffffff', true);
   if (rank >= 4) for (const [x, y] of [[3, 6], [2, 12], [4, 17]]) { s.v(x, y, y + 2, IC, true); s.p(x, y, '#ffffff', true); s.p(x + 1, y + 1, ID, true); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 15, 8, 6, '#c8f0ff'); for (const [x, y] of [[9, 16], [13, 17], [11, 19], [14, 20]]) s.p(x, y, '#ffffff', true); s.hl(8, 15, 21, ID);
+  for (const [x, t] of [[11, 0], [13, 0], [12, 0]]) s.v(x, t, 3, '#ffffff', true);
   return grand(s, (b) => {
-    // flèches du palais de glace, neige
-    for (const [x0, h, w] of [[1, 22, 3], [5, 16, 2], [21, 18, 3], [25, 24, 2], [10, 8, 2], [16, 10, 2]]) for (let y = 26 - h; y <= 26; y++) {
-      const k = Math.min(w, Math.floor((y - (26 - h)) / 2)); for (let x = x0 - k; x <= x0 + k; x++) b.under(x, y, x === x0 - k ? '#ffffff' : x === x0 + k ? ID : '#b8e8f8');
-    }
-    for (const [x, y] of [[3, 1], [24, 2], [13, 0], [1, 9], [26, 11]]) b.p(x, y, '#ffffff', true);
+    for (let y = 22; y <= 27; y++) for (let x = 2; x <= 8 + (y - 22); x++) b.under(x, y, (x + y) % 4 ? '#c8f0ff' : '#ffffff');
+    for (const [x, y] of [[23, 2], [24, 3], [20, 3]]) b.p(x, y, IC, true);
   });
 }
 
 // Sylva, archère elfique : novice sylvestre à l'arc blanc, archère à la couronne de feuilles,
 // sentinelle au diadème d'argent et au croissant, gardienne de la lune à l'arc-croissant et à la
-// flèche de lumière ; rang 5, l'étoile des elfes : un arbre blanc aux feuilles d'argent derrière elle.
+// flèche de lumière ; rang 5, l'étoile des elfes : armure d'argent ciselée, diadème à étoile,
+// longue cape de feuilles d'argent, grand arc-croissant et flèche de lumière.
 function sylva(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.sylva, H = '#f0ecd8', HS = '#c8c0a8', LF = '#7ac85a', SV = '#d8e4f0', MN = '#e8f0ff';
   s.r(5, 10, 2, 7, '#8a6a4a'); s.p(5, 9, W); s.p(6, 8, W); s.p(6, 9, LF);
@@ -1013,17 +1014,18 @@ function sylva(rank) {
     s.v(18, 2, 21, C.string, true); s.hl(13, 21, 11, MN, true); s.p(12, 11, '#ffffff', true); s.p(13, 10, MN, true); s.p(13, 12, MN, true);
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 4, SV); s.p(11, 15, '#ffffff', true); s.p(12, 16, LF, true); s.hl(8, 15, 14, MN);
+  s.p(11, 2, '#ffffff', true); s.p(10, 3, MN, true); s.p(12, 3, MN, true);
   return grand(s, (b) => {
-    // arbre blanc aux feuilles d'argent
-    for (let y = 8; y <= 26; y++) for (const x of [13, 14]) b.under(x, y, '#e8e4f0');
-    for (const [x0, y0, x1, y1] of [[13, 14, 4, 6], [14, 12, 23, 4], [13, 16, 2, 13], [14, 15, 25, 12]]) b.sline(x0, y0, x1, y1, '#e8e4f0');
-    for (const [cx, cy, r] of [[4, 5, 4], [23, 4, 4], [2, 13, 2], [25, 12, 2]]) for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) b.under(x, y, (x * 3 + y) % 5 === 0 ? '#ffffff' : (x + y) % 3 ? '#c8e8d8' : MN);
+    capeBack(b, '#c8e8d8', MN, LF);
   });
 }
 
 // Thorn, druide : graine aux petits bois et au bâton noueux, druide à la couronne de feuilles,
 // gardien des bois à l'oiseau sur le bâton, archidruide aux grands bois fleuris et à la robe de
-// mousse ; rang 5, l'esprit de la nature : un cercle de menhirs couverts de lierre derrière lui.
+// mousse ; rang 5, l'esprit de la nature : son corps devient écorce, ses bois immenses se couvrent
+// de fleurs, le bâton est un jeune arbre.
 function thorn(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.thorn, H = '#6b4428', AN = '#c8a878', AND = '#8a6a4a', LF = '#7ac85a', FL = '#ff9ac8', MS = '#4e8a34';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#5a3a22', bootsHi: '#7a5a3a', sole: '#2a1a12', robe: true, cape: rank >= 4 && MS });
@@ -1050,17 +1052,18 @@ function thorn(rank) {
   if (rank >= 3) { s.r(5, top - 3, 2, 2, '#3a64c8'); s.p(7, top - 3, '#e8a030'); s.p(5, top - 3, '#21182a', true); s.p(4, top - 2, '#26408a'); } // oiseau bleu
   if (rank >= 4) for (const [x, y] of [[1, top + 2], [2, top + 5], [6, top + 2]]) s.p(x, y, LF);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 6, '#6a4a2a'); for (const [x, y] of [[9, 15], [12, 17], [14, 15], [10, 19]]) s.p(x, y, '#8a6a4a'); for (const [x, y] of [[11, 16], [13, 19]]) s.p(x, y, LF, true);
+  for (const [x, y] of [[5, 1], [7, 0], [16, 0], [18, 1], [10, 0]]) s.p(x, y, FL, true);
   return grand(s, (b) => {
-    // cercle de menhirs couverts de lierre, lucioles
-    for (const [x0, h] of [[0, 14], [5, 18], [20, 18], [25, 14]]) for (let y = 26 - h; y <= 26; y++) for (let x = x0; x < x0 + 3; x++) b.under(x, y, (x + y) % 5 === 0 ? MS : x === x0 ? '#a8a0b0' : '#8a8090');
-    for (let x = 4; x <= 23; x++) { b.under(x, 7, '#8a8090'); b.under(x, 8, '#6a6070'); }
-    for (const [x, y] of [[11, 2], [17, 3], [2, 4], [26, 6]]) b.spark(x, y, '#e8f8a0');
+    for (const [x, y] of [[4, 4], [5, 3], [7, 4], [3, 6], [6, 6]]) b.p(x, y, LF, true); b.p(5, 5, FL, true);
   });
 }
 
 // Gorm, orc barbare : brute au petit couperet, orc barbare au bandeau de fer, chef de guerre au
 // collier d'os, aux peintures et à l'épaulière à pointes, seigneur orc au crâne cornu ; rang 5, le
-// fléau des terres : sa bannière de guerre et un tas de crânes derrière lui.
+// fléau des terres : armure à pointes, crâne cornu sur la tête, peintures de guerre rouges,
+// couperet géant ensanglanté.
 function gorm(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.gorm, H = '#2a2234', TK = '#efe6cf', MT = '#b9c6d2', MD = '#8e99a4', BO = '#e8e0cc', RD = '#a82a2a';
   body(s, { tunic: C.skin, dark: C.skinSh, trim: C.skin, pants: K.pants, boots: K.main, bootsHi: K.trim, sole: '#2a1a12', mouth: false, cape: rank >= 4 && '#5a2a2a', belt: K.main, bracers: rank >= 2 ? MD : K.main });
@@ -1091,18 +1094,19 @@ function gorm(rank) {
   if (rank >= 4) { s.p(19, y0 + 4, RD, true); s.p(20, y0 + 5, RD, true); }
   const out = s.recolor({ [C.skin]: '#7ab84a', [C.skinSh]: '#4e8a34' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 3, MD); for (const x of [8, 11, 14]) out.p(x, 13, MT); out.p(9, 15, RD, true);
+  for (const x of [5, 18]) { out.r(x, 12, 2, 3, MD); out.p(x, 11, MT); out.p(x + 1, 11, MT); }
+  out.p(18, 2, RD, true); out.p(19, 6, RD, true); out.p(20, 9, RD, true);
   return grand(out, (b) => {
-    // bannière de guerre rouge à crâne, tas de crânes
-    b.v(2, 0, 26, '#5a3f2e');
-    for (let y = 1; y <= 12; y++) b.hl(3, y > 10 ? (y === 12 ? 5 : 6) : 8, y, RD);
-    b.r(4, 4, 3, 3, BO); b.p(4, 5, '#2a2234', true); b.p(6, 5, '#2a2234', true);
-    for (const [x, y] of [[18, 24], [21, 24], [24, 24], [20, 22], [23, 22], [22, 20], [1, 24]]) { b.under(x, y, BO); b.under(x + 1, y, BO); b.under(x, y + 1, '#c8b890'); b.under(x + 1, y + 1, BO); }
+    b.under(23, 3, '#b9c6d2'); b.under(23, 4, '#b9c6d2'); b.under(23, 6, '#b9c6d2');
   });
 }
 
 // Zara, danseuse : danseuse de rue à la dague et au foulard, danseuse au bandeau de pièces et au
 // cimeterre, étoile du bazar aux deux foulards et aux bracelets, danseuse royale au diadème et aux
-// deux cimeterres ; rang 5, la déesse de la danse : de longs rubans de soie tourbillonnent autour d'elle.
+// deux cimeterres ; rang 5, la déesse de la danse : parure d'or et de joyaux, voile qui tombe du
+// diadème, longs rubans de soie aux bras, deux cimeterres d'or.
 function zara(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.zara, H = '#2a2234', HH = '#4a3e5a', VL = '#f0a8c8', SC = '#4fd8c8', GD = '#e0a93a', MT = '#b9c6d2';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: K.trim, bootsHi: '#fff0a0', sole: '#8a5a20', mouth: false, cape: rank >= 4 && VL, belt: K.trim, buckle: '#ffffff', bracers: rank >= 3 && GD });
@@ -1129,19 +1133,18 @@ function zara(rank) {
     if (rank >= 4) { s.v(5, 9, 14, MT); s.p(4, 8, MT); s.p(4, 7, MT); s.p(3, 6, MT); s.hl(4, 6, 15, GD); }
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 15, 6, 2, '#e0a93a'); s.p(11, 15, '#e2334a', true); s.p(12, 16, '#4fd8c8', true);
+  s.hl(8, 15, 6, GD); s.p(10, 5, GD); s.p(13, 5, GD);
   return grand(s, (b) => {
-    // rubans de soie en tourbillon
-    for (let i = 0; i < 160; i++) {
-      const a = i * 0.08, r = 6 + i * 0.05;
-      b.under(Math.round(14 + Math.cos(a) * r), Math.round(14 + Math.sin(a) * r * 0.8), i % 2 ? VL : '#ffd0e4');
-      b.under(Math.round(14 + Math.cos(a + 3.1) * r), Math.round(14 + Math.sin(a + 3.1) * r * 0.8), i % 2 ? SC : '#a8fff0');
-    }
+    for (let i = 0; i < 18; i++) { b.under(7 - Math.round(i * 0.35), 18 + Math.round(Math.sin(i * 0.6) * 2) + (i >> 2), i % 2 ? SC : '#a8fff0'); b.under(20 + Math.round(i * 0.35), 17 + Math.round(Math.sin(i * 0.6 + 1) * 2) + (i >> 2), i % 2 ? VL : '#ffd0e4'); }
   });
 }
 
 // Kitsune, renarde : ses queues se multiplient avec le rang (1, 3, 5, 7, puis 9). Renardeau,
 // kitsune aux feux follets, renarde mystique, renarde céleste au masque de renard sur le côté ;
-// rang 5, Kyūbi : neuf grandes queues en éventail et un torii derrière elle.
+// rang 5, Kyūbi : ses neuf queues en grand éventail, kimono blanc et rouge brodé d'or, masque de
+// renard sur la tête, feux follets autour d'elle.
 function kitsune(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.kitsune, H = '#e8702a', HH = '#ffa860', TW = '#fff4e8', FF = '#5ac8ff';
   // queues en éventail derrière, bouts blancs
@@ -1160,17 +1163,17 @@ function kitsune(rank) {
   // feux follets bleus (plus nombreux avec le rang)
   for (const [x, y] of [[19, 11], [20, 15], [19, 7], [21, 18], [22, 9]].slice(0, rank)) { s.p(x, y, FF, true); s.p(x, y - 1, '#c8f0ff', true); s.p(x + 1, y, '#2f78d0', true); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.hl(8, 15, 18, '#e0a93a'); s.p(10, 20, '#e0a93a', true); s.p(13, 19, '#e0a93a', true);
   return grand(s, (b) => {
-    // torii rouge, deux queues de plus en éventail
-    for (const x of [4, 23]) for (let y = 4; y <= 26; y++) { b.under(x, y, '#d8323c'); b.under(x + 1, y, '#a82a2a'); }
-    for (let x = 1; x <= 26; x++) { b.under(x, 3, '#2a2234'); b.under(x, 4, '#d8323c'); b.under(x, 7, '#d8323c'); }
-    for (const [x, y] of [[20, 22], [22, 19]]) { b.sline(x, y, 16, 22, H); b.sline(x, y + 1, 16, 23, H); b.p(x, y, TW); b.p(x + 1, y, TW); }
+    for (const [x, y] of [[0, 6], [1, 2], [24, 4], [26, 9], [25, 16]]) { b.sline(x + (x < 10 ? 1 : -1), y + 1, x < 10 ? 10 : 18, 22, H); b.sline(x + (x < 10 ? 2 : -2), y + 1, x < 10 ? 10 : 18, 23, H); b.p(x, y, TW); b.p(x + 1, y, TW); b.p(x, y + 1, TW); }
   });
 }
 
 // Sybil, voyante : diseuse à la petite boule de cristal, voyante aux anneaux d'or, oracle aux
 // cartes de tarot qui flottent, prophétesse au troisième œil et au voile étoilé ; rang 5, l'œil du
-// destin : un grand œil s'ouvre dans le ciel derrière elle.
+// destin : le troisième œil s'ouvre et luit, voile d'étoiles jusqu'au sol, cartes de tarot en
+// éventail, grande boule de cristal.
 function sybil(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.sybil, H = '#2a2234', TB = '#8a4ac8', TBD = '#6a2a9a', CR = '#c8a8ff', GD = '#e0a93a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#3a2470', bootsHi: '#5a3aa8', sole: '#1a1040', robe: true, cape: rank >= 4 && '#2a1a5a', bracers: rank >= 2 && GD });
@@ -1188,13 +1191,11 @@ function sybil(rank) {
   else { s.r(19, cy, 3, 3, CR); s.p(19, cy, '#ffffff', true); s.hl(19, 21, cy + 3, '#8a6a4a'); }
   if (rank >= 3) for (const [x, y] of [[2, 8], [3, 14], [21, 4]].slice(0, rank - 1)) { s.r(x, y, 2, 3, '#f2eef4'); s.p(x, y + 1, K.trim, true); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(11, 4, 2, 2, '#e8d8ff', true); s.p(11, 4, '#8a4ac8', true); s.p(12, 5, '#21182a', true);
+  for (const x of [7, 16]) s.v(x, 14, 22, '#4a2a8a'); for (const [x, y] of [[7, 16], [16, 19], [7, 21]]) s.p(x, y, GD, true);
   return grand(s, (b) => {
-    // grand œil dans le ciel
-    // cercle de cartes de tarot marquées d'un œil, tout autour d'elle
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * Math.PI * 2, x = Math.round(12.5 + Math.cos(a) * 12), y = Math.round(12 + Math.sin(a) * 11);
-      b.under(x, y, '#f2eef4'); b.under(x + 1, y, '#f2eef4'); b.under(x, y + 1, '#8a4ac8'); b.under(x + 1, y + 1, '#f2eef4'); b.under(x, y + 2, '#f2eef4'); b.under(x + 1, y + 2, K.trim);
-    }
+    for (let i = 0; i < 4; i++) { const x = 1 + i * 2, y = 14 - i; b.r(x, y, 2, 3, '#f2eef4'); b.p(x, y + 1, K.trim, true); }
   });
 }
 
@@ -1202,7 +1203,8 @@ function sybil(rank) {
 
 // Grumli, nain : apprenti forgeron au bonnet de cuir et au petit marteau, nain au casque et au
 // marteau-enclume, gardien de la forge aux tresses à anneaux et aux runes, thane au heaume-couronne
-// et à la barbe jusqu'aux genoux ; rang 5, le roi sous la montagne : sa forge brûle derrière lui.
+// et à la barbe jusqu'aux genoux ; rang 5, le roi sous la montagne : heaume-couronne d'or, armure à
+// runes de feu, barbe jusqu'au sol aux anneaux d'or, marteau-enclume qui rougeoie.
 function grumli(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.grumli, B = '#5a3a24', BH = '#7a5236', ST = '#b9c6d2', SH = '#e4ecf3', SD = '#8e99a4', RU = '#ff8a2a', GD = '#e0a93a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: rank >= 2 ? SD : '#6a4a32', bootsHi: rank >= 2 ? SH : '#8a6a4a', sole: '#2a1a12', mouth: false, cape: rank >= 4 && '#2a3a6a', bracers: rank >= 2 ? ST : '#6a4a32' });
@@ -1230,21 +1232,16 @@ function grumli(rank) {
     if (rank >= 4) { s.hl(2, 6, y0 + 1, RU, true); s.p(4, y0 + 1, '#fbe08a', true); s.hl(0, 8, y0 - 1, ST); }
   }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // forge : voûte de pierre, foyer qui rougeoie, enclume
-    for (let y = 2; y <= 26; y++) for (let x = 3; x <= 24; x++) {
-      const inner = x > 6 && x < 21 && y > 6, arch = (x - 13.5) ** 2 / 110 + (y - 14) ** 2 / 150 < 1;
-      if (!arch) continue;
-      b.under(x, y, inner ? (y > 18 ? '#ff8a2a' : y > 12 ? '#e2552a' : '#5a2a1a') : (x + y) % 4 ? '#6a6070' : '#8a8090');
-    }
-    for (const [x, y] of [[9, 20], [17, 19], [13, 17]]) { b.under(x, y, '#fbe08a'); b.under(x, y - 1, '#ffd84a'); }
-    for (const [x, y] of [[1, 6], [26, 9], [25, 2]]) b.spark(x, y, RU);
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 15, 6, 3, '#8e99a4'); s.p(10, 16, RU, true); s.p(14, 15, RU, true);
+  for (const x of [8, 10, 13, 15]) s.v(x, 0, 2, GD); s.p(10, 0, '#fbe08a', true); s.r(11, 1, 2, 1, RU, true);
+  s.v(10, 21, 23, B); s.v(13, 21, 23, B); s.p(10, 22, GD, true); s.p(13, 22, GD, true);
+  return grand(s);
 }
 
 // Spike, homme cactus : bouture au petit sombrero, cactus au poncho, mariachi épineux aux deux
 // maracas et au sombrero à pompons, cactus en fleur couvert de fleurs roses ; rang 5, le roi du
-// désert : une immense fleur de cactus s'ouvre derrière lui.
+// désert : couronne de grandes fleurs roses sur le sombrero, bras couverts de fleurs, maracas d'or.
 function spike(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.spike, SP = '#f0e8c8', SB = '#e8c860', SBD = '#b8902a', FL = '#ff6ab8', FLH = '#ffb8e0';
   // bras de cactus qui monte à gauche (plus haut avec le rang)
@@ -1268,22 +1265,17 @@ function spike(rank) {
   if (rank >= 3) { s.v(1, 19, 21, '#8a5a32'); s.r(0, 16, 3, 3, M); s.p(0, 16, rank >= 4 ? FLH : '#ffb070', true); }
   const out = s.recolor({ [C.skin]: '#6ab85a', [C.skinSh]: '#3a7a32' });
   if (rank < 5) return out;
-  return grand(out, (b) => {
-    // immense fleur rose derrière lui
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      for (let r = 4; r < 13; r++) for (let w = -2; w <= 2; w++) {
-        const x = Math.round(14 + Math.cos(a) * r - Math.sin(a) * w * (r / 10)), y = Math.round(11 + Math.sin(a) * r * 0.9 + Math.cos(a) * w * (r / 10));
-        b.under(x, y, r > 10 ? FLH : FL);
-      }
-    }
-    for (let y = 8; y <= 14; y++) for (let x = 11; x <= 17; x++) b.under(x, y, '#fbe08a');
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[9, 1], [12, 0], [15, 1], [6, 4], [18, 4]]) { out.p(x, y, FL, true); out.p(x + 1, y, FLH, true); out.p(x, y + 1, FL, true); }
+  for (const [x, y] of [[6, 15], [17, 16], [3, 11], [4, 14]]) out.p(x, y, FL, true);
+  out.r(17, 8, 3, 3, '#e0a93a'); out.p(17, 8, '#fbe08a', true); out.r(0, 16, 3, 3, '#e0a93a'); out.p(0, 16, '#fbe08a', true);
+  return grand(out);
 }
 
 // Bip, robot : prototype au petit bras-blaster, Bip à l'écran sur la poitrine, Bip 2.0 aux
-// réacteurs dans les pieds et au canon d'épaule, Méga Bip à la visière et au cœur lumineux ;
-// rang 5, Bip Ultime : il pilote un grand robot dont la tête et les bras sont derrière lui.
+// réacteurs dans les pieds et au canon d'épaule, Méga Bip à la visière et au cœur lumineux ; rang
+// 5, Bip Ultime : armure de méca, réacteurs-ailes dans le dos, double canon, visière et cœur qui
+// brillent.
 function bip(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.bip, MT = '#a8b0bc', MD = '#7a8290', N = '#4ff0e8', OR = K.main;
   if (rank >= 3) { s.r(4, 11, 3, 3, MD); s.hl(1, 4, 12, MT); s.p(1, 12, N, true); } // canon d'épaule
@@ -1307,16 +1299,18 @@ function bip(rank) {
   if (rank >= 4) { s.hl(17, 16 + L, 15, MT); s.p(17 + L, 15, N, true); }
   const out = s.recolor({ [C.skin]: MT, [C.skinSh]: MD });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 4, '#7a8290'); out.r(11, 15, 2, 2, '#ffffff', true); out.p(10, 15, N, true); out.p(13, 16, N, true);
+  out.hl(17, 23, 14, '#a8b0bc'); out.p(23, 14, N, true);
   return grand(out, (b) => {
-    // le grand robot qu'il pilote : tête, épaules et poings derrière lui
-    for (let y = 0; y <= 8; y++) for (let x = 7; x <= 20; x++) b.under(x, y, y === 0 ? MT : y === 4 && x > 8 && x < 19 ? N : (x + y) % 6 ? MD : MT);
-    for (const x0 of [0, 21]) for (let y = 9; y <= 24; y++) for (let x = x0; x < x0 + 7; x++) b.under(x, y, y > 19 ? OR : x === x0 || x === x0 + 6 ? MD : MT);
+    for (const d of [-1, 1]) { const x = d < 0 ? 6 : 21; b.sline(x, 16, x + 4 * d, 11, '#a8b0bc'); b.sline(x, 17, x + 4 * d, 13, '#7a8290'); b.p(x + 4 * d, 11, N, true); b.p(x + 2 * d, 19, '#ff8a2a', true); }
   });
 }
 
-// Lulu, boulangère : mitronne à la petite baguette, boulangère à la miche, pâtissière au
-// rouleau et au croissant, maîtresse boulangère à la toque rose et au gâteau ; rang 5, la fée des
-// gâteaux : son grand four à pain rougeoie derrière elle, croissants qui volent.
+// Lulu, boulangère : mitronne à la petite baguette, boulangère à la miche, pâtissière au rouleau et
+// au croissant, maîtresse boulangère à la toque rose et au gâteau ; rang 5, la fée des gâteaux :
+// petites ailes de sucre, toque-gâteau à la cerise, robe à volants roses, fouet magique qui
+// saupoudre du sucre.
 function lulu(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.lulu, H = '#e8c070', R = '#d83a3a', BG = '#d8a050', BGD = '#a8702a', PK = '#ffb8d0', WD = '#c8945a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#8a5a32', bootsHi: '#a8784a', sole: '#3a2a1a', robe: true, cape: rank >= 4 && PK });
@@ -1344,20 +1338,18 @@ function lulu(rank) {
   if (rank === 3) { s.hl(17, 21, 15, BG); s.hl(18, 20, 14, BG); s.p(16, 16, BG); s.p(22, 16, BG); s.p(19, 15, BGD); s.p(18, 14, '#f0c878', true); }
   if (rank >= 4) { s.r(17, 13, 5, 4, '#f8e0c0'); s.hl(17, 21, 13, '#ffffff'); s.hl(17, 21, 15, PK); s.p(19, 12, R); s.hl(16, 22, 17, '#b9c6d2'); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 3, PK); s.hl(8, 15, 20, '#ffffff'); s.p(9, 21, PK); s.p(12, 21, PK); s.p(15, 21, PK);
+  for (const [x, y] of [[2, 5], [4, 4], [3, 7], [5, 6]]) s.p(x, y, '#ffffff', true);
   return grand(s, (b) => {
-    // four à pain en briques, bouche qui rougeoie, croissants qui volent
-    for (let y = 3; y <= 26; y++) for (let x = 2; x <= 25; x++) {
-      if ((x - 13.5) ** 2 / 140 + (y - 16) ** 2 / 170 > 1) continue;
-      const mouth = (x - 13.5) ** 2 / 40 + (y - 17) ** 2 / 50 < 1;
-      b.under(x, y, mouth ? (y > 18 ? '#ff8a2a' : '#5a2a1a') : (y % 3 === 0 || (x + Math.floor(y / 3) * 2) % 5 === 0) ? '#8a3a2a' : '#c8603a');
-    }
-    for (const [x, y] of [[1, 2], [23, 1], [25, 9]]) { b.hl(x, x + 3, y + 1, BG); b.hl(x + 1, x + 2, y, BG); b.p(x + 1, y, '#f0c878', true); }
+    for (const d of [-1, 1]) { const x = d < 0 ? 8 : 19; for (const [dx, dy] of [[0, 0], [1, -1], [2, -1], [2, 0], [1, 1], [0, 1], [2, 2]]) b.under(x + d * dx, 15 + dy, dy === -1 ? '#ffffff' : '#ffe0f0'); }
   });
 }
 
 // DJ Max : ambianceur au casque, DJ à la casquette et à la chaîne, DJ résident aux lunettes LED et
 // au gros vinyle, star des platines aux écouteurs lumineux et aux deux vinyles ; rang 5, la légende
-// de la nuit : boule à facettes et rayons laser derrière lui.
+// de la nuit : blouson néon, énormes écouteurs lumineux, lunettes LED, deux vinyles lumineux,
+// chaîne en or massive.
 function djmax(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.djmax, CP = '#e2338a', HP = '#2a2234', NE = '#ff4ab8', CY = '#4ff0e8', GD = '#e0a93a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#f2eef4', bootsHi: '#ffffff', sole: '#e2338a', cape: rank >= 4 && '#8a2060' });
@@ -1382,17 +1374,15 @@ function djmax(rank) {
   disc(19, rank >= 3 ? 14 : 16, [1, 2, 3, 3, 3][rank - 1]);
   if (rank >= 4) disc(3, 14, 2);
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // boule à facettes au plafond, rayons laser
-    b.v(14, 0, 1, '#8e99a4');
-    for (let y = 2; y <= 6; y++) for (let x = 12; x <= 16; x++) if ((x - 14) ** 2 + (y - 4) ** 2 <= 5) b.under(x, y, (x + y) % 2 ? '#e4ecf3' : '#8ab0c8');
-    for (const [x1, y1, c] of [[0, 20, NE], [27, 18, CY], [0, 10, CY], [27, 8, NE]]) for (let i = 4; i <= 30; i++) { const t = i / 30; b.under(Math.round(14 + (x1 - 14) * t), Math.round(5 + (y1 - 5) * t), c, true); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 3, '#2a2a3a'); s.v(8, 14, 18, NE, true); s.v(15, 14, 18, CY, true); s.hl(10, 13, 17, GD); s.hl(10, 13, 18, GD); s.p(11, 18, '#fbe08a', true);
+  s.p(19, 14, CY, true); s.p(3, 14, NE, true);
+  return grand(s);
 }
 
 // Pablo, facteur : coursier à la lettre, facteur à la sacoche, postier en chef au tampon et aux
-// colis dans le dos, messager royal à la casquette ailée et au sceau d'or ; rang 5, le messager
-// des vents : une nuée de lettres s'envole autour de lui et sa grande boîte aux lettres.
+// colis dans le dos, messager royal à la casquette ailée et au sceau d'or ; rang 5, le messager des
+// vents : casquette et sandales ailées, cape de messager, sacoche dorée, lettre d'or scellée.
 function pablo(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.pablo, H = '#3a2a22', SB = '#8a5a32', SBD = '#6a4226', GD = '#e0a93a', RD = '#d83a3a', PK = '#c8945a';
   if (rank >= 3) { s.r(2, 8, 5, 4, PK); s.r(3, 5, 4, 3, '#e8b878'); s.v(4, 8, 11, '#8a5a32'); s.hl(3, 6, 6, '#8a5a32'); } // colis dans le dos
@@ -1413,16 +1403,17 @@ function pablo(rank) {
   s.r(16, 6, 6, 4, L); s.sline(16, 6, 18, 8, rank >= 4 ? GD : '#c8c0d0'); s.sline(21, 6, 19, 8, rank >= 4 ? GD : '#c8c0d0');
   s.p(19, 8, RD, true); if (rank >= 3) s.p(21, 7, '#3ab86a', true);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(3, 16, 4, 4, '#e0a93a'); s.hl(3, 6, 16, '#b07a20'); s.p(4, 17, RD, true);
+  for (const d of [-1, 1]) { const x = d < 0 ? 8 : 15; s.p(x + d, 22, W); s.p(x + 2 * d, 21, W); }
   return grand(s, (b) => {
-    // grande boîte aux lettres rouge, lettres qui s'envolent
-    for (let y = 10; y <= 26; y++) for (let x = 20; x <= 27; x++) b.under(x, y, y === 13 ? '#2a2234' : y < 12 && (x === 20 || x === 27) ? null : x === 20 ? '#a82a2a' : RD);
-    for (let i = 0; i < 6; i++) { const x = 1 + i * 4, y = 4 + Math.round(Math.sin(i) * 3); b.under(x, y, W); b.under(x + 1, y, W); b.under(x + 2, y, W); b.under(x, y + 1, W); b.under(x + 1, y + 1, RD); b.under(x + 2, y + 1, W); }
+    capeBack(b, '#3a5ab8', '#2a408a', '#f0d040');
   });
 }
 
 // Bob, zombie gentil : mort-vivant à la chemise déchirée, Bob à la fleur, zombie costaud aux
 // bandages et au boulon dans la tête, zombie chic au smoking et au haut-de-forme ; rang 5, le roi
-// des zombies : des tombes et des mains qui sortent de terre derrière lui.
+// des zombies : couronne de travers, cape royale en lambeaux, sceptre-os, médailles de fer.
 function bob(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.bob, H = '#4a3a2a', ST = '#3a2a2a', BD = '#e8e0cc', MT = '#8e99a4', TX = '#1e1a22';
   const chic = rank >= 4;
@@ -1449,20 +1440,17 @@ function bob(rank) {
   if (chic) { s.v(22, 16, 22, TX); s.p(22, 16, '#e0a93a'); s.p(22, 22, '#e0a93a'); }
   const out = s.recolor({ [C.skin]: '#9ac08a', [C.skinSh]: '#6a9a5a', ['#f0907a']: '#c8a0a8' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(9, 0, 6, 2, '#e0a93a'); out.p(9, 0, '#fbe08a', true); out.p(12, 0, '#e2334a', true); out.r(9, 2, 6, 2, null); out.hl(9, 14, 2, '#e0a93a');
+  out.v(22, 10, 16, BD); out.r(21, 9, 3, 2, BD); out.p(22, 9, '#ffffff', true);
   return grand(out, (b) => {
-    // tombes, mains qui sortent de terre, lune
-    for (const [x0, h] of [[0, 9], [6, 7], [19, 8], [24, 10]]) for (let y = 26 - h; y <= 26; y++) for (let x = x0; x < x0 + 4; x++) {
-      if (y === 26 - h && (x === x0 || x === x0 + 3)) continue;
-      b.under(x, y, x === x0 + 1 && y === 28 - h ? '#5a5060' : '#8a8090');
-    }
-    for (let x = 0; x < 28; x++) { b.under(x, 26, '#4a3a2a'); b.under(x, 27, '#3a2a1a'); }
-    for (const x of [4, 17]) { b.under(x, 25, '#9ac08a'); b.under(x, 24, '#9ac08a'); b.under(x - 1, 23, '#9ac08a'); b.under(x + 1, 23, '#9ac08a'); }
+    capeBack(b, '#5a2a4a', '#3a1a30', '#e0a93a');
   });
 }
 
 // Zip, skateur : débutant à la planche nue, skateur aux genouillères et à l'autocollant, pro du
 // skate au casque et à la planche à flammes, champion du park à la planche néon ; rang 5, le roi de
-// la rampe : une rampe couverte de graffitis derrière lui.
+// la rampe : planche-hover néon, casque à visière, casque audio, baskets lumineuses.
 function zip(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.zip, H = '#e8a040', CP = '#d83a3a', DK = '#2a2234', N = '#4ff0e8';
   // planche debout à gauche
@@ -1485,19 +1473,17 @@ function zip(rank) {
   }
   if (rank >= 2) { s.p(9, 20, DK); s.p(14, 20, DK); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 8, 6, 2, '#2a3440'); s.hl(9, 14, 9, N, true); s.r(6, 7, 2, 3, '#2a2234'); s.r(16, 7, 2, 3, '#2a2234'); s.p(17, 8, '#ff4ab8', true);
+  s.p(8, 22, N, true); s.p(13, 22, N, true);
   return grand(s, (b) => {
-    // rampe en U couverte de graffitis
-    for (let x = 0; x < 28; x++) {
-      const h = Math.round(Math.max(0, Math.abs(x - 13.5) - 5) ** 1.6 * 0.9);
-      for (let y = 26 - h; y <= 26; y++) b.under(x, y, y === 26 - h ? '#e4ecf3' : '#8a8090');
-    }
-    for (const [x, y, c] of [[2, 18, '#ff4ab8'], [3, 17, '#ff4ab8'], [24, 17, N], [25, 16, N], [22, 22, '#fbe08a'], [5, 22, '#fbe08a']]) b.p(x, y, c, true);
+    for (let x = 3; x <= 7; x++) b.under(x, 27, x % 2 ? N : '#ff4ab8');
   });
 }
 
-// Rexy, enfant en costume de dinosaure : bébé dino à une seule pointe, Rexy à la crête, petit
-// T-rex à la grosse queue et à l'os, dino-tyran à la gueule pleine de dents ; rang 5, le roi des
-// dinos : un volcan crache sa lave derrière lui.
+// Rexy, enfant en costume de dinosaure : bébé dino à une seule pointe, Rexy à la crête, petit T-rex
+// à la grosse queue et à l'os, dino-tyran à la gueule pleine de dents ; rang 5, le roi des dinos :
+// grosse capuche de T-rex à mâchoire immense, couronne, grandes pointes sur la queue, griffes.
 function rexy(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.rexy, SPK = '#f08a2a', TE = '#ffffff', BN = '#efe6cf';
   // queue (plus grosse avec le rang, à pointes au rang 4)
@@ -1520,17 +1506,18 @@ function rexy(rank) {
   s.p(6, 19, TE); s.p(17, 19, TE);
   if (rank >= 3) { s.hl(17, 21, 17, BN); s.p(17, 16, BN); s.p(17, 18, BN); s.p(21, 16, BN); s.p(21, 18, BN); } // os
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(10, 0, 4, 1, '#e0a93a'); s.p(10, -1 + 1, '#e0a93a'); s.p(11, 0, '#e2334a', true); s.p(13, 0, '#fbe08a', true);
+  for (const x of [16, 18, 20]) s.p(x, 8, TE, true); s.hl(16, 21, 7, K.dark); s.hl(16, 21, 4, K.main);
   return grand(s, (b) => {
-    // volcan qui crache sa lave
-    for (let y = 6; y <= 26; y++) { const w = Math.round((y - 6) * 0.65) + 3; for (let x = 14 - w; x <= 13 + w; x++) b.under(x, y, y < 8 ? '#ff8a2a' : (x * 7 + y) % 9 === 0 ? '#e2552a' : '#5a4a4a'); }
-    for (const [x, y] of [[12, 3], [14, 1], [16, 2], [10, 0], [18, 4]]) { b.under(x, y, '#ff8a2a'); b.under(x, y + 1, '#fbe08a'); }
-    for (let i = 0; i <= 10; i++) { b.under(12 - Math.round(i * 0.3), 8 + i, '#ff8a2a'); b.under(16 + Math.round(i * 0.2), 8 + i, '#ff8a2a'); }
+    for (const [x, y] of [[1, 22], [3, 21], [5, 20]]) { b.under(x, y, SPK); b.under(x, y - 1, SPK); }
   });
 }
 
-// Léo, homme-lion : lionceau à la petite crinière, homme-lion aux griffes, guerrier lion aux tresses
-// de crinière et aux longues griffes, roi lion à la couronne et à la cape rouge ; rang 5, le lion
-// solaire : une immense tête de lion dorée rugit derrière lui.
+// Léo, homme-lion : lionceau à la petite crinière, homme-lion aux griffes, guerrier lion aux
+// tresses de crinière et aux longues griffes, roi lion à la couronne et à la cape rouge ; rang 5,
+// le lion solaire : crinière immense et dorée, couronne-soleil, armure à tête de lion, griffes
+// d'or.
 function leo(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.leo, MN = '#b8601e', MNH = '#d8803a', MNL = '#e8a050', MZ = '#f8e0b8', MT = '#b9c6d2', GD = '#e0a93a';
   // crinière : petite, puis très large
@@ -1552,19 +1539,19 @@ function leo(rank) {
   s.r(16, 15, 2, 4, rank >= 3 ? MT : '#e0a860');
   const out = s.recolor({ [C.skin]: '#e0a860', [C.skinSh]: '#b07a3a' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [y, a, b2] of [[2, 6, 17], [3, 4, 19], [16, 6, 17]]) out.hl(a, b2, y, '#e0a93a');
+  out.r(9, 15, 6, 3, '#e0a93a'); out.r(11, 15, 2, 2, '#b8601e'); out.p(11, 15, '#fbe08a', true);
+  for (const y of [15, 17, 19]) out.hl(18, 22, y, '#e0a93a');
   return grand(out, (b) => {
-    // immense tête de lion dorée derrière lui : crinière en rayons, oreilles, yeux
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) {
-      const dx = x - 13.5, dy = y - 11, r = Math.sqrt(dx * dx + dy * dy), a = Math.atan2(dy, dx);
-      if (r < 13 + Math.sin(a * 9) * 1.5) b.under(x, y, r < 9 ? '#f0c060' : Math.sin(a * 9) > 0 ? '#d8803a' : '#b8601e');
-    }
-    for (const x of [6, 20]) { b.under(x, 1, '#f0c060'); b.under(x + 1, 1, '#f0c060'); }
+    for (let y = 0; y < 22; y++) for (let x = 0; x < 28; x++) { const dx = x - 13.5, dy = y - 12, r = Math.sqrt(dx * dx + dy * dy), an = Math.atan2(dy, dx); if (r < 11 + Math.sin(an * 8) * 1.2) b.under(x, y, Math.sin(an * 8) > 0.3 ? '#fbe08a' : '#e0a93a'); }
   });
 }
 
 // Capitaine Tonnerre, super-héros : acolyte au loup jaune et à l'étincelle, capitaine à l'éclair,
 // super-héros aux deux éclairs et aux bottes jaunes, héros de la ville à la couronne de foudre ;
-// rang 5, le dieu de la foudre : un nuage d'orage et des éclairs derrière lui.
+// rang 5, le dieu de la foudre : couronne de foudre, cape violette zébrée d'éclairs, yeux qui
+// brillent, foudre dans les deux mains.
 function tonnerre(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.tonnerre, H = '#3a2a22', Y = K.trim, CP = '#6a3aa8';
   body(s, { tunic: K.main, dark: K.dark, trim: '#4a3e5a', pants: K.pants, boots: rank >= 3 ? Y : K.dark, bootsHi: rank >= 3 ? '#fff0a0' : '#4a3e5a', sole: '#140d11', cape: rank >= 2 && CP, belt: Y, buckle: '#ffffff' });
@@ -1580,16 +1567,18 @@ function tonnerre(rank) {
   else bolt(19, rank >= 3 ? 3 : 6, rank >= 3);
   if (rank >= 3) bolt(5, 5, rank >= 4);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.p(10, 10, '#ffffff', true); s.p(13, 10, '#ffffff', true);
+  for (const [x, y] of [[3, 16], [4, 17], [3, 18], [20, 16], [19, 17], [20, 18]]) s.p(x, y, Y, true);
   return grand(s, (b) => {
-    // nuage d'orage, éclairs qui tombent
-    for (const [cx, cy, r] of [[6, 3, 4], [12, 2, 4], [18, 3, 4], [23, 4, 3], [3, 5, 3]]) for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) b.under(x, y, y > cy + 1 ? '#4a4a6a' : '#6a6a8a');
-    for (const x0 of [2, 25]) { b.sline(x0, 7, x0 - 1, 12, Y); b.sline(x0 - 1, 12, x0 + 1, 13, Y); b.sline(x0 + 1, 13, x0, 19, Y); }
+    capeBack(b, CP, '#4a2a7a', Y);
   });
 }
 
 // Ramsès, pharaon momie : momie à la petite coiffe et au petit ânkh, pharaon à la coiffe rayée,
 // pharaon d'or au fouet et à la crosse, dieu-roi au masque d'or et au collier ailé ; rang 5, le
-// fils du soleil : une pyramide et le disque solaire derrière lui.
+// fils du soleil : disque solaire et cobra sur la coiffe, masque d'or, collier ailé, crosse et
+// fouet d'or, pagne doré.
 function ramses(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.ramses, BL = '#2a4a9a', G = '#e0a93a', GH = '#fbe08a', BD = '#c8b898';
   s.p(6, 15, K.main); s.p(5, 16, K.main); s.p(4, 16, K.main); s.p(3, 17, K.main); s.p(2, 18, K.main); s.p(3, 19, BD);
@@ -1618,18 +1607,18 @@ function ramses(rank) {
   if (rank >= 3) { s.v(4, 9, 20, BL); s.p(5, 8, BL); s.p(6, 9, BL); for (let y = 10; y <= 14; y += 2) { s.p(3, y, G); s.p(5, y + 1, G); } } // fouet
   const out = s.recolor({ [C.skin]: '#e8dcc0', [C.skinSh]: '#b8a888', ['#f0907a']: '#d8c8a8' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(10, 0, 4, 2, '#e2552a'); out.p(11, 0, '#ff8a5a', true); out.p(9, 1, G); out.p(14, 1, G);
+  out.r(8, 18, 8, 3, G); out.v(11, 18, 20, BL); out.v(12, 18, 20, BL);
   return grand(out, (b) => {
-    // pyramide et disque solaire
-    for (let y = 6; y <= 26; y++) { const w = Math.round((y - 6) * 0.75); for (let x = 14 - w; x <= 13 + w; x++) b.under(x, y, (y % 3 === 0 || (x + Math.floor(y / 3)) % 4 === 0) ? '#c8a050' : '#e8c878'); }
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 28; x++) if ((x - 22) ** 2 + (y - 3) ** 2 < 10) b.under(x, y, '#e2552a');
-    for (const x of [16, 27]) { b.under(x, 3, G); b.under(x + (x === 16 ? 1 : -1), 4, G); }
+    for (const d of [-1, 1]) for (let i = 0; i < 5; i++) b.under(d < 0 ? 7 - i : 20 + i, 18 + (i >> 1), i % 2 ? BL : G);
   });
 }
 
 // Elixa, alchimiste : préparatrice à la petite fiole, alchimiste aux lunettes de laiton, maîtresse
 // des potions aux lunettes baissées et à la deuxième fiole qui flotte, grande alchimiste au cercle
-// brodé et à la pierre rouge ; rang 5, la pierre philosophale : un grand cercle de transmutation
-// tourne derrière elle.
+// brodé et à la pierre rouge ; rang 5, la pierre philosophale : robe brodée du grand cercle,
+// bandoulière de fioles, pierre rouge qui flotte au-dessus de sa main, lunettes qui luisent.
 function elixa(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.elixa, H = '#e88ab8', HH = '#ffb8d8', BR = '#c8903a', LQ = '#ff8a2a', GL = '#d8f0ff', RS = '#e2334a';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#5a2a3a', bootsHi: '#7a3a4a', sole: '#2a1018', robe: true, cape: rank >= 4 && K.dark });
@@ -1655,17 +1644,16 @@ function elixa(rank) {
   if (rank >= 3) { s.r(2, 8, 3, 3, GL); s.r(2, 9, 3, 2, '#7af06a', true); s.p(3, 7, GL); s.p(3, 6, '#8a5a32'); s.p(2, 8, '#ffffff', true); } // fiole qui flotte
   if (rank >= 4) { s.r(19, cy, 2, 2, RS, true); s.p(19, cy, '#ff8a9a', true); }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // cercle de transmutation : deux anneaux, triangle, runes
-    for (let i = 0; i < 80; i++) { const a = (i / 80) * Math.PI * 2; b.under(Math.round(14 + Math.cos(a) * 13), Math.round(13 + Math.sin(a) * 12), '#ff8a2a'); b.under(Math.round(14 + Math.cos(a) * 11), Math.round(13 + Math.sin(a) * 10), '#e88ab8'); }
-    const tri = [[14, 2], [24, 19], [4, 19]];
-    for (let k = 0; k < 3; k++) { const [x0, y0] = tri[k], [x1, y1] = tri[(k + 1) % 3]; for (let i = 0; i <= 20; i++) b.under(Math.round(x0 + (x1 - x0) * i / 20), Math.round(y0 + (y1 - y0) * i / 20), '#fbe08a'); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.sline(8, 14, 15, 19, '#5a3a22'); for (const [x, y] of [[9, 15], [11, 16], [13, 18]]) s.p(x, y, ['#7af06a', '#5ac8ff', LQ][(x >> 1) % 3], true);
+  s.r(19, 2, 2, 2, RS, true); s.p(19, 2, '#ff8a9a', true); s.p(18, 3, '#ffd080', true); s.p(21, 2, '#ffd080', true);
+  return grand(s);
 }
 
-// Mako, homme-requin : bébé requin au petit aileron et à la lance, homme-requin au trident,
-// requin-tigre aux rayures et au grand aileron, grand requin blanc à la couronne de corail ;
-// rang 5, le mégalodon : une gueule géante s'ouvre derrière lui, bulles.
+// Mako, homme-requin : bébé requin au petit aileron et à la lance, homme-requin au trident, requin-
+// tigre aux rayures et au grand aileron, grand requin blanc à la couronne de corail ; rang 5, le
+// mégalodon : tête de requin à mâchoire immense, armure de corail, aileron géant, trident de
+// corail.
 function mako(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.mako, FN = '#5a7a98', CO = '#ff7a6a', MT = '#b9c6d2';
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#3a5a7a', bootsHi: FN, sole: '#1a2a3a', mouth: false, cape: rank >= 4 && '#2a5a8a', belt: '#2a2234', buckle: rank >= 4 ? CO : '#e0a93a' });
@@ -1688,20 +1676,18 @@ function mako(rank) {
   else { s.hl(17, 21, y0 + 3, tip); for (const x of [17, 19, 21]) s.v(x, y0 + (x === 19 ? 0 : 1), y0 + 2, tip); s.p(19, y0, '#ffffff', true); }
   const out = s.recolor({ [C.skin]: '#8aaac8', [C.skinSh]: '#6a8aa8' });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 3, '#e86a5a'); for (const [x, y] of [[9, 14], [12, 15], [14, 14]]) out.p(x, y, CO, true);
+  out.r(8, 12, 8, 2, '#3a2a3a'); for (const x of [8, 10, 12, 14]) { out.p(x, 12, '#ffffff', true); out.p(x + 1, 13, '#ffffff', true); }
   return grand(out, (b) => {
-    // gueule géante de mégalodon autour de lui, bulles
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) {
-      const d = ((x - 13.5) / 14) ** 2 + ((y - 13) / 14) ** 2;
-      if (d < 1 && d > 0.55) b.under(x, y, d > 0.8 ? '#3a5a7a' : '#8a2a3a');
-    }
-    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, x = Math.round(13.5 + Math.cos(a) * 9.5), y = Math.round(13 + Math.sin(a) * 9.5); b.under(x, y, '#ffffff'); b.under(x + Math.sign(13.5 - x), y + Math.sign(13 - y), '#e8e0d8'); }
-    for (const [x, y] of [[1, 2], [3, 0], [25, 1], [24, 26]]) b.p(x, y, '#c8f0ff', true);
+    for (const [x, y] of [[14, 0], [15, 0], [15, 1], [16, 1], [16, 2]]) b.under(x, y, FN);
   });
 }
 
 // Pixel, hackeuse : codeuse aux lunettes et au petit ordi, hackeuse à la visière lumineuse, pirate
 // du net aux écrans holographiques, cyber-reine au casque à oreilles lumineuses ; rang 5, le
-// fantôme du réseau : une pluie de code tombe derrière elle.
+// fantôme du réseau : casque de réalité virtuelle, combinaison à circuits néon, écrans
+// holographiques qui tournent autour de ses mains.
 function pixel(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.pixel, H = '#9a5ad8', HH = '#c89af0', NE = '#4ff0e8', GR = '#9af098';
   // ordinateur portable (plus grand au rang 2)
@@ -1717,15 +1703,17 @@ function pixel(rank) {
   // écrans holographiques qui flottent
   if (rank >= 3) for (const [x, y] of [[18, 6], [19, 13]].slice(0, rank - 2)) { s.r(x, y, 4, 3, '#1e5a4a', true); s.hl(x, x + 3, y, NE, true); s.p(x + 1, y + 1, GR, true); s.p(x + 2, y + 2, GR, true); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 9, 8, 3, '#2a3440'); s.hl(9, 14, 10, NE, true); s.p(8, 9, '#4a4a5a');
+  s.v(9, 14, 18, NE, true); s.hl(9, 13, 16, NE, true); s.p(14, 17, GR, true);
   return grand(s, (b) => {
-    // pluie de code vert
-    for (let x = 0; x < 28; x += 2) { const y0 = (x * 7) % 11, len = 6 + (x * 3) % 9; for (let y = y0; y < y0 + len && y < 28; y++) b.under(x, y, y === y0 + len - 1 ? '#ffffff' : y % 2 ? GR : '#3a8a4a', true); }
+    for (const [x, y] of [[22, 6], [0, 10]]) { b.r(x, y, 5, 3, '#1e5a4a', true); b.hl(x, x + 4, y, NE, true); b.p(x + 1, y + 1, GR, true); b.p(x + 3, y + 2, GR, true); }
   });
 }
 
 // Lumi, chevalière au sabre de lumière : padawan au sabre court bleu, chevalière au sabre vert,
 // gardienne à la capuche de bure, maîtresse au long sabre et à la cape ; rang 5, la légende de la
-// Force : des rochers flottent autour d'elle dans une aura verte.
+// Force : robe de maître à capuche, ceinture de cuir, sabre double à deux lames vertes.
 function lumi(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.lumi, H = '#6b4428', HH = '#8a5a34', CL = '#6a4a32', MT = '#b9c6d2';
   const SB = rank === 1 ? '#5ab4ff' : '#5ae05a', SL = rank === 1 ? '#d8f0ff' : '#d8ffd0', SD = rank === 1 ? '#2a78c8' : '#2a9a3a';
@@ -1743,16 +1731,16 @@ function lumi(rank) {
   s.v(18, 17, 20, MT); s.p(18, 18, '#2a2234'); s.hl(17, 19, 17, MT);
   s.v(18, top, 16, SB, true); s.v(18, top + 1, 15, SL, true); s.p(18, top, '#ffffff', true); s.v(19, top + 1, 16, SD, true);
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // aura verte de la Force, rochers qui flottent
-    for (let y = 2; y < 28; y++) for (let x = 0; x < 28; x++) { const d = ((x - 13.5) / 13) ** 2 + ((y - 15) / 13) ** 2; if (d < 1 && d > 0.8) b.under(x, y, '#5ae05a', true); }
-    for (const [x, y, w] of [[1, 3, 3], [23, 6, 4], [2, 20, 2], [24, 22, 3]]) for (let k = 0; k < w; k++) { b.p(x + k, y, '#a8a0b0'); b.p(x + k, y + 1, '#6a6070'); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 4, CL); s.hl(8, 15, 17, '#4a3020');
+  s.v(18, 18, 23, '#5ae05a', true); s.v(19, 18, 23, '#2a9a3a', true); s.v(18, 19, 22, '#d8ffd0', true);
+  return grand(s);
 }
 
 // Kero, grenouille ninja : têtard au petit shuriken, Kero au bandeau à plaque, ninja des marais au
 // katana dans le dos, maître ninja au grand shuriken et au parchemin ; rang 5, la grenouille
-// légendaire : il est debout devant un crapaud géant qu'il a invoqué.
+// légendaire : manteau d'ermite rouge, marques de sage autour des yeux, grand parchemin dans le
+// dos, shuriken géant.
 function kero(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.kero, R = K.trim, GR = '#6ac84a', GD = '#4a9a34', MT = '#b9c6d2', SC = '#f0e0b0';
   if (rank >= 3) { s.sline(4, 20, 9, 9, '#2a2234'); s.sline(9, 9, 11, 5, MT); s.p(11, 5, '#ffffff', true); } // katana dans le dos
@@ -1774,17 +1762,17 @@ function kero(rank) {
   s.p(cx, cy - r, '#ffffff', true);
   const out = s.recolor({ [C.skin]: GR, [C.skinSh]: GD });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.p(8, 3, '#e2334a'); out.p(15, 3, '#e2334a'); out.p(9, 5, '#e2334a'); out.p(14, 5, '#e2334a');
+  out.r(8, 14, 8, 2, '#d83a3a'); out.hl(8, 15, 14, '#ff8a8a');
   return grand(out, (b) => {
-    // crapaud géant : gros corps, yeux en bosses, bouche, pipe
-    for (let y = 4; y <= 26; y++) for (let x = 0; x < 28; x++) { const d = ((x - 13.5) / 14) ** 2 + ((y - 17) / 13) ** 2; if (d < 1) b.under(x, y, y > 22 ? '#c8a050' : (x + y) % 7 === 0 ? '#8a4a2a' : '#c8703a'); }
-    for (const cx2 of [6, 21]) { for (let y = 0; y <= 5; y++) for (let x = cx2 - 3; x <= cx2 + 3; x++) if ((x - cx2) ** 2 + (y - 3) ** 2 <= 9) b.under(x, y, '#c8703a'); b.under(cx2, 3, '#21182a'); b.under(cx2 + 1, 3, '#fbe08a'); }
-    for (let x = 1; x < 27; x++) b.under(x, 14, '#8a3a2a');
+    for (let y = 8; y <= 20; y++) { b.under(4, y, SC); b.under(5, y, SC); } b.under(4, 7, '#8a3a2a'); b.under(5, 7, '#8a3a2a'); b.under(4, 21, '#8a3a2a'); b.under(5, 21, '#8a3a2a');
   });
 }
 
-// Atlas, méca-gardien : drone au petit bouclier, méca-gardien au canon, sentinelle au grand bouclier
-// et à l'aileron en V, colosse aux réacteurs dorsaux et à la visière ; rang 5, le titan : un dôme
-// de boucliers hexagonaux l'entoure.
+// Atlas, méca-gardien : drone au petit bouclier, méca-gardien au canon, sentinelle au grand
+// bouclier et à l'aileron en V, colosse aux réacteurs dorsaux et à la visière ; rang 5, le titan :
+// armure lourde blanche et or, ailes-réacteurs, double canon, bouclier d'énergie géant.
 function atlas(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.atlas, FP = '#4a5a7a', NE = '#4ff0e8', MT = '#b9c6d2', GD = '#e0a93a';
   if (rank >= 4) for (const x of [4, 18]) { s.r(x, 9, 2, 5, MT); s.p(x, 9, '#ffffff', true); s.p(x, 14, '#ff8a2a', true); s.p(x + 1, 14, '#fbe08a', true); } // réacteurs dorsaux
@@ -1806,19 +1794,18 @@ function atlas(rank) {
   if (rank >= 2) { const L = rank >= 3 ? 5 : 3; s.r(16, 15, 2, 4, K.main); s.r(18, 15, L, 3, MT); s.p(18 + L, 16, NE, true); s.p(18, 15, '#ffffff', true); }
   const out = s.recolor({ [C.skin]: FP, [C.skinSh]: '#34405a', ['#f0907a']: FP });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 4, '#f2f4f8'); out.hl(8, 15, 14, GD); out.r(11, 15, 2, 2, NE, true); out.p(11, 15, '#ffffff', true);
+  out.hl(18, 23, 14, MT); out.p(23, 14, NE, true);
   return grand(out, (b) => {
-    // dôme de boucliers hexagonaux
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) {
-      const d = ((x - 13.5) / 14) ** 2 + ((y - 15) / 15) ** 2; if (d >= 1 || y > 26) continue;
-      const hx = (x + (Math.floor(y / 3) % 2) * 2) % 4, hy = y % 3;
-      if (hx === 0 || hy === 0) b.under(x, y, d > 0.85 ? '#ffffff' : NE, true);
-    }
+    for (const d of [-1, 1]) { const x = d < 0 ? 6 : 21; for (let i = 0; i < 5; i++) { b.under(x + d * i, 12 - i, MT); b.under(x + d * i, 13 - i, '#8e99a4'); } b.p(x + d * 4, 7, NE, true); }
   });
 }
 
 // Pyra, phénix : ses ailes de flammes grandissent à chaque rang. Étincelle aux petites ailes,
 // phénix au diadème, oiseau de feu aux grandes ailes, phénix royal aux plumes de queue ; rang 5, le
-// phénix éternel : un immense oiseau de feu déploie ses ailes derrière elle.
+// phénix éternel : ailes de feu immenses, longues plumes de queue, couronne de flammes, robe de
+// braises.
 function pyra(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.pyra, F1 = '#ff8a2a', F2 = '#fbe08a', F3 = '#e2334a';
   const wing = [
@@ -1840,18 +1827,19 @@ function pyra(rank) {
   if (rank >= 2) { s.hl(8, 15, 7, K.trim); s.r(11, 6, 2, 1, F2, true); }
   if (rank >= 4) { s.p(11, 5, F2); s.p(12, 5, '#ffffff', true); s.p(10, 6, F1); s.p(13, 6, F1); }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 4, '#a82a2a'); for (const [x, y] of [[9, 19], [12, 20], [14, 18]]) s.p(x, y, F2, true);
+  for (const [x, y] of [[9, 3], [11, 2], [12, 1], [14, 3]]) s.p(x, y, F2, true);
   return grand(s, (b) => {
-    // immense oiseau de feu : ailes en arc, tête au-dessus, longue queue
-    for (const d of [-1, 1]) for (let i = 0; i < 13; i++) { const x = 14 + d * (1 + i), y0 = 10 - Math.round(Math.sin((i / 12) * Math.PI) * 8); for (let y = y0; y <= y0 + 4 + (i % 3); y++) b.under(x, y, y === y0 ? F2 : (y - y0) % 2 ? F1 : F3); }
-    for (const [x, y] of [[13, 0], [14, 0], [13, 1], [14, 1], [15, 1], [12, 2], [13, 2], [14, 2]]) b.under(x, y, F1);
-    b.p(14, 1, '#ffffff', true);
-    for (let y = 20; y <= 27; y++) { b.under(13 - (y - 20), y, F3); b.under(14 + (y - 20), y, F3); }
+    for (const d of [-1, 1]) for (let i = 0; i < 6; i++) { const x = d < 0 ? 4 - i : 23 + i, y0 = 4 + i; for (let y = y0; y <= y0 + 8; y++) if (x >= 0 && x < 28) b.under(x, y, y === y0 ? F2 : y % 2 ? F1 : F3); }
+    for (let y = 24; y <= 27; y++) { b.under(9 - (y - 24), y, F1); b.under(18 + (y - 24), y, F1); }
   });
 }
 
 // Mortis, roi-liche : squelette au cercle de fer, liche à la couronne de glace, roi-liche aux
 // grandes pointes et au bâton gelé, seigneur de l'hiver aux épaulières de glace ; rang 5, le roi de
-// l'hiver éternel : un trône de glace se dresse derrière lui.
+// l'hiver éternel : immense couronne de glace, armure de givre, cape de glace qui traîne, sceptre
+// au grand cristal.
 function mortis(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.mortis, IC = K.trim, BO = '#e8e0cc', ID = '#4ab8d8';
   body(s, { tunic: K.main, dark: K.dark, trim: IC, pants: K.pants, boots: K.dark, bootsHi: K.main, sole: '#0a0e1e', robe: true, mouth: false, cape: rank >= 2 && '#141c38' });
@@ -1873,15 +1861,12 @@ function mortis(rank) {
   if (rank >= 4) { s.p(17, top + 1, IC, true); s.p(21, top + 2, ID, true); s.p(21, top, IC, true); }
   const out = s.recolor({ [C.skin]: BO, [C.skinSh]: '#b8ac90', ['#f0907a']: BO });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 4, '#8ad0e8'); out.hl(10, 13, 15, BO); out.p(9, 16, '#ffffff', true); out.p(14, 14, '#ffffff', true);
+  for (const [x, y] of [[9, 0], [14, 0], [11, 0]]) out.v(x, y, 3, IC, true);
   return grand(out, (b) => {
-    // trône de glace : haut dossier à pointes, accoudoirs
-    for (let y = 0; y <= 26; y++) for (let x = 5; x <= 22; x++) {
-      const top2 = 2 + Math.abs(((x - 5) % 4) - 2) * 2;
-      if (y < top2) continue;
-      b.under(x, y, (x === 5 || x === 22) ? '#ffffff' : (x + y) % 5 === 0 ? ID : '#a8e0f0');
-    }
-    for (const x0 of [1, 23]) for (let y = 16; y <= 26; y++) for (let x = x0; x < x0 + 4; x++) b.under(x, y, y === 16 ? '#ffffff' : '#8ad0e8');
-    for (const [x, y] of [[0, 3], [27, 6], [2, 11], [25, 13]]) b.p(x, y, '#ffffff', true);
+    capeBack(b, '#c8f0ff', '#8ad0e8', '#ffffff');
+    b.under(21, 2, IC); b.under(22, 1, IC); b.under(20, 1, ID);
   });
 }
 
@@ -1896,9 +1881,9 @@ function yuei(s, o = {}) {
   s.hl(10, 13, 14, '#f2eef4'); s.v(11, 15, 17, '#d83a3a'); s.v(12, 15, 16, '#d83a3a'); s.p(9, 15, '#6a6e7a'); s.p(14, 15, '#6a6e7a');
 }
 
-// Shoto : élève de Yuei, costume de héros au bras de glace, glace et feu au harnais argenté,
-// flamme ardente (le côté gauche s'embrase) ; rang 5, le héros Shoto : un mur de glace géant et
-// les flammes derrière lui.
+// Shoto : élève de Yuei, costume de héros au bras de glace, glace et feu au harnais argenté, flamme
+// ardente (le côté gauche s'embrase) ; rang 5, le héros Shoto : tout le côté gauche se couvre d'une
+// armure de glace, le côté droit brûle, la cicatrice rougeoie.
 function shoto(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.shoto, HW = '#f2eef4', HR = '#d8402a', IC = '#8ae8ff', ICD = '#4ab8d8', F1 = '#ff8a2a', F2 = '#fbe08a';
   // glace qui couvre le côté gauche (dès le costume)
@@ -1921,16 +1906,18 @@ function shoto(rank) {
     if (rank >= 4) { s.v(16, 14, 17, F1, true); s.v(17, 13, 14, F2, true); s.p(20, cy - 3, F1, true); s.p(21, cy - 1, F2, true); }
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 4, 5, '#a8e8f8'); s.p(9, 15, '#ffffff', true); s.p(10, 17, ICD); s.v(7, 4, 6, IC, true);
+  s.r(12, 14, 4, 5, '#e86a3a'); s.p(13, 15, F2, true); s.p(14, 17, F1, true);
   return grand(s, (b) => {
-    // mur de glace géant à gauche, flammes à droite
-    for (let x = 0; x < 14; x++) { const t = 1 + Math.abs(((x * 5) % 7) - 3) * 2; for (let y = t; y <= 26; y++) b.under(x, y, (x + y) % 6 === 0 ? '#ffffff' : x % 3 ? '#a8e8f8' : IC); }
-    for (let x = 14; x < 28; x++) { const t = 4 + Math.round(Math.abs(Math.sin(x * 1.1)) * 8); for (let y = t; y <= 26; y++) b.under(x, y, y < t + 2 ? F2 : y < t + 6 ? F1 : HR); }
+    for (const [x, y] of [[4, 12], [3, 14], [5, 10]]) { b.under(x, y, IC); b.under(x, y + 1, '#ffffff'); }
+    for (const [x, y] of [[23, 12], [24, 14], [22, 10]]) { b.under(x, y, F1); b.under(x, y + 1, F2); }
   });
 }
 
 // Bakugo : élève de Yuei qui crépite déjà, costume aux gantelets-grenades, X orange et grands
-// gantelets, AP Shot (gantelets dorés à canon) ; rang 5, Howitzer Impact : une énorme explosion
-// derrière lui.
+// gantelets, AP Shot (gantelets dorés à canon) ; rang 5, Howitzer Impact : gantelets énormes qui
+// explosent, flammes dans les paumes, masque d'explosion, costume de pro.
 function bakugo(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.bakugo, H = '#f0e0a0', HS = '#c8b070', O = K.trim, GR = '#e8702a', MT = '#b9c6d2';
   if (rank === 1) yuei(s, { mouth: false });
@@ -1956,18 +1943,17 @@ function bakugo(rank) {
   }
   if (rank >= 4) { s.hl(20, 22, 18, MT); s.p(23, 18, '#ffb030', true); s.p(22, 17, MT); } // canon
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[2, 15], [3, 14], [21, 15], [20, 14], [2, 21], [21, 21]]) s.p(x, y, (x + y) % 2 ? '#ffb030' : '#fff0a0', true);
+  s.hl(9, 14, 18, '#e8702a');
   return grand(s, (b) => {
-    // énorme explosion : boule de feu, fumée
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) {
-      const dx = x - 13.5, dy = y - 11, r = Math.sqrt(dx * dx + dy * dy) + Math.sin(Math.atan2(dy, dx) * 7) * 1.5;
-      if (r < 14) b.under(x, y, r < 6 ? '#fff0a0' : r < 9 ? '#ffb030' : r < 12 ? GR : '#6a6070');
-    }
+    for (const [x, y] of [[3, 19], [2, 20], [26, 19], [25, 20], [4, 18], [24, 18]]) b.p(x, y, (x + y) % 2 ? '#ff6a1f' : '#fbe08a', true);
   });
 }
 
 // Red Riot : élève de Yuei aux cheveux en lames, costume torse nu aux épaulières crantées, bras
-// durcis, Red Riot Unbreakable (tout son corps devient roche) ; rang 5, un mur de roches pointues se
-// dresse derrière lui.
+// durcis, Red Riot Unbreakable (tout son corps devient roche) ; rang 5, Red Riot Unbreakable au
+// maximum : tout son corps est roche hérissée de pointes.
 function redriot(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.redriot, H = '#e2334a', HS = '#a8203a', RK = '#a8a0a8', RL = '#d8d0d8', RD = '#7a7280';
   if (rank === 1) yuei(s, { mouth: false });
@@ -1993,15 +1979,19 @@ function redriot(rank) {
     for (const [x, y] of [[3, 14], [20, 14], [5, 19], [18, 19]]) s.p(x, y, RK);
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[8, 14], [15, 14], [8, 18], [15, 18]]) s.p(x, y, RL, true);
+  for (const [x, y] of [[7, 15], [16, 15], [6, 18], [17, 18], [9, 20], [14, 20]]) s.p(x, y, RK);
+  s.r(8, 8, 8, 1, RK); s.p(9, 8, RL, true);
   return grand(s, (b) => {
-    // mur de roches pointues
-    for (let x = 0; x < 28; x++) { const t = 4 + Math.abs(((x * 3) % 8) - 4) * 2; for (let y = t; y <= 26; y++) b.under(x, y, y === t ? RL : (x + y) % 4 === 0 ? RD : RK); }
+    for (const [x, y] of [[4, 16], [3, 17], [23, 16], [24, 17], [10, 3], [17, 3]]) b.under(x, y, RK);
   });
 }
 
 // Deku : élève de Yuei au gros sac à dos jaune, costume vert à capuche à oreilles, Full Cowl (des
 // éclairs verts courent sur lui), costume bêta aux gantelets et au Blackwhip ; rang 5, One For All
-// à 100 % : un orage d'éclairs verts derrière lui.
+// à 100 % : des éclairs verts le parcourent tout entier, yeux qui brillent, Blackwhip qui jaillit
+// des bras.
 function deku(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.deku, H = '#2a5a3a', HH = '#4a8a5a', GL = '#5af08a', BP = '#f0c030', BW = '#2a2234';
   if (rank === 1) { s.r(5, 11, 4, 7, BP); s.p(5, 11, '#fff0a0', true); s.hl(5, 8, 14, '#c89020'); } // sac à dos jaune
@@ -2021,18 +2011,17 @@ function deku(rank) {
   if (rank >= 3) for (const [x, y] of [[19, 12], [20, 13], [19, 14], [21, 15], [5, 13], [4, 14], [20, 18], [9, 19], [14, 16]]) s.p(x, y, GL, true); // Full Cowl
   if (rank >= 4) for (const [x0, y0, x1, y1] of [[18, 17, 22, 20], [22, 20, 23, 23], [6, 17, 2, 20], [2, 20, 1, 23]]) s.sline(x0, y0, x1, y1, BW); // Blackwhip
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.p(10, 10, GL, true); s.p(13, 10, GL, true);
+  for (const [x, y] of [[8, 15], [15, 17], [10, 20], [13, 22], [7, 9], [16, 9], [9, 3], [14, 2]]) s.p(x, y, GL, true);
   return grand(s, (b) => {
-    // orage d'éclairs verts autour de lui
-    for (const [x0, y0, len, d] of [[2, 0, 9, 1], [25, 2, 10, -1], [0, 12, 8, 1], [27, 14, 9, -1], [7, 1, 6, -1], [20, 0, 7, 1]]) {
-      let x = x0; for (let y = y0; y < y0 + len; y++) { b.under(x, y, y % 3 ? GL : '#ffffff'); if (y % 2) x += d; }
-    }
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) if (((x - 13.5) / 13) ** 2 + ((y - 15) / 14) ** 2 < 1 && ((x - 13.5) / 13) ** 2 + ((y - 15) / 14) ** 2 > 0.88) b.under(x, y, GL, true);
+    for (const [x0, y0, x1, y1] of [[5, 21, 0, 14], [22, 21, 27, 14], [6, 22, 1, 27], [21, 22, 26, 27]]) b.sline(x0, y0, x1, y1, BW);
   });
 }
 
 // All Might : Toshinori (sa forme maigre, chemise trop grande), Young Age (costume blanc et bleu),
-// Bronze Age (costume rouge et brun), Silver Age (costume argenté) ; rang 5, Golden Age : son costume
-// légendaire, carrure énorme, et l'onde de choc d'un smash derrière lui.
+// Bronze Age (costume rouge et brun), Silver Age (costume argenté) ; rang 5, Golden Age : carrure
+// encore plus énorme, cape de héros rouge, poing qui fume, grand sourire.
 function allmight(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.allmight, H = '#f8d850', HS = '#d8a830', Y = '#f0c030';
   if (rank === 1) {
@@ -2059,10 +2048,10 @@ function allmight(rank) {
   // poing en avant (rouge au rang 5)
   s.r(17, 15, 4, 4, rank >= 5 ? '#e2334a' : suit[2]); s.p(17, 15, '#ffffff', true); s.hl(17, 20, 18, Y);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.p(21, 14, '#ffffff', true); s.p(22, 13, '#e8e0d8', true); s.p(21, 12, '#ffffff', true);
   return grand(s, (b) => {
-    // onde de choc du smash : anneaux et traits de vitesse
-    for (let i = 0; i < 90; i++) { const a = (i / 90) * Math.PI * 2; for (const [r, c] of [[13, '#fbe08a'], [10, '#8ab4ff']]) b.under(Math.round(14 + Math.cos(a) * r), Math.round(14 + Math.sin(a) * r * 0.9), c); }
-    for (const [x, y] of [[0, 4], [1, 23], [26, 3], [27, 24]]) { b.under(x, y, '#ffffff'); b.under(x + (x ? -1 : 1), y, '#ffffff'); }
+    capeBack(b, '#e2334a', '#a82030', '#f0c030');
   });
 }
 
@@ -2079,7 +2068,7 @@ function meche(s, tx, ty, x0, x1, by, c) {
 
 // Gon : examen Hunter (canne à pêche, badge 405), Tour céleste (bras bandé), Greed Island (le
 // Jajanken : poing de nen jaune), fourmis-chimères (mâchoire serrée, aura qui monte) ; rang 5, Gon
-// adulte aux cheveux jusqu'au sol, dans une immense aura de nen.
+// adulte : ses cheveux poussent jusqu'au sol, musculature d'adulte, poing de nen énorme qui brûle.
 function gon(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.gon, H = '#1e2622', HH = '#3a6a3a', NEN = '#f8d850', adult = rank >= 5;
   // Gon adulte : la crinière tombe derrière lui jusqu'au sol
@@ -2112,21 +2101,17 @@ function gon(rank) {
     for (const [x, y] of [[22, 11], [15, 12]]) s.spark(x, y, '#ffffff');
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(6, 14, 2, 3, C.skin); s.p(6, 14, '#f8d4b4', true);
+  for (const [x, y] of [[16, 12], [18, 11], [20, 11], [22, 13], [22, 17], [20, 19], [16, 19], [21, 15]]) s.p(x, y, '#fff0a0', true);
   return grand(s, (b) => {
-    // immense aura de nen jaune qui monte en flammes
-    // (flammes qui épousent sa silhouette, plus hautes vers le haut)
-    const on = (x, y) => !!s.get(x - 2, y - 4);
-    for (let y = 0; y < 27; y++) for (let x = 0; x < 28; x++) {
-      if (on(x, y)) continue;
-      const up = 2 + ((x * 5) % 4);
-      let near = 0; for (let k = 1; k <= up && !near; k++) if (on(x, y + k)) near = k; for (const [dx, dy] of [[-2, 0], [2, 0], [-1, 0], [1, 0], [0, -1], [-1, 1], [1, 1]]) if (on(x + dx, y + dy)) near = near || 1;
-      if (near) b.under(x, y, near >= up - 1 ? '#fff0a0' : NEN);
-    }
+    for (let x = 4; x <= 23; x++) b.under(x, 27, H);
   });
 }
 
-// Kirua : examen Hunter (skate), yo-yo d'acier, main d'assassin (Rhythm Echo), foudre de
-// Kanmuru ; rang 5, Godspeed : cheveux bleutés, un orage d'éclairs bleus derrière lui.
+// Kirua : examen Hunter (skate), yo-yo d'acier, main d'assassin (Rhythm Echo), foudre de Kanmuru ;
+// rang 5, Godspeed : cheveux dressés et bleutés par la foudre, éclairs qui lui parcourent tout le
+// corps, griffes d'assassin.
 function kirua(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.kirua, god = rank >= 5;
   const H = god ? '#c8e8ff' : '#eef0f4', HS = god ? '#6ab8ff' : '#b8c0d0', EL = '#6ac8ff';
@@ -2168,16 +2153,16 @@ function kirua(rank) {
     s.spark(21, god ? 1 : 5, '#ffffff'); s.spark(2, god ? 3 : 8, '#ffffff');
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  for (const [x, y] of [[8, 15], [15, 17], [10, 20], [14, 21], [7, 9], [16, 9]]) s.p(x, y, EL, true);
   return grand(s, (b) => {
-    // orage d'éclairs bleus tout autour de lui
-    for (const [x0, y0, len, d] of [[1, 0, 12, 1], [26, 1, 13, -1], [0, 14, 10, 1], [27, 13, 11, -1], [6, 0, 6, -1], [21, 0, 6, 1]]) {
-      let x = x0; for (let y = y0; y < y0 + len; y++) { b.under(x, y, y % 3 ? EL : '#ffffff'); b.under(x + d, y, '#2a78c8'); if (y % 2) x += d; }
-    }
+    for (const [x, y] of [[3, 6], [2, 7], [3, 8], [24, 6], [25, 7], [24, 8], [3, 18], [24, 18]]) b.under(x, y, EL);
   });
 }
 
 // Hisoka : une carte, puis deux, puis l'éventail et le Bungee Gum rose, puis le joker ; rang 5, le
-// magicien : ses cheveux se dressent, une toile de Bungee Gum et de grandes cartes derrière lui.
+// magicien suprême : cheveux dressés plus haut, Bungee Gum enroulé aux deux mains, éventail de
+// cartes et joker, costume de bouffon.
 function hisoka(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.hisoka, H = '#e2405a', HS = '#a82a48', GUM = '#ff7ac8', loose = rank >= 5;
   body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a2a8a', bootsHi: '#9a4ac8', sole: '#2a1a34', mouth: false, cape: rank >= 4 && '#6a2a8a', belt: K.trim, buckle: '#e0a93a' });
@@ -2209,17 +2194,15 @@ function hisoka(rank) {
     s.spark(2, 11, '#ffc8e8');
   }
   if (rank < 5) return s;
-  return grand(s, (b) => {
-    // toile de Bungee Gum et grandes cartes qui volent
-    for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; for (let r = 3; r < 15; r++) b.under(Math.round(14 + Math.cos(a) * r), Math.round(14 + Math.sin(a) * r), GUM); }
-    for (const r of [7, 12]) for (let i = 0; i < 60; i++) { const a = (i / 60) * Math.PI * 2; b.under(Math.round(14 + Math.cos(a) * r), Math.round(14 + Math.sin(a) * r), '#ffc8e8'); }
-    for (const [x, y, c] of [[1, 1, '#e2334a'], [23, 2, '#2a2234'], [0, 21, '#2a2234'], [24, 21, '#e2334a']]) { b.r(x, y, 3, 4, '#f8f4f8'); b.p(x + 1, y + 1, c, true); b.p(x + 1, y + 2, c, true); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 2, '#8a3aa8'); for (const x of [9, 12, 15]) s.p(x, 19, '#f0c030', true);
+  s.sline(17, 19, 22, 21, GUM, true); s.p(22, 20, GUM, true);
+  return grand(s);
 }
 
 // Netero : vieux maître aux mains jointes, chapelet au cou, une main dorée du Bodhisattva derrière
-// lui au rang 3, quatre au rang 4 ; rang 5, Hyakushiki Kannon : la statue géante aux cent mains
-// se dresse derrière lui.
+// lui au rang 3, quatre au rang 4 ; rang 5, Hyakushiki Kannon : gi blanc de combat, ses mains
+// dorées deviennent plus grandes et plus nombreuses, chapelet de grosses perles.
 function netero(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.netero, W = '#ffffff', WS = '#c8c8d8', GO = '#e8b84a', GH = '#fbe08a', GD = '#c08a28';
   // le Bodhisattva : mains dorées derrière lui
@@ -2249,16 +2232,18 @@ function netero(rank) {
   s.r(11, 15, 2, 3, C.skin); s.p(11, 15, '#f8d4b4', true); s.p(12, 17, C.skinSh);
   if (rank >= 4) for (const [x, y] of [[21, 3], [2, 3], [22, 10]]) s.spark(x, y, GH);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 5, '#f2eef4'); s.sline(8, 14, 12, 18, '#c8bca4'); s.r(11, 15, 2, 3, C.skin);
+  for (const x of [9, 14]) { s.p(x, 14, '#8a5a32'); s.p(x, 16, '#8a5a32'); }
   return grand(s, (b) => {
-    // statue géante du Bodhisattva : tête à auréole au-dessus, bras en éventail
-    for (let i = 0; i < 70; i++) { const a = (i / 70) * Math.PI * 2; b.under(Math.round(13.5 + Math.cos(a) * 8), Math.round(11 + Math.sin(a) * 8), GH); b.under(Math.round(13.5 + Math.cos(a) * 9), Math.round(11 + Math.sin(a) * 9), GO); }
-    for (let i = 0; i < 7; i++) for (const d of [-1, 1]) { const a = -0.3 + i * 0.35; for (let r = 8; r < 15; r++) b.under(Math.round(13.5 + d * Math.cos(a) * r), Math.round(10 + Math.sin(a) * r), r > 12 ? GH : GO); }
+    const palm = (x, y) => { [1, 0, 1].forEach((d, i) => b.v(x + i * 2, y + d, y + 3, GO)); b.r(x, y + 4, 5, 3, GO); b.p(x + 1, y, GH, true); };
+    palm(1, 0); palm(22, 0); palm(0, 20); palm(23, 20);
   });
 }
 
 // Meruem : le roi qui vient de naître (queue courte), le roi qui grandit (brassards), le roi à la
-// cape, le roi couronné ; rang 5, le roi éveillé : ses ailes sombres se déploient dans une aura
-// violette.
+// cape, le roi couronné ; rang 5, le roi éveillé : ses ailes d'insecte se déploient, carapace plus
+// massive, couronne, queue au dard violet.
 function meruem(rank) {
   const s = new Spr(24, 24), K = NEW_CLASS.meruem, SK = '#c8dcd0', SS = '#8aa89a', A = '#2a3a3a', AU = '#b87af0';
   // la longue queue à dard, derrière lui à gauche
@@ -2284,10 +2269,11 @@ function meruem(rank) {
   s.p(6, 19, '#ffffff'); s.p(17, 19, '#ffffff');
   const out = s.recolor({ [C.skin]: SK, [C.skinSh]: SS, [BLUSH]: SK });
   if (rank < 5) return out;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  out.r(8, 14, 8, 4, '#2e5a52'); out.hl(9, 14, 15, '#1e3a36'); out.hl(9, 14, 17, '#1e3a36'); out.p(11, 16, AU, true); out.p(12, 16, AU, true);
+  out.p(10, 10, AU, true); out.p(13, 10, AU, true);
   return grand(out, (b) => {
-    // ailes sombres d'insecte et aura violette
-    for (let y = 0; y < 28; y++) for (let x = 0; x < 28; x++) { const d = ((x - 13.5) / 13.5) ** 2 + ((y - 14) / 14) ** 2; if (d < 1 && d > 0.85) b.under(x, y, AU, true); }
-    for (const d of [-1, 1]) for (let i = 0; i < 11; i++) { const x = 14 + d * (2 + i), y0 = 4 + Math.round(i * 0.3); for (let y = y0; y <= y0 + 12 - i; y++) b.under(x, y, y === y0 ? '#4a6a6a' : i % 3 === 0 ? '#3a5a5a' : '#1e2a2e'); }
+    for (const d of [-1, 1]) for (let i = 0; i < 6; i++) { const x = 14 + d * (5 + i), y0 = 8 + i; for (let y = y0; y <= y0 + 7 - i; y++) b.under(x, y, y === y0 ? '#6a8a8a' : (x + y) % 3 ? '#3a5a5a' : '#8ab0b0'); }
   });
 }
 

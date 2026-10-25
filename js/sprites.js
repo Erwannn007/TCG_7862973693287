@@ -1,6 +1,6 @@
 // Tous les dessins du jeu. Règles : docs/DIRECTION_ARTISTIQUE.md
 import { Spr } from './spr.js';
-import { C, METALS, BLUSH, body, pauldrons, grand } from './chibi.js';
+import { C, METALS, BLUSH, body, pauldrons, grand, capeBack } from './chibi.js';
 import { NEW_CLASS, NEW_DRAW } from './heroes.js';
 
 export { C, METALS };
@@ -30,7 +30,8 @@ export const OBSIDIENNE = {
 // à sa façon), et un rang 5 en 28×28 avec un grand décor personnel (voir grand() dans chibi.js).
 
 // Kael, épéiste : recrue à l'épée courte, écuyer au bandeau, chevalier au plastron et au plumet,
-// champion au heaume ailé et à la lame runique ; rang 5, la lame de feu et la cape de flammes.
+// champion au heaume ailé et à la lame runique ; rang 5, la lame de feu : armure de plates rouge,
+// épaulières de flammes, l'épée s'embrase et s'allonge, cape de flammes qui tombe de ses épaules.
 function kael(rank) {
   const s = new Spr(24, 24), K = CLASS.kael, H = C.hair, HH = '#8a5a34', ST = '#b9c6d2', SH = '#e4ecf3', SD = '#8e99a4', WG = '#f2eef4';
   body(s, {
@@ -73,19 +74,19 @@ function kael(rank) {
   s.v(18, 19, 20, C.grip); s.p(18, 20, '#7a5a3a', true);
   s.p(18, 21, rank >= 4 ? K.trim : SD);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(9, 14, 6, 3, '#c83a3a'); s.hl(9, 14, 14, '#ff8a5a'); s.p(11, 15, '#fbe08a', true); s.p(12, 15, '#ff8a2a', true);
+  for (const x of [5, 17]) { s.r(x, 12, 2, 2, '#c83a3a'); s.p(x, 11, '#ff8a2a'); s.p(x + 1, 11, '#fbe08a', true); }
   return grand(s, (b) => {
-    // cape de flammes qui monte derrière lui, braises
-    for (let x = 4; x <= 23; x++) {
-      const h = 9 + Math.round(Math.abs(Math.sin(x * 1.3)) * 9) + (x > 8 && x < 19 ? 4 : 0);
-      for (let y = 27 - h; y <= 25; y++) b.under(x, y, y < 27 - h + 2 ? '#ffd84a' : y < 27 - h + 6 ? '#ff8a2a' : '#c83a2a');
-    }
-    for (const [x, y] of [[3, 12], [25, 9], [1, 20], [26, 18], [22, 2]]) b.spark(x, y, (x + y) % 2 ? '#ffd84a' : '#ff8a2a');
+    for (let x = 6; x <= 21; x++) { const h = 25 + (x * 7) % 3; for (let y = 18; y <= h; y++) b.under(x, y, y > h - 2 ? '#fbe08a' : y > h - 5 ? '#ff8a2a' : '#c83a2a'); }
+    b.v(20, 0, 4, '#e4ecf3'); b.v(21, 1, 4, '#b9c6d2'); b.p(19, 1, '#ff8a2a', true); b.p(22, 0, '#fbe08a', true); b.p(22, 2, '#ff8a2a', true);
   });
 }
 
 // Lyra, archère : chasseuse à l'arc de bois, éclaireuse à l'arc gainé, rôdeuse à la cape et à la
-// plume rouge, gardienne des bois au diadème de feuilles et à l'arc vivant ; rang 5, l'esprit de
-// la forêt : grands bois de cerf de lumière, flèche de lumière.
+// plume rouge, gardienne des bois au diadème de feuilles et à l'arc vivant ; rang 5, l'esprit de la
+// forêt : capuche de feuilles d'où poussent de petits bois de cerf, cape de feuilles, arc de
+// lumière à flèche encochée.
 function lyra(rank) {
   const s = new Spr(24, 24), L = CLASS.lyra, LF = '#7ac85a', LD = '#2f6a2a', WD = '#8a5a32', SP = '#c8ffb0';
   // carquois dans le dos, empennages (plus nombreux avec le rang)
@@ -119,21 +120,18 @@ function lyra(rank) {
   if (rank >= 4) for (const [x, y] of [[2, y0 + 4], [4, y0 + 3], [2, y1 - 4], [1, y0 + 3]]) s.p(x, y, LF, true);
   if (rank >= 4) { s.hl(6, 9, mid, rank >= 5 ? '#ffffff' : '#c8a870'); s.p(10, mid, rank >= 5 ? SP : '#b9c6d2', true); } // flèche encochée
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.hl(8, 15, 5, '#5a8a3a'); for (const [x, y] of [[9, 4], [12, 3], [14, 4]]) s.p(x, y, '#c8ffb0', true);
+  s.r(9, 16, 6, 1, '#5a8a3a'); s.p(10, 16, LF, true); s.p(13, 16, LF, true);
   return grand(s, (b) => {
-    // grands bois de cerf de lumière derrière la tête, feuilles qui volent
-    for (const d of [-1, 1]) {
-      const c = d < 0 ? 9 : 18;
-      b.sline(c, 8, c + 4 * d, 1, '#a8f088'); b.sline(c + 2 * d, 5, c + 6 * d, 4, '#a8f088'); b.sline(c + 3 * d, 3, c + 3 * d, 0, '#a8f088');
-      b.p(c + 4 * d, 0, '#ffffff', true); b.p(c + 6 * d, 3, '#ffffff', true);
-    }
-    for (const [x, y] of [[1, 8], [26, 12], [24, 22], [2, 24]]) { b.p(x, y, LF, true); b.p(x + 1, y + 1, LD, true); }
-    for (const [x, y] of [[25, 3], [3, 15]]) b.spark(x, y, SP);
+    for (const d of [-1, 1]) { const x = d < 0 ? 9 : 18; b.sline(x, 6, x + 2 * d, 2, '#c8ffb0'); b.p(x + d, 3, '#c8ffb0'); b.p(x + 3 * d, 2, '#ffffff', true); }
+    capeBack(b, LD, LF, '#c8ffb0');
   });
 }
 
 // Elio, mage : la barbe pousse avec le rang. Apprenti au bâton court, mage au chapeau étoilé,
-// sorcier à la lune, archimage à la robe d'étoiles ; rang 5, le maître des astres : une
-// constellation et une lune tournent derrière lui.
+// sorcier à la lune, archimage à la robe d'étoiles ; rang 5, le maître des astres : robe de nuit
+// étoilée, barbe jusqu'au sol, chapeau à croissant de lune, bâton coiffé d'une petite galaxie.
 function elio(rank) {
   const s = new Spr(24, 24), E = CLASS.elio, B = E.beard, BS = '#b0aaa0', ORB = ['#5ab4ff', '#d8f4ff', '#2f78d0'], MOON = '#fbe08a';
   body(s, { tunic: E.main, dark: E.dark, trim: E.trim, pants: E.pants, boots: '#3a3a6a', bootsHi: '#5a5a8a', sole: '#1e1e3a', robe: true, mouth: false, cape: rank >= 4 && E.dark });
@@ -167,21 +165,19 @@ function elio(rank) {
     if (rank >= 4) { s.p(21, 0, MOON, true); s.p(22, 3, MOON, true); s.p(21, 5, MOON, true); }
   }
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 19, 8, 3, '#1a2648'); for (const [x, y] of [[9, 20], [13, 21], [11, 19]]) s.p(x, y, MOON, true);
+  s.v(11, 18, 21, B); s.v(12, 18, 21, B); s.p(11, 21, BS);
+  s.p(13, 3, MOON, true); s.p(14, 2, MOON, true); s.p(13, 1, '#fff8c0', true);
   return grand(s, (b) => {
-    // grande lune derrière lui, constellation qui le relie aux étoiles
-    for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) {
-      const dx = x - 5.5, dy = y - 5.5, r = dx * dx + dy * dy, r2 = (dx - 3) * (dx - 3) + dy * dy;
-      if (r < 30 && r2 > 20) b.under(x + 1, y + 1, r < 12 ? '#fff8c0' : MOON);
-    }
-    const stars = [[25, 2], [22, 6], [26, 11], [24, 16], [3, 17], [1, 23]];
-    stars.forEach(([x, y], i) => { b.p(x, y, '#ffffff', true); if (i && i !== 4) b.sline(stars[i - 1][0], stars[i - 1][1], x, y, '#5a84e0'); });
-    for (const [x, y] of stars) b.p(x, y, '#ffffff', true);
+    for (const [x, y, c] of [[19, 2, '#c8a8ff'], [21, 1, '#ffffff'], [23, 3, '#5ab4ff'], [22, 5, '#c8a8ff'], [20, 6, '#ffffff']]) b.p(x, y, c, true);
+    b.r(20, 3, 3, 3, '#3a2a7a', true); b.p(21, 4, '#ffffff', true);
   });
 }
 
 // Séra, prêtresse : novice au voile blanc, prêtresse au bâton à gemme, sainte à la couronne de
-// fleurs, grande prêtresse à la mitre et au cristal de rose ; rang 5, l'ange gardien : ses ailes
-// roses et un cœur de lumière.
+// fleurs, grande prêtresse à la mitre et au cristal de rose ; rang 5, l'ange gardien : ses propres
+// ailes roses lui poussent dans le dos, robe blanche et or, bâton au grand cristal en cœur.
 function sera(rank) {
   const s = new Spr(24, 24), S = CLASS.sera, W = C.white, HR = '#e8c070', PK = '#ff9ac8', PL = '#ffd0e0';
   body(s, { tunic: S.main, dark: S.dark, trim: S.trim, pants: S.pants, boots: '#f2eef4', bootsHi: '#ffffff', sole: '#c8b0c0', robe: true, cape: rank >= 4 && W });
@@ -213,22 +209,18 @@ function sera(rank) {
   s.v(4, top + 5, 23, rank >= 4 ? '#f2eef4' : C.wood);
   for (let y = top + 7; y < 23; y += 3) s.p(4, y, rank >= 4 ? PL : '#5a3f2e', true);
   if (rank < 5) return s;
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 18, 8, 4, '#f2eef4'); s.hl(8, 15, 21, '#e8b84a'); s.p(9, 19, PK, true); s.p(14, 20, PK, true);
+  s.r(2, 2, 5, 4, '#ff6aa8', true); s.p(4, 6, '#ff6aa8', true); s.hl(3, 5, 5, '#ff6aa8', true); s.p(2, 2, '#ffffff', true);
   return grand(s, (b) => {
-    // ses ailes roses déployées, cœur de lumière au-dessus
-    const wing = [[7, 5, 9], [8, 3, 9], [9, 1, 9], [10, 0, 9], [11, 0, 9], [12, 1, 9], [13, 1, 9], [14, 2, 9], [15, 3, 9], [16, 3, 9], [17, 4, 9], [18, 6, 9], [19, 5, 6], [20, 7, 8]];
-    for (const [y, x0, x1] of wing) for (let x = x0; x <= x1; x++) {
-      const c = x === x0 ? '#e88ab8' : (x + y) % 3 ? '#ffe0ee' : PL;
-      b.under(x, y, c); b.under(27 - x, y, c);
-    }
-    for (const [dx, dy] of [[0, 1], [1, 0], [2, 1], [3, 0], [4, 1], [1, 2], [2, 2], [3, 2], [2, 3]]) b.p(12 + dx, dy, '#ff6aa8', true);
-    b.p(13, 1, '#ffffff', true);
-    for (const [x, y] of [[1, 4], [26, 3], [0, 18], [27, 16]]) b.spark(x, y, PL);
+    const wing = [[12, 5, 9], [13, 3, 9], [14, 2, 9], [15, 2, 9], [16, 3, 9], [17, 4, 9], [18, 5, 9], [19, 7, 9]];
+    for (const [y, x0, x1] of wing) for (let x = x0; x <= x1; x++) { const c = x === x0 ? '#e88ab8' : (x + y) % 3 ? '#ffe0ee' : PL; b.under(x, y, c); b.under(27 - x, y, c); }
   });
 }
 
 // Volt, cyber-ninja : initié à la lame de métal, ninja masqué aux kunaïs, ombre néon aux lunettes
-// et à la lame plasma, maître cyber au bras mécanique ; rang 5, le fantôme de données : deux
-// doubles holographiques derrière lui et des pixels qui s'envolent.
+// et à la lame plasma, maître cyber au bras mécanique ; rang 5, le fantôme de données : armure
+// cyber intégrale à lignes néon, visière pleine, deux lames plasma, pans du bandeau en néon.
 function volt(rank) {
   const s = new Spr(24, 24), V = CLASS.volt, N = C.neon, ND = '#2fb8c8', MT = '#8e99a4', MH = '#b9c6d2';
   body(s, { tunic: V.main, dark: V.dark, trim: V.trim, pants: V.pants, boots: '#2a2234', bootsHi: '#4a3e5a', sole: '#140d11', mouth: false, buckle: rank >= 3 ? N : MT, cape: false, belt: V.mask });
@@ -261,13 +253,11 @@ function volt(rank) {
   s.hl(17, rank >= 4 ? 20 : 19, 18, rank >= 3 ? '#4a3e5a' : MT);
   s.v(18, 19, 20, V.hair); s.p(18, 21, V.main);
   if (rank < 5) return s;
-  const ghost = s.silhouette('#7a3cc8');
-  return grand(s, (b) => {
-    // deux doubles holographiques, décalés derrière lui
-    for (const [dx, dy] of [[-4, -1], [4, -2]]) for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++)
-      if (ghost.get(x, y)) b.under(x + 2 + dx, y + 4 + dy, y % 3 ? (dx < 0 ? '#3a1c6a' : '#4a2386') : '#a878e8', true);
-    for (const [x, y] of [[1, 6], [26, 8], [2, 14], [25, 20], [24, 3]]) { b.p(x, y, N, true); b.p(x + 1, y - 1, '#a878e8', true); }
-  });
+  // rang 5 : la forme ultime du héros lui-même (aucun décor)
+  s.r(8, 14, 8, 4, '#3a2a5a'); s.v(9, 14, 17, N, true); s.v(14, 14, 17, N, true); s.r(11, 15, 2, 2, '#ffffff', true);
+  s.hl(8, 15, 10, '#1a1320'); s.hl(9, 14, 10, N, true); s.p(1, 10, N, true); s.p(2, 9, N, true);
+  s.v(4, 8, 17, N, true); s.v(5, 9, 16, ND, true); s.p(4, 8, '#ffffff', true); s.hl(3, 5, 18, '#4a3e5a');
+  return grand(s);
 }
 
 const DRAW = { kael, lyra, elio, sera, volt, ...NEW_DRAW };
