@@ -104,10 +104,13 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
    le panneau mène aussi à l'Équipe. En haut : or, rejouer une
    étape, coffre du jour, options.
-2. **Équipe** (à gauche) : salle d'armes ; à gauche une rangée de cartes (portrait du
-   héros dans la salle d'armes, cadre pierre / bleu / or selon la rareté, badge 1-2-3 pour
-   l'équipe, « UP » s'il peut monter de rang) ; à droite la fiche du héros choisi (gemmes de
-   rang, stats en segments, compétence, Améliorer, Dans l'équipe / Retirer).
+2. **Équipe** (à gauche) : salle d'armes. Le héros choisi se tient debout sur un cercle
+   de pierre, sous un rai de lumière chaude. À gauche, une petite plaque de bois par héros
+   (dorée pour celui qu'on regarde, badge 1-2-3 pour l'équipe, « UP » s'il peut monter de
+   rang). Autour du héros, ses pancartes en arc : Améliorer, Dans l'équipe / Retirer. À
+   droite, sa fiche sur une plaque de bois (rang en gemmes, stats en segments, compétence,
+   aperçu des 5 rangs). Monter de rang : la magie dorée converge vers le héros, il
+   s'illumine, la salle tremble.
 3. **Invocation** (à droite) : salle sans porte, le cristal posé sur une estrade au-dessus
    d'un cercle de runes qui s'illuminent, bougies, bannières violettes, rai de lumière et
    poussière de magie sur le cristal. Deux pancartes en arc autour du cristal (×1 / ×10) ;

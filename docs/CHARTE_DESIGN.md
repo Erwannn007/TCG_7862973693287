@@ -110,6 +110,10 @@ Les informations (taux, compteurs, descriptions) vont sur une **plaque de bois**
 une pancarte (`paintSign`), qui flotte doucement (lévitation de 2,2 s). Titre en Jacquarda doré,
 texte crème avec ombre sombre, barres en segments.
 
+Pour choisir parmi une liste (les héros de l'équipe), une **colonne de petites plaques**, la
+plaque choisie en bois doré et décalée de 6 px ; le sujet choisi est mis en scène dans le décor
+(debout sous un rai de lumière), pas dans une vignette.
+
 ## 7. Particules
 
 Un seul canvas `#fx` au-dessus de toute l'interface, en pixels d'art (`U` = 2 px CSS).
@@ -166,5 +170,6 @@ Chaque geste a un son (`js/sfx.js`, ondes carrées 8 bits) et, si possible, une 
 | Dessin des pancartes en bois | `js/ui-art.js` (`signUrl`) |
 | Disposition en arc, glissé, choix, particules | `js/main.js` (`layoutSigns`, `attachSigns`, `chooseSign`, `fx`, `sparks`) |
 | Rituel d'invocation | `js/main.js` (`ritual`, `drawAltar`) |
+| Salle d'équipe (héros sur scène, plaques, montée de rang) | `js/main.js` (`renderTeam`, `layoutTeam`, `drawTeamLife`, `upgrade`) |
 | Styles des pancartes et animations | `css/style.css` (`.signs`, `.act`, `@keyframes levitate / aura / shine / mote`) |
 | Sons | `js/sfx.js` |
