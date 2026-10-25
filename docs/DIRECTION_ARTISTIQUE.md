@@ -217,6 +217,15 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 - Icônes 14×14 dessinées avec `Spr`, posées sur des **pancartes de bois** disposées en arc
   (bois doré quand l'action est visée). Pas de médaillons ronds ou octogonaux.
 - Barres de vie et de stats **en segments** (plus lisibles qu'un remplissage continu).
+  En combat, la jauge de PV est un petit objet en pixel art sous les pieds :
+  - cadre de **bois à rivet d'or** et **cœur** pour un héros, cadre de **fer sombre** et
+    **crâne** pour un ennemi ; 8 segments (14 pour un boss) de 2 px avec reflet et ombre ;
+  - vert, puis ambre sous 50 %, rouge sous 25 % (le cœur bat alors) ;
+  - **traînée crème** : les PV qu'on vient de perdre restent visibles un instant, puis la
+    traînée se vide par paliers ; au soin, les segments clignotent en blanc-vert.
+
+  Dans l'interface, les barres (stats, pitié) reprennent le même cadre de bois et des
+  segments avec reflet et ombre.
 - Repères de combat bien visibles : chevron doré contouré qui rebondit au-dessus du
   héros actif, anneau doré à ses pieds, coins de visée clignotants sur les cibles.
 - Zones tactiles d'au moins 44 px ; actions fréquentes en bas, sous les pouces ;

@@ -83,6 +83,7 @@ export class Battle {
     const sx = cx - (bm.w >> 1);
     return {
       side, key, ...data, max: data.hp, cd: 0, stun: 0, guard: false, alive: true,
+      trailHp: data.hp, trailT: 0, hitAt: 0, healAt: 0, // jauge de PV : traînée des dégâts, éclair de soin
       bm, flash, shade, cx, by, sx, sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
       // cx0/sx0 : place dans la formation ; fx : décalage de mise en scène (fxT = où il va)
       cx0: cx, sx0: sx, fx: 0, fxT: 0,
@@ -137,7 +138,7 @@ export class Battle {
         g.drawImage(u.shade.canvas, x, y);
         g.globalAlpha = 1;
       }
-      this.bar(u);
+      this.bar(u, t);
       if (u.stun && step % 2) {
         g.fillStyle = '#fbe08a';
         g.fillRect(u.cx - 4, u.sy - 3, 1, 1);
@@ -333,24 +334,72 @@ export class Battle {
     g.globalAlpha = 1;
   }
 
-  // Barre de PV en segments : on compte les morceaux d'un coup d'œil.
-  bar(u) {
-    const g = this.g, w = u.boss ? 40 : 24, seg = u.boss ? 10 : 6, x = u.cx - (w >> 1), y = u.by + 3;
-    const ratio = u.hp / u.max, lit = Math.ceil(ratio * seg);
+  // Jauge de PV : petit cadre en pixel art (bois à rivets d'or pour un héros, fer sombre pour un
+  // ennemi) avec un cœur ou un crâne, des segments qu'on compte d'un coup d'œil, une traînée
+  // claire qui montre les PV qu'on vient de perdre puis se vide par paliers, un éclair au soin.
+  bar(u, t) {
+    const g = this.g, hero = u.side === 'h', seg = u.boss ? 14 : 8, IW = seg * 3 - 1;
+    const x = Math.round(u.cx - IW / 2) + 2, y = u.by + 4, step = Math.floor(t / 250);
+    // la traînée rattrape les PV par paliers, un peu après le coup
+    if (u.trailHp < u.hp) u.trailHp = u.hp;
+    if (u.trailHp > u.hp && t - u.hitAt > 300 / this.speed && t - u.trailT > 40) {
+      u.trailT = t;
+      u.trailHp = Math.max(u.hp, u.trailHp - u.max / seg / 2);
+    }
+    const F = hero ? ['#6a4228', '#a8703a', '#3a2416'] : ['#4a4650', '#76707e', '#2a2630'];
     g.fillStyle = OUTLINE;
-    g.fillRect(x - 1, y - 1, w + 2, 5);
-    const col = ratio > 0.5 ? ['#5cc85a', '#9af098'] : ratio > 0.25 ? ['#e0a93a', '#fbe08a'] : ['#e2334a', '#ff8a9a'];
-    const sw = w / seg;
+    g.fillRect(x - 2, y - 2, IW + 4, 7);
+    g.fillStyle = F[0];
+    g.fillRect(x - 1, y - 1, IW + 2, 5);
+    g.fillStyle = F[1];
+    g.fillRect(x - 1, y - 1, IW + 2, 1);
+    g.fillStyle = F[2];
+    g.fillRect(x - 1, y + 3, IW + 2, 1);
+    g.fillStyle = '#1e1418';
+    g.fillRect(x, y, IW, 3);
+    g.fillStyle = hero ? '#fbe08a' : '#b8b0bc';
+    g.fillRect(x + IW, y + 1, 1, 1);
+    const ratio = u.hp / u.max, lit = Math.ceil(ratio * seg), trail = Math.ceil((u.trailHp / u.max) * seg);
+    const heal = t - u.healAt < 360 / this.speed && step % 2 === 0;
+    const col = heal ? ['#d8ffd0', '#ffffff', '#9af098']
+      : ratio > 0.5 ? ['#5cc85a', '#9af098', '#3a8e3e'] : ratio > 0.25 ? ['#e0a93a', '#fbe08a', '#a87a20'] : ['#e2334a', '#ff8a9a', '#8a1a28'];
     for (let i = 0; i < seg; i++) {
-      const sx = x + Math.round(i * sw);
-      g.fillStyle = i < lit ? col[0] : '#3a2a34';
-      g.fillRect(sx, y, Math.round(sw) - 1, 3);
+      const sx = x + i * 3;
       if (i < lit) {
+        g.fillStyle = col[0];
+        g.fillRect(sx, y, 2, 3);
         g.fillStyle = col[1];
-        g.fillRect(sx, y, Math.round(sw) - 1, 1);
+        g.fillRect(sx, y, 2, 1);
+        g.fillStyle = col[2];
+        g.fillRect(sx, y + 2, 2, 1);
+      } else if (i < trail) {
+        g.fillStyle = '#fff2c0';
+        g.fillRect(sx, y, 2, 3);
+        g.fillStyle = '#e8c070';
+        g.fillRect(sx, y + 2, 2, 1);
+      } else {
+        g.fillStyle = '#2e2228';
+        g.fillRect(sx, y, 2, 3);
+        g.fillStyle = '#3a2a32';
+        g.fillRect(sx, y, 2, 1);
       }
     }
+    // cœur (héros) ou crâne (ennemi) posé sur le bout gauche du cadre ; le cœur bat quand il reste peu de vie
+    const ix = x - 6, iy = y - 2;
+    const cells = hero ? ['.X.X.', 'XXXXX', 'XXXXX', '.XXX.', '..X..'] : ['.XXX.', 'XXXXX', 'X.X.X', 'XXXXX', '.X.X.'];
+    g.fillStyle = OUTLINE;
+    cells.forEach((row, j) => [...row].forEach((ch, i) => ch === 'X' && g.fillRect(ix + i - 1, iy + j - 1, 3, 3)));
+    const beat = hero && ratio <= 0.25 && step % 2 === 0;
+    cells.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (ch === '.') {
+        if (!hero && j === 2) { g.fillStyle = OUTLINE; g.fillRect(ix + i, iy + j, 1, 1); }
+        return;
+      }
+      g.fillStyle = hero ? (beat ? '#ff8a9a' : j === 1 && i === 1 ? '#ff8a9a' : j >= 3 ? '#a8203a' : '#e2334a') : j === 0 && i === 1 ? '#f2eef4' : j >= 3 ? '#a89c88' : '#d8d0bc';
+      g.fillRect(ix + i, iy + j, 1, 1);
+    }));
   }
+
 
   ring(u, col) {
     const g = this.g, w = Math.max(12, u.bm.w - 2), x = u.cx - (w >> 1), y = u.by - 2;
@@ -546,6 +595,7 @@ export class Battle {
       for (const h of this.alive('h')) {
         const v = Math.min(h.max - h.hp, Math.round(u.atk * s.mult));
         h.hp += v;
+        h.healAt = performance.now();
         this.float(h, '+' + v, '#5cc85a');
       }
       await this.wait(500);
@@ -624,6 +674,7 @@ export class Battle {
     if (d.guard) v *= 0.5;
     v = Math.max(1, Math.round(v));
     d.hp = Math.max(0, d.hp - v);
+    d.hitAt = performance.now();
     d.flashUntil = performance.now() + 320 / this.speed;
     this.float(d, crit ? v + '!' : String(v), crit ? '#fbe08a' : WHITE);
     this.shake(crit ? 2 : 1, crit ? 260 : 120);
