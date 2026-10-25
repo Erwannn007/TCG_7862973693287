@@ -229,13 +229,28 @@ small { font-size: 12px; }
 .r-sign .r-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .r-sign .badge { top: -6px; right: -6px; }
 .r-sign .badge.team { left: -6px; right: auto; }
-#t-info {
+#t-info, #t-skins {
   position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 4px); right: var(--safe-r); width: 270px;
   display: flex; flex-direction: column; justify-content: space-between; gap: 2px; padding: 10px 18px 12px; overflow: hidden;
   font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2.2s steps(1) infinite;
 }
+/* vestiaire : plaque de même taille que la fiche, aperçu du héros et défilement des skins */
+#t-skins { z-index: 3; align-items: center; text-align: center; justify-content: space-evenly; }
+#scr-team.skins #t-slots, #scr-team.skins #t-hint { visibility: hidden; }
+#scr-team.skins #t-roster { filter: brightness(.5); }
+.sk-view { display: flex; align-items: center; gap: 10px; }
+.sk-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px #ff8ad8, 0 0 0 6px var(--line); touch-action: none; }
+.sk-arrow {
+  width: 30px; height: 44px; font-size: 18px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
+  border: 6px solid transparent; border-image: var(--f-btn) var(--sl) fill / 6px stretch;
+}
+.sk-arrow:disabled { filter: grayscale(1) brightness(.6); }
+.sk-name { font-size: 16px; font-weight: 700; color: var(--gold-hi); }
+.sk-dots { display: flex; gap: 6px; }
+.sk-dots i { width: 6px; height: 6px; background: var(--line); box-shadow: 0 0 0 1px #6a4a3a; }
+.sk-dots i.on { background: #ff8ad8; }
 .d-name { font: 400 24px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); }
 .d-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .stat { display: grid; grid-template-columns: 34px 1fr 30px; align-items: center; gap: 6px; font-size: 13px; }
@@ -364,6 +379,29 @@ small { font-size: 12px; }
 }
 /* particules en pixels (traînée du doigt, éclats de bois) au-dessus de l'interface de combat */
 #fx { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 11; pointer-events: none; }
+
+/* fin de combat : plaque de bois qui tombe (dorée pour une victoire), choix en pancartes */
+#b-end { position: absolute; inset: 0; z-index: 6; }
+#b-veil { position: absolute; inset: 0; background: #0e080b; opacity: 0; }
+#b-plaque {
+  position: absolute; left: calc(50% - 130px); top: 50%; translate: -50% -50%; width: 300px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 22px 20px;
+  color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414; text-align: center;
+  background: no-repeat center; image-rendering: pixelated;
+}
+#b-plaque.win { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.end-title { font: 400 40px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
+#b-plaque.win .end-title { color: #8a1a28; text-shadow: 2px 2px 0 #fbe08a, 3px 3px 0 var(--line); }
+#b-plaque.lose .end-title { color: #c8a870; }
+.end-team { display: flex; gap: 12px; align-items: flex-end; min-height: 76px; }
+#b-plaque.win .end-team canvas { animation: hop .5s steps(1) infinite; }
+#b-plaque.win .end-team canvas:nth-child(2) { animation-delay: -.17s; }
+#b-plaque.win .end-team canvas:nth-child(3) { animation-delay: -.34s; }
+#b-plaque.lose .end-team canvas { filter: grayscale(.7) brightness(.7); translate: 0 3px; }
+@keyframes hop { 0% { translate: 0 0; } 50% { translate: 0 -6px; } }
+.end-gold { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; }
+.end-gold b { color: #8a1a28; }
+.end-note { font-size: 13px; }
 
 /* ================================================================ surcouches */
 .overlay {

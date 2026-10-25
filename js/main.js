@@ -108,6 +108,7 @@ let screen = 'camp';
 
 function show(name) {
   screen = name;
+  if (name !== 'team') resetSkins();
   for (const s of [...ROOMS, 'battle']) {
     const e = $('#scr-' + s);
     e.classList.toggle('hidden', s !== name);
@@ -488,7 +489,7 @@ function rotateTo(i) {
 // l'équipe, sinon de sa plaque dans la colonne.
 function heroSigns() {
   const id = selected, own = state.owned[id], m = $('#t-menu');
-  if (!own || teamDrag) return m.classList.add('hidden');
+  if (!own || teamDrag || teamMode) return m.classList.add('hidden');
   const pos = state.team.indexOf(id), c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
   let hx, hy;
   if (pos >= 0) [hx, hy] = [teamSlots[pos].sx + 12 * k, teamSlots[pos].sy - 12 * k];
@@ -501,7 +502,7 @@ function heroSigns() {
     own.rank < 5
       ? { ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${cost.frags} · ${cost.gold} or`, showSub: true, off: !canUpgrade(id) || state.gold < cost.gold, go: () => upgrade(id) }
       : { ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true },
-    { ico: 'skin', mg: '#ff8ad8', label: 'Skin', sub: 'bientôt', showSub: true, go: () => heroSigns() },
+    { ico: 'skin', mg: '#ff8ad8', label: 'Skin', sub: 'vestiaire', showSub: true, go: () => enterSkins(id) },
   ], hx, hy, 90, 0.9);
 }
 
@@ -569,11 +570,150 @@ function layoutTeam() {
   const hint = $('#t-hint');
   hint.style.left = Math.round(cxs) + 'px';
   hint.style.top = Math.round(c.offsetTop + (CAR_CY - CAR_RY - 30) * k) + 'px';
+  if (teamMode) paintSign($('#t-skins'));
   // le héros choisi vient devant (ou ses pancartes sortent de sa plaque s'il n'est pas dans l'équipe)
   const pos = state.team.indexOf(selected);
   if (pos >= 0) rotateTo(pos);
   else heroSigns();
   drawRooms(false, 'team');
+}
+
+// ---- vestiaire (skins)
+
+// Skins de chaque héros : [{ name, recolor }] (aucun pour l'instant ; la tenue d'origine est toujours là).
+const SKINS = {};
+let teamMode = null, skinT0 = 0, skinOut = false, skinIndex = 0;
+const SKIN_RUN = 700; // durée de la sortie (et du retour) des héros du fond
+
+// 0 : tout le monde en place, 1 : les héros du fond sont sortis et celui de devant a reculé.
+function skinProgress(now) {
+  if (!teamMode) return 0;
+  const q = Math.min(1, (now - skinT0) / SKIN_RUN);
+  return skinOut ? 1 - q : q;
+}
+
+// Redessine la salle à chaque image pendant ms (les trajets du vestiaire).
+function teamAnimFor(ms) {
+  const end = performance.now() + ms;
+  const tick = () => {
+    drawRooms(false, 'team');
+    if (performance.now() < end) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Ouvre le vestiaire : les autres sortent, la fiche tombe en copeaux, la plaque des skins tombe du ciel.
+function enterSkins(id) {
+  teamMode = 'skins';
+  skinOut = false;
+  skinT0 = performance.now();
+  skinIndex = 0;
+  $('#scr-team').classList.add('skins');
+  $('#t-menu').classList.add('hidden');
+  sfx('focus');
+  teamAnimFor(SKIN_RUN + 100);
+  const info = $('#t-info'), r = info.getBoundingClientRect();
+  const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
+  fx(Array.from({ length: 22 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2, 2), vy: rr(-3, -0.5), g: 0.25, life: rr(24, 40) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+  sparks(r.left + r.width / 2, r.top + 20, '#ff8ad8', 16, 1.4);
+  info.animate([{ translate: '0 0', rotate: '0deg' }, { translate: '0 -10px', rotate: '-2deg', offset: 0.2 }, { translate: '0 120vh', rotate: '9deg' }], { duration: 520, easing: 'steps(9, end)', fill: 'forwards' });
+  sfx('wood');
+  setTimeout(() => teamMode === 'skins' && !skinOut && dropSkins(id), 430);
+}
+
+function dropSkins(id) {
+  const box = $('#t-skins');
+  renderSkins(id);
+  box.classList.remove('hidden');
+  paintSign(box);
+  box.animate([{ translate: '0 -130vh' }, { translate: '0 10px', offset: 0.8 }, { translate: '0 -3px', offset: 0.9 }, { translate: '0 0' }], { duration: 460, easing: 'steps(8, end)', fill: 'backwards' });
+  setTimeout(() => {
+    const r = box.getBoundingClientRect();
+    fx(Array.from({ length: 14 }, () => ({ x: rr(r.left, r.right), y: r.bottom, vx: rr(-1.2, 1.2), vy: rr(-1.2, -0.2), g: 0.03, life: rr(18, 30) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 })));
+    sfx('wood');
+    haptic(20);
+    $('#scr-team').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -2 : 2}px` })), { duration: 160, easing: 'steps(5, end)' });
+  }, 380);
+}
+
+// La plaque des skins : nom du skin, aperçu du héros dans sa tenue, flèches et points pour défiler.
+function renderSkins(id) {
+  const box = $('#t-skins'), own = state.owned[id], list = [{ name: 'Tenue d’origine' }, ...(SKINS[id] || [])];
+  skinIndex = Math.max(0, Math.min(list.length - 1, skinIndex));
+  const sk = list[skinIndex];
+  box.innerHTML = '';
+  box.appendChild(el('div', 'd-name', 'Vestiaire'));
+  box.appendChild(el('div', 'd-line', `${HEROES[id].name} · ${list.length} skin${list.length > 1 ? 's' : ''}`));
+  const view = el('div', 'sk-view');
+  const prev = el('button', 'sk-arrow', '◂'), next = el('button', 'sk-arrow', '▸');
+  prev.disabled = skinIndex === 0;
+  next.disabled = skinIndex === list.length - 1;
+  const win = el('div', 'sk-win');
+  win.appendChild(portrait(id, own.rank, 3, 28, 30));
+  view.append(prev, win, next);
+  box.appendChild(view);
+  box.appendChild(el('div', 'sk-name', sk.name));
+  const dots = el('div', 'sk-dots');
+  list.forEach((_, i) => dots.appendChild(el('i', i === skinIndex ? 'on' : '')));
+  box.appendChild(dots);
+  box.appendChild(el('div', 'muted', list.length > 1 ? 'Glisse ou touche les flèches pour défiler.' : 'Aucun autre skin pour l’instant.'));
+  const back = el('button', 'btn', 'Retour');
+  back.onclick = exitSkins;
+  box.appendChild(back);
+  const go = (d) => {
+    const n = skinIndex + d;
+    if (n < 0 || n >= list.length) return sfx('denied');
+    skinIndex = n;
+    sfx('hover');
+    renderSkins(id);
+    paintSign(box);
+  };
+  prev.onclick = () => go(-1);
+  next.onclick = () => go(1);
+  // glisser sur l'aperçu pour défiler (sans changer de pièce)
+  let sx = null;
+  win.addEventListener('pointerdown', (e) => { e.stopPropagation(); sx = e.clientX; });
+  win.addEventListener('pointerup', (e) => {
+    e.stopPropagation();
+    if (sx !== null && Math.abs(e.clientX - sx) > 30) go(e.clientX < sx ? 1 : -1);
+    sx = null;
+  });
+}
+
+// Referme le vestiaire : la plaque des skins tombe, la fiche revient du ciel, les héros reviennent.
+function exitSkins() {
+  if (teamMode !== 'skins' || skinOut) return;
+  skinOut = true;
+  skinT0 = performance.now();
+  const box = $('#t-skins'), info = $('#t-info');
+  box.animate([{ translate: '0 0' }, { translate: '0 120vh', rotate: '-8deg' }], { duration: 420, easing: 'steps(7, end)', fill: 'forwards' });
+  sfx('wood');
+  setTimeout(() => {
+    box.getAnimations().forEach((a) => a.cancel());
+    box.classList.add('hidden');
+    info.getAnimations().forEach((a) => a.cancel());
+    info.animate([{ translate: '0 -130vh' }, { translate: '0 8px', offset: 0.8 }, { translate: '0 0' }], { duration: 420, easing: 'steps(7, end)' });
+    sfx('wood');
+  }, 380);
+  teamAnimFor(SKIN_RUN + 100);
+  setTimeout(() => {
+    teamMode = null;
+    skinOut = false;
+    $('#scr-team').classList.remove('skins');
+    heroSigns();
+  }, SKIN_RUN + 40);
+}
+
+// Sortie immédiate (on quitte la pièce).
+function resetSkins() {
+  if (!teamMode) return;
+  teamMode = null;
+  skinOut = false;
+  const box = $('#t-skins');
+  box.getAnimations().forEach((a) => a.cancel());
+  box.classList.add('hidden');
+  $('#t-info').getAnimations().forEach((a) => a.cancel());
+  $('#scr-team').classList.remove('skins');
 }
 
 // ---- glisser-déposer
@@ -583,7 +723,7 @@ function dragSource(elm, id, slot) {
   elm.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); // ne pas changer de pièce en glissant
     unlock();
-    if (teamDrag) return;
+    if (teamDrag || teamMode) return;
     const st = { x: e.clientX, y: e.clientY, moved: false };
     elm.setPointerCapture(e.pointerId);
     const move = (ev) => {
@@ -710,8 +850,10 @@ function drawTeamLife(g) {
   g.globalAlpha = 1;
   const order = [0, 1, 2].sort((a, b) => teamSlots[a].depth - teamSlots[b].depth);
   for (const i of order) {
-    const sl = teamSlots[i], x = Math.round(sl.x), fy = Math.round(sl.y), id = state.team[i];
-    const front = sl.depth > 0.9, over = teamDrag?.over === i;
+    const sl = teamSlots[i], front = sl.depth > 0.9, over = teamDrag?.over === i, id = state.team[i];
+    // vestiaire (skins) : ceux du fond sautillent puis filent vers la gauche, celui de devant recule avec son socle
+    const p = skinProgress(now);
+    const x = Math.round(sl.x), fy = Math.round(sl.y) - (front ? Math.round(p * 4) : 0);
     if ((front && id && id === selected && !dragging) || over) {
       g.fillStyle = over ? '#ffe9a0' : '#fff2c0';
       g.globalAlpha = over ? 0.14 : 0.11;
@@ -747,20 +889,33 @@ function drawTeamLife(g) {
       continue;
     }
     const own = state.owned[id];
-    const bm = bitmap(`h-${id}-${own.rank}`, () => heroSprite(id, own.rank));
+    let dx = 0, dy = 0, run = false;
+    if (p > 0 && !front) {
+      run = p > 0.3;
+      dx = run ? -Math.round(((p - 0.3) / 0.7) * 240) : 0;
+      dy = -(Math.floor(now / 90) % 2) * 2;
+      if (p >= 1) continue;
+    }
+    const key = `h-${id}-${own.rank}` + (run ? '-f' : '');
+    const bm = bitmap(key, () => (run ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)));
     const white = now < slotFlash[i] && roomStep % 2 === 0;
     const img = white ? bitmap(`h-${id}-${own.rank}-w`, () => heroSprite(id, own.rank).silhouette('#ffffff')) : bm;
-    const bx = x - (bm.w >> 1), by = fy - bm.h - ((Math.floor(roomStep / 2) + i) % 2);
+    const bx = x - (bm.w >> 1) + dx, by = fy - bm.h - ((Math.floor(roomStep / 2) + i) % 2) + dy;
     g.globalAlpha = 0.4;
     g.fillStyle = OUTLINE;
-    g.fillRect(x - 6, fy - 1, 12, 2);
+    g.fillRect(x - 6 + dx, fy - 1, 12, 2);
     g.globalAlpha = 1;
     g.drawImage(img.canvas, bx, by);
     drawFx(g, bm, bx, by, roomStep);
+    if (run && roomStep % 2) {
+      g.fillStyle = '#b8a080';
+      g.fillRect(bx + bm.w, fy - 1, 2, 1);
+      g.fillRect(bx + bm.w + 2, fy - 2, 1, 1);
+    }
     // au fond : dans la pénombre
     if (!front && !over) {
       g.globalAlpha = 0.45;
-      g.drawImage(bitmap(`h-${id}-${own.rank}-d`, () => heroSprite(id, own.rank).silhouette(OUTLINE)).canvas, bx, by);
+      g.drawImage(bitmap(key + '-d', () => (run ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)).silhouette(OUTLINE)).canvas, bx, by);
       g.globalAlpha = 1;
     }
   }
@@ -1008,6 +1163,7 @@ function placeBattleCanvas(cv, w, h, s) {
 function startBattle(n) {
   const st = stage(n);
   closeModal(false);
+  hideEnd();
   show('battle');
   const cv = $('#b-canvas'), dpr = DPR();
   // échelle entière la plus grande, puis scène élargie et allongée (sol en plus en bas) pour couvrir tout l'écran
@@ -1300,6 +1456,7 @@ function attachSigns(m) {
 attachSigns($('#b-menu'));
 attachSigns($('#s-menu'));
 attachSigns($('#t-menu'));
+attachSigns($('#b-end-menu'));
 
 // Choix de la cible : coins de visée sur les ennemis, on touche celui qu'on veut.
 function pickTarget(u, type) {
@@ -1320,6 +1477,7 @@ function pickTarget(u, type) {
 
 async function closeBattle() {
   closeModal(false);
+  hideEnd();
   await fade(true);
   battle?.stop();
   battle = null;
@@ -1329,22 +1487,71 @@ async function closeBattle() {
   await fade(false);
 }
 
+// Fin de combat, dans le style du jeu : le décor s'assombrit, une plaque de bois tombe du ciel
+// (dorée pour une victoire) avec le titre, l'équipe qui saute de joie (ou grise et tête basse) et
+// l'or gagné qui se compte ; les choix sortent ensuite de la plaque en pancartes.
 function endBattle(st, res) {
-  const box = el('div');
-  if (res === 'win') {
-    const first = st.n > state.best;
-    const gain = st.gold + (first ? st.firstGold : 0);
+  const win = res === 'win', first = win && st.n > state.best, gain = win ? st.gold + (first ? st.firstGold : 0) : 0;
+  if (win) {
     state.gold += gain;
     if (first) state.best = st.n;
     save();
-    sfx('win');
-    box.innerHTML = `<div class="big-title">Victoire !</div><p style="text-align:center"><b>+${gain} or</b>${first ? '<br><span class="muted">bonus du premier passage</span>' : ''}</p>`;
-    modal(box, [['Camp', closeBattle], ['Étape suivante', () => nextBattle(state.best + 1), 'gold']]);
-  } else {
-    sfx('lose');
-    box.innerHTML = `<div class="big-title lose">Défaite…</div><p style="text-align:center">Améliore tes héros ou change d’équipe.</p>`;
-    modal(box, [['Camp', closeBattle], ['Réessayer', () => nextBattle(st.n), 'gold']]);
   }
+  sfx(win ? 'win' : 'lose');
+  haptic(win ? 40 : 20);
+  const end = $('#b-end'), veil = $('#b-veil'), pl = $('#b-plaque');
+  pl.innerHTML = '';
+  pl.className = win ? 'win' : 'lose';
+  pl.appendChild(el('div', 'end-title', win ? 'Victoire !' : 'Défaite…'));
+  const team = el('div', 'end-team');
+  state.team.forEach((id) => team.appendChild(heroCanvas(id, state.owned[id].rank, 3)));
+  pl.appendChild(team);
+  if (win) {
+    const g = el('div', 'end-gold');
+    g.appendChild(spriteCanvas('coin', coinSprite, 2));
+    const n = el('b', '', '+0');
+    g.append(n, el('span', '', 'or'));
+    pl.appendChild(g);
+    if (first) pl.appendChild(el('div', 'end-note', 'bonus du premier passage'));
+    // l'or se compte par paliers
+    for (let i = 1; i <= 12; i++) setTimeout(() => { n.textContent = '+' + Math.round((gain * i) / 12); if (i % 3 === 0) sfx('coin'); }, 520 + i * 50);
+  } else {
+    pl.appendChild(el('div', 'end-note', 'Améliore tes héros ou change d’équipe.'));
+  }
+  end.classList.remove('hidden');
+  $('#b-end-menu').classList.add('hidden');
+  for (const [o, ms] of [[0.2, 0], [0.4, 60], [0.6, 120]]) setTimeout(() => (veil.style.opacity = o), ms);
+  // la plaque tombe du haut et rebondit, puis lâche une gerbe d'étincelles (ou un nuage de poussière)
+  pl.style.backgroundImage = signUrl(pl.offsetWidth, pl.offsetHeight, win ? 'hot' : 'normal', 7);
+  pl.style.backgroundSize = '100% 100%';
+  pl.animate(
+    [{ translate: '-50% -150vh' }, { translate: '-50% calc(-50% + 12px)', offset: 0.75 }, { translate: '-50% calc(-50% - 4px)', offset: 0.88 }, { translate: '-50% -50%' }],
+    { duration: 480, easing: 'steps(8, end)', fill: 'backwards' },
+  );
+  setTimeout(() => {
+    const r = pl.getBoundingClientRect();
+    if (win) {
+      sparks(r.left + r.width / 2, r.top + 10, '#fbe08a', 40, 2.4);
+      fx(Array.from({ length: 14 }, () => ({ x: rr(r.left, r.right), y: r.top, vx: rr(-1.5, 1.5), vy: rr(-3, -1), g: 0.12, life: rr(30, 50) | 0, c: Math.random() < 0.5 ? '#e0a93a' : '#fbe08a', s: 2 })));
+    } else {
+      fx(Array.from({ length: 16 }, () => ({ x: rr(r.left, r.right), y: r.bottom, vx: rr(-1.2, 1.2), vy: rr(-1.2, -0.2), g: 0.03, life: rr(20, 34) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 })));
+    }
+    sfx('wood');
+    $('#scr-battle').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -3 : 3}px` })), { duration: 160, easing: 'steps(5, end)' });
+    layoutSigns($('#b-end-menu'), null, win ? [
+      { ico: 'fight', mg: '#ffd86a', label: 'Étape suivante', sub: `Étape ${state.best + 1}`, showSub: true, go: () => nextBattle(state.best + 1) },
+      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
+    ] : [
+      { ico: 'fight', mg: '#ff8a4a', label: 'Réessayer', sub: `Étape ${st.n}`, showSub: true, go: () => nextBattle(st.n) },
+      { ico: 'back', mg: '#d8c8b0', label: 'Camp', go: closeBattle },
+    ], r.right - 64, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
+  }, 480);
+}
+
+function hideEnd() {
+  $('#b-end').classList.add('hidden');
+  $('#b-end-menu').classList.add('hidden');
+  $('#b-veil').style.opacity = 0;
 }
 
 async function nextBattle(n) {

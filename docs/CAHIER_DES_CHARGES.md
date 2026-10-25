@@ -81,7 +81,7 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
   par le bouton silencieux de l'iPhone.
 - Sons et vibrations se coupent séparément depuis l'écran Combat.
 - Dégâts = ATQ × multiplicateur × (1 − DÉF / (DÉF + 60)) × aléa 0,9–1,1, coup critique 10 % (×1,5).
-- Victoire : or gagné (bonus au premier passage). Défaite : on peut réessayer.
+- Victoire : or gagné (bonus au premier passage). Défaite : on peut réessayer. La fin de combat est une plaque de bois qui tombe sur le champ de bataille (dorée pour une victoire), avec l’équipe, l’or qui se compte et les choix en pancartes (Étape suivante / Réessayer, Camp).
 
 ## 7. Progression des étapes
 
@@ -119,7 +119,9 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    qui est visé reçoit un rai de lumière ; au dépôt, il atterrit dans un éclat. Un simple
    toucher choisit le héros : sa fiche s'affiche à droite sur une plaque de bois (rang, place,
    stats, compétence, aperçu des 5 rangs) et ses pancartes jaillissent de lui en arc comme en
-   combat : « Améliorer » et « Skin » (pas encore actif) ; pour un héros hors de l'équipe, elles
+   combat : « Améliorer » et « Skin ». Skin ouvre le vestiaire : les autres héros sortent de la
+   salle, la fiche tombe et une plaque « Vestiaire » prend sa place pour faire défiler les skins
+   du héros (aucun pour l'instant, seulement la tenue d'origine) ; pour un héros hors de l'équipe, elles
    sortent de sa plaque. Monter de rang : la magie dorée converge vers le héros, il
    s'illumine, la salle tremble.
 3. **Invocation** (à droite) : salle sans porte, bannières violettes. L'autel : un grand

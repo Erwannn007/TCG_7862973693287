@@ -109,6 +109,8 @@ doivent garder la même taille dans une même scène).
 | Coup critique / attaque de boss | tremblement de 2 à 3 px, éclair blanc plein écran (70 ms) |
 | Rituel (invocation) | voile sombre, magie qui converge vers le cristal par vagues, anneaux de lumière, tremblement, éclair blanc |
 | Choisir un héros (équipe) | les socles tournent en carrousel (8° par image) : il vient devant au milieu, sous un rai de lumière, les autres reculent dans la pénombre ; ses pancartes jaillissent ensuite. **Jamais d'agrandissement d'un sprite** : la profondeur se rend par la position et la pénombre |
+| Fin de combat | voile sombre par paliers, une plaque de bois tombe du ciel et rebondit (bois doré + gerbe d'étincelles et pièces pour une victoire, bois brun + poussière pour une défaite) : titre gothique, l'équipe qui sautille (ou grise), l'or qui se compte ; les choix sortent ensuite en pancartes |
+| Vestiaire (skins) | les héros du fond sautillent puis filent vers la gauche, celui de devant recule avec son socle ; la fiche tombe en copeaux et une plaque de même taille tombe du ciel avec l'aperçu et le défilement des skins ; « Retour » rejoue tout à l'envers |
 
 Ceux qui n'agissent pas restent **dans la pénombre** (silhouette sombre à 9 % par palier) ;
 les cibles qu'on peut toucher restent éclairées.
