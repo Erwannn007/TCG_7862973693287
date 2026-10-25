@@ -5,7 +5,7 @@ import { bitmap, drawFx, drawText, textWidth } from './render.js';
 import { sceneLayers, LAYER_M, SW, SH } from './scene.js';
 import { OUTLINE } from './spr.js';
 import { sfx, haptic } from './sfx.js';
-import { posed, POSE_PAD, HERO_FX, ENEMY_FX, fxColors, drawEffect } from './fx.js';
+import { posed, POSE_PAD, heroFx, ENEMY_FX, fxColors, drawEffect } from './fx.js';
 
 // Largeur variable (240 à 320) selon l'écran ; les positions sont données pour 240 et recentrées.
 // Hauteur au moins H : le surplus s'ajoute en bas (plus de sol), pour remplir tout l'écran.
@@ -68,7 +68,7 @@ export class Battle {
     this.heroes = team.map((id, i) => {
       const rank = owned[id].rank, st = heroStats(id, rank, owned[id].lvl || 1);
       const lk = look ? look(id, rank) : { key: `h-${id}-${rank}`, make: () => heroSprite(id, rank) };
-      return this.unit('h', { id, rank, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]], lk.key, lk.make);
+      return this.unit('h', { id, rank, skin: lk.skin || null, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]], lk.key, lk.make);
     });
     const big = stage.enemies.length === 1 && stage.boss;
     const es = SLOT_ORDER[stage.enemies.length];
@@ -100,7 +100,7 @@ export class Battle {
       // cx0/sx0 : place dans la formation ; fx : décalage de mise en scène (fxT = où il va)
       cx0: cx, sx0: sx, fx: 0, fxT: 0,
       // pose en cours (élan, frappe, incantation, garde, choc) et fiche d'effets du personnage
-      pose: null, prof: side === 'h' ? HERO_FX[data.id] || HERO_FX.kael : ENEMY_FX[data.kind] || ENEMY_FX.goblin,
+      pose: null, prof: side === 'h' ? heroFx(data.id, data.skin) : ENEMY_FX[data.kind] || ENEMY_FX.goblin,
     };
   }
 
@@ -305,7 +305,8 @@ export class Battle {
       const a = v.a, d0 = at(v.d[0] || a);
       drawEffect(v.name, g, Math.floor(p * v.steps) / v.steps, {
         x: a.cx + a.dx, y: a.by - (a.bm.h >> 1), tx: d0.tx, ty: d0.ty, d: v.d.map(at),
-        dir: a.side === 'h' ? 1 : -1, rank: a.rank || 1, cols: fxColors(a.prof, a.side === 'h' ? a.rank : 1),
+        // une tenue garde ses couleurs à tous les rangs
+        dir: a.side === 'h' ? 1 : -1, rank: a.rank || 1, cols: fxColors(a.prof, a.side === 'h' && !a.skin ? a.rank : 1),
       });
       return true;
     });

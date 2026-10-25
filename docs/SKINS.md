@@ -15,11 +15,26 @@
   équipe, combat, file des tours, fin de combat.
 
 - **En combat**, une tenue a automatiquement toutes les **animations** du héros (élan, frappe,
-  incantation, garde, choc : elles sont fabriquées à partir du sprite porté) et garde les
-  **effets** du héros qui la porte (Kael en slip frappe toujours avec sa lame rouge, Volt
-  livreur de pizza garde son néon). Voir la [direction artistique](DIRECTION_ARTISTIQUE.md#29-animations-et-effets-de-combat).
-  Plus tard, une tenue pourra avoir ses propres effets (la pioche du mineur cubique qui fait
-  voler des blocs…) : il suffira de lui donner une fiche d'effets à elle.
+  incantation, garde, choc : elles sont fabriquées à partir du sprite porté) et **ses propres
+  effets et sons** (`SKIN_FX` dans `js/fx.js`). Seuls les visuels changent : la portée, les cibles
+  et les dégâts restent ceux du héros. Les couleurs d'une tenue ne changent pas avec le rang.
+
+  | Tenue | Attaque | Compétence | Son |
+  |---|---|---|---|
+  | Kael · En slip | coup d'épée en bois, étoiles qui tournent (sonné) | croix en bois et ronde d'étoiles | « bonk » |
+  | Kael · Mineur cubique | coup de pioche, des blocs volent et retombent | croix de blocs pixel, pluie de cubes | « pop » |
+  | Kael · Armure de diamant | lame cyan, éclats de diamant en losange | croix de diamant et éclats | lame, éclair |
+  | Lyra · Pirate | boulet de canon en cloche avec fumée, explosion | gros boulet, onde de feu et fumée, la cible est sonnée | canon |
+  | Elio · Pyjama | oreiller lancé, plumes | un **mouton** tombe sur chaque ennemi, avec des « Zzz » | « pop », bêlement |
+  | Séra · Sorcière | fiole verte qui éclate en bulles | chaudron : bulles vertes et violettes qui montent sur l'équipe | bulles |
+  | Volt · Livreur de pizza | une part de pizza (croûte, fromage, pepperoni) | livraison express : ruée rouge et blanche, parts qui volent | « bonk », néon |
+  | Volt · Samouraï | coup de katana horizontal, pétales de cerisier | iaï : ruée éclair, coupe nette, pluie de pétales | lame |
+
+- **Nouvelle tenue** : lui donner une ligne dans `SKIN_FX` (couleurs, effets, sons) ; les
+  champs absents reprennent ceux du héros. Si l'effet n'existe pas, l'ajouter dans `FX` en
+  respectant les règles des effets (pixels entiers, paliers, court, peu de pixels, un peu de
+  blanc à la tête de l'effet), et en touchant les mêmes cibles que l'effet du héros (une
+  compétence de zone touche toujours tous les ennemis).
 
 ## 2. Pop culture et clins d'œil : oui, à fond
 
@@ -66,4 +81,5 @@ qui rend la référence drôle et la garde dans l'ambiance du jeu.
 2. Dans `SKIN_DRAW`, écrire sa fonction de dessin : partir de `body(s, { … })` (tunique, jambes,
    bottes, ceinture aux couleurs de la tenue), puis dessiner la coiffe, le visage et l'accessoire.
 3. Générer la planche et vérifier la lisibilité.
-4. C'est tout : elle apparaît à l'autel des tenues, dans la collection et au vestiaire.
+4. Lui donner ses effets de combat dans `SKIN_FX` (`js/fx.js`) et, si besoin, ses sons (`js/sfx.js`).
+5. C'est tout : elle apparaît à l'autel des tenues, dans la collection et au vestiaire.

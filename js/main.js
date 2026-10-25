@@ -34,7 +34,7 @@ const icon = (name, k = 2) => spriteCanvas('ico-' + name, () => iconSprite(name)
 // Apparence d'un héros : sa tenue (skin) s'il en porte une — la même à tous les rangs —, sinon le
 // dessin de son rang. skin : forcer une tenue (null : tenue d'origine).
 const look = (id, rank, skin = state.wear[id]) => (skin
-  ? { key: 'skin-' + skin, make: () => skinSprite(skin) }
+  ? { key: 'skin-' + skin, make: () => skinSprite(skin), skin }
   : { key: `h-${id}-${rank}`, make: () => heroSprite(id, rank) });
 const lookCanvas = (id, k) => {
   const lk = look(id, state.owned[id].rank);

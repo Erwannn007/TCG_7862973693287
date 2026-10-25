@@ -260,6 +260,227 @@ const FX = {
   },
 };
 
+// ---------------------------------------------------------------- effets des tenues
+
+// Petites étoiles qui tournent au-dessus d'une tête (sonné).
+function dizzy(g, x, y, q, col, n = 3) {
+  for (let i = 0; i < n; i++) {
+    const a = q * 9 + (i / n) * Math.PI * 2;
+    px(g, x + Math.cos(a) * 7, y - 10 + Math.sin(a) * 2, i % 2 ? '#ffffff' : col);
+  }
+}
+// Petits cubes de 2 px qui volent et retombent.
+function cubes(g, x, y, q, cols, n = 8) {
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i - n / 2) * 0.35, v = 6 + (i % 3) * 3;
+    const cx = x + Math.cos(a) * v * q * 1.6, cy = y + Math.sin(a) * v * q * 1.6 + q * q * 18;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(cx) - 1, Math.round(cy) - 1, 4, 4);
+    px(g, cx, cy, cols[i % cols.length], 2);
+  }
+}
+// Projectile en cloche générique : dessine draw(x, y) le long de la trajectoire.
+const arc = (e, q, h, draw) => draw(lerp(e.x + 8 * e.dir, e.tx, q), lerp(e.y - 4, e.ty, q) - Math.sin(q * Math.PI) * h);
+
+Object.assign(FX, {
+  // --- Kael en slip : coup d'épée en bois, étoiles qui tournent
+  bonk(g, q, e) {
+    if (q < 0.4) slash(g, e.tx, e.ty, q * 2.5, e.dir, ['#a8703a', '#e0b07a'], 8);
+    else {
+      burst(g, e.tx, e.ty - 4, (q - 0.4) / 0.6, ['#fbe08a', '#ffffff'], 7);
+      dizzy(g, e.tx, e.ty, q, '#fbe08a');
+    }
+  },
+  bonkX(g, q, e) {
+    FX.cross(g, q, { ...e, cols: ['#a8703a', '#fbe08a'] });
+    if (q > 0.5) dizzy(g, e.tx, e.ty, q, '#fbe08a', 5);
+  },
+  // --- mineur cubique : la pioche fait voler des blocs
+  blocks(g, q, e) {
+    if (q < 0.35) slash(g, e.tx, e.ty, q * 3, e.dir, ['#9aa4ae', '#ffffff'], 9, -120, 40);
+    else cubes(g, e.tx, e.ty, (q - 0.35) / 0.65, ['#5cc85a', '#8a5a32', '#9aa4ae', '#3a8e3e']);
+  },
+  blockX(g, q, e) {
+    // une croix de blocs pixel, puis une pluie de cubes
+    const k = Math.min(1, q * 2), r = 12;
+    for (let i = -r; i <= r; i += 3) {
+      if (Math.abs(i) > r * k) continue;
+      px(g, e.tx + i, e.ty + i, '#5cc85a', 3);
+      px(g, e.tx + i, e.ty - i, '#8a5a32', 3);
+    }
+    if (q > 0.45) cubes(g, e.tx, e.ty, (q - 0.45) / 0.55, ['#5cc85a', '#8a5a32', '#9aa4ae', '#4ff0e8'], 12);
+  },
+  // --- armure de diamant : lame cyan et éclats en losange
+  diamond(g, q, e) {
+    slash(g, e.tx, e.ty, q, e.dir, ['#4fd8e0', '#c8f6ff'], 10 + e.rank);
+    if (q > 0.35) for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + q, d = 4 + (q - 0.35) * 18, x = e.tx + Math.cos(a) * d, y = e.ty + Math.sin(a) * d;
+      px(g, x, y - 1, '#c8f6ff'); px(g, x - 1, y, '#4fd8e0'); px(g, x + 1, y, '#2a9ab0'); px(g, x, y + 1, '#4fd8e0');
+    }
+  },
+  diamondX(g, q, e) {
+    FX.cross(g, q, { ...e, cols: ['#4fd8e0', '#ffffff'] });
+    if (q > 0.5) FX.diamond(g, (q - 0.5) * 2, e);
+  },
+  // --- Lyra pirate : boulet de canon et fumée
+  cannon(g, q, e) {
+    if (q < 0.8) {
+      for (let i = 1; i < 5; i++) arc(e, q - i * 0.06, 8, (x, y) => px(g, x, y, i % 2 ? '#c8c0c8' : '#8a8088', 2));
+      arc(e, q, 8, (x, y) => {
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+        px(g, x - 1, y - 1, '#4a4650', 3);
+        px(g, x - 1, y - 1, '#a8a0a8');
+      });
+    } else {
+      const k = (q - 0.8) / 0.2;
+      burst(g, e.tx, e.ty, k, ['#ff6a1f', '#fbe08a'], 9);
+      for (let i = 0; i < 6; i++) px(g, e.tx - 6 + i * 2.5, e.ty - 4 - k * 8 + (i % 2) * 3, '#c8c0c8', 2);
+    }
+  },
+  cannonBlast(g, q, e) {
+    FX.cannon(g, Math.min(1, q * 1.4), e);
+    if (q > 0.6) {
+      const k = (q - 0.6) / 0.4;
+      ring(g, e.tx, e.ty, k, '#ff6a1f', 18);
+      ring(g, e.tx, e.ty, Math.max(0, k - 0.2), '#c8c0c8', 14);
+      dizzy(g, e.tx, e.ty, q, '#fbe08a', 4);
+    }
+  },
+  // --- Elio en pyjama : oreiller et plumes, moutons qui tombent du ciel
+  pillow(g, q, e) {
+    if (q < 0.75) arc(e, q, 10, (x, y) => {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 4, Math.round(y) - 3, 9, 6);
+      g.fillStyle = '#f2eef4';
+      g.fillRect(Math.round(x) - 3, Math.round(y) - 2, 7, 4);
+      px(g, x - 3, y - 2, '#ffffff', 2);
+    });
+    else for (let i = 0; i < 7; i++) {
+      const k = (q - 0.75) / 0.25, a = (i / 7) * Math.PI * 2;
+      px(g, e.tx + Math.cos(a) * (3 + k * 12), e.ty + Math.sin(a) * (3 + k * 8) + k * 4, i % 2 ? '#ffffff' : '#c8d4f0', i % 3 ? 1 : 2);
+    }
+  },
+  sheep(g, q, e) {
+    for (const [i, d] of e.d.entries()) {
+      const k = Math.max(0, Math.min(1, q * 1.6 - i * 0.18));
+      if (k <= 0) continue;
+      const y = k < 0.6 ? lerp(-12, d.ty - 4, k / 0.6) : d.ty - 4 - Math.sin(((k - 0.6) / 0.4) * Math.PI) * 4;
+      // un mouton tout rond (laine blanche, tête noire)
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(d.tx) - 6, Math.round(y) - 4, 13, 9);
+      g.fillStyle = '#f2eef4';
+      g.fillRect(Math.round(d.tx) - 5, Math.round(y) - 3, 11, 6);
+      px(g, d.tx - 4, y - 3, '#ffffff', 2);
+      // bouclettes de laine sur le dos
+      for (const bx of [-4, -1, 2]) {
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(d.tx) + bx - 1, Math.round(y) - 6, 4, 3);
+        px(g, d.tx + bx, y - 5, '#ffffff', 2);
+      }
+      g.fillStyle = '#2a2234';
+      g.fillRect(Math.round(d.tx) + 4 * e.dir - 1, Math.round(y) - 2, 3, 3);
+      for (const lx of [-4, -1, 2, 4]) { px(g, d.tx + lx, y + 5, '#2a2234'); px(g, d.tx + lx, y + 6, '#2a2234'); }
+      if (k > 0.6) for (let z = 0; z < 3; z++) {
+        const zz = (k - 0.6) / 0.4;
+        const zx = d.tx + 6 + z * 3, zy = y - 8 - z * 4 - zz * 6;
+        px(g, zx, zy, '#c8d4f0'); px(g, zx + 1, zy, '#c8d4f0'); px(g, zx + 1, zy + 1, '#c8d4f0'); px(g, zx, zy + 2, '#c8d4f0'); px(g, zx + 1, zy + 2, '#c8d4f0');
+      }
+    }
+  },
+  // --- Séra sorcière : fiole verte qui éclate en bulles, chaudron de bulles qui soignent
+  potion(g, q, e) {
+    if (q < 0.75) arc(e, q, 12, (x, y) => {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 2, Math.round(y) - 3, 5, 7);
+      px(g, x - 1, y - 1, '#7af06a', 3);
+      px(g, x, y - 3, '#c8a870');
+      px(g, x - 1, y - 1, '#ffffff');
+    });
+    else for (let i = 0; i < 8; i++) {
+      const k = (q - 0.75) / 0.25, a = (i / 8) * Math.PI * 2, r = 2 + k * 10;
+      px(g, e.tx + Math.cos(a) * r, e.ty + Math.sin(a) * r * 0.7 - k * 6, i % 2 ? '#7af06a' : '#d8ffd0', 2);
+    }
+  },
+  cauldron(g, q, e) {
+    for (const d of e.d) {
+      g.globalAlpha = 0.35;
+      g.fillStyle = '#7af06a';
+      g.fillRect(Math.round(d.tx) - 10, Math.round(d.ty) + 6, 21, 3);
+      g.globalAlpha = 1;
+      for (let i = 0; i < 6; i++) {
+        const t = (q * 2 + i * 0.17) % 1, bx = d.tx - 9 + i * 3.5, by = d.ty + 8 - t * 26;
+        if (q < 0.1) continue;
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(bx) - 1, Math.round(by) - 1, 4, 4);
+        px(g, bx, by, i % 2 ? '#7af06a' : '#c08aff', 2);
+        px(g, bx, by, '#ffffff');
+      }
+    }
+  },
+  // --- Volt livreur de pizza : part de pizza, puis livraison express
+  pizza(g, q, e) {
+    if (q > 0.85) return;
+    const x = e.tx - 4 * e.dir, y = e.ty - 3, k = Math.min(1, q * 2.5);
+    // une part triangulaire : croûte, fromage, pepperoni
+    for (let j = 0; j < 7; j++) {
+      const w = Math.round((7 - j) * k);
+      for (let i = 0; i <= w; i++) px(g, x + i * e.dir, y + j, j === 0 ? '#c8945a' : '#fbe08a');
+      if (j === 2 || j === 4) px(g, x + 2 * e.dir, y + j, '#c83020');
+    }
+    if (q > 0.4) burst(g, e.tx, e.ty, (q - 0.4) / 0.6, ['#fbe08a', '#c83020'], 8);
+  },
+  pizzaDash(g, q, e) {
+    if (q < 0.5) {
+      const x1 = lerp(e.x, e.tx, q * 2);
+      for (let x = Math.min(e.x, x1); x <= Math.max(e.x, x1); x += 2) px(g, x, e.ty + ((x | 0) % 4 === 0 ? -1 : 0), (x | 0) % 6 < 3 ? '#d83a3a' : '#ffffff');
+    }
+    FX.pizza(g, Math.max(0, (q - 0.3) / 0.7), e);
+    if (q > 0.5) for (let i = 0; i < 3; i++) {
+      const k = (q - 0.5) / 0.5, a = -1.2 - i * 0.5;
+      px(g, e.tx + Math.cos(a) * k * 18, e.ty + Math.sin(a) * k * 14 + k * k * 10, '#fbe08a', 3);
+    }
+  },
+  // --- Volt samouraï : coup de katana horizontal et pétales
+  katana(g, q, e) {
+    if (q < 0.5) for (let i = -10; i <= 10; i++) if (Math.abs(i) < q * 40) px(g, e.tx + i, e.ty + i * 0.15, Math.abs(i) < 3 ? '#ffffff' : '#d8e0e8');
+    if (q > 0.3) for (let i = 0; i < 6; i++) {
+      const k = (q - 0.3) / 0.7, x = e.tx - 8 + i * 3 + k * 6 * e.dir, y = e.ty - 6 + (i % 3) * 4 + k * 12;
+      px(g, x, y, i % 2 ? '#ff9ac8' : '#ffd0e0', 2);
+    }
+  },
+  iai(g, q, e) {
+    if (q < 0.45) {
+      const x1 = lerp(e.x, e.tx + 10 * e.dir, q / 0.45);
+      for (let x = Math.min(e.x, x1); x <= Math.max(e.x, x1); x++) px(g, x, e.ty, (x | 0) % 2 ? '#ffffff' : '#b8283a');
+    } else {
+      const k = (q - 0.45) / 0.55;
+      for (let i = -14; i <= 14; i++) if (k < 0.5) px(g, e.tx + i, e.ty - i * 0.3, '#ffffff', 2);
+      for (let i = 0; i < 10; i++) {
+        const x = e.tx - 14 + i * 3 + k * 8 * e.dir, y = e.ty - 10 + (i % 4) * 5 + k * 16;
+        px(g, x, y, i % 2 ? '#ff9ac8' : '#ffd0e0', 2);
+      }
+      if (k < 0.6) burst(g, e.tx, e.ty, k / 0.6, ['#b8283a', '#fbe08a'], 10);
+    }
+  },
+});
+
+// Une tenue peut changer les effets et les sons (jamais la portée ni les cibles : le gameplay
+// reste celui du héros). Les champs absents sont ceux du héros.
+export const SKIN_FX = {
+  'kael-slip': { cols: ['#a8703a', '#fbe08a'], attack: 'bonk', skill: 'bonkX', sound: 'bonk', skillSound: 'bonk' },
+  'kael-cube': { cols: ['#5cc85a', '#9aa4ae'], attack: 'blocks', skill: 'blockX', sound: 'pop', skillSound: 'pop' },
+  'kael-diamant': { cols: ['#4fd8e0', '#c8f6ff'], attack: 'diamond', skill: 'diamondX', sound: 'slash', skillSound: 'zap' },
+  'lyra-pirate': { cols: ['#4a4650', '#c8c0c8'], attack: 'cannon', skill: 'cannonBlast', sound: 'cannon', skillSound: 'cannon' },
+  'elio-pyjama': { cols: ['#c8d4f0', '#ffffff'], attack: 'pillow', skill: 'sheep', sound: 'pop', skillSound: 'baa' },
+  'sera-sorciere': { cols: ['#7af06a', '#c08aff'], attack: 'potion', skill: 'cauldron', sound: 'bubble', skillSound: 'bubble' },
+  'volt-pizza': { cols: ['#d83a3a', '#fbe08a'], attack: 'pizza', skill: 'pizzaDash', sound: 'bonk', skillSound: 'plasma' },
+  'volt-samourai': { cols: ['#b8283a', '#ff9ac8'], attack: 'katana', skill: 'iai', sound: 'slash', skillSound: 'slash' },
+};
+
+// Fiche d'effets d'un héros, avec sa tenue s'il en porte une.
+export const heroFx = (id, skin) => ({ ...(HERO_FX[id] || HERO_FX.kael), ...(skin && SKIN_FX[skin]) });
+
 // ---------------------------------------------------------------- fiches des personnages
 
 // cols : [couleur principale, éclat] ; ranged : attaque à distance (le héros ne s'avance pas) ;

@@ -134,6 +134,12 @@ const SOUNDS = {
   zap: () => { tone(N.C5, 0.18, 0, 'square', 0.5, N.C6 * 2); tone(N.G5, 0.12, 0.04, 'triangle', 0.6, N.E6); },
   holy: () => [N.E5, N.A5, N.E6].forEach((f, i) => tone(f, 0.08, i * 0.05, 'triangle', 0.8)),
   plasma: () => { tone(N.A5, 0.05, 0, 'square', 0.5, N.E6 * 1.5); tone(N.E6, 0.06, 0.05, 'square', 0.4, N.A5); noise(0.04, 0.03, 0.4); },
+  // sons des tenues
+  bonk: () => { tone(330, 0.05, 0, 'square', 0.6, 520); tone(660, 0.08, 0.05, 'triangle', 0.6); noise(0.03, 0, 0.4); },
+  pop: () => { tone(N.C5, 0.04, 0, 'square', 0.5, N.C6); noise(0.04, 0.03, 0.5); },
+  cannon: () => { noise(0.2, 0, 1); tone(90, 0.25, 0, 'square', 0.7, 40); },
+  bubble: () => [N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.04, i * 0.05, 'triangle', 0.6, f * 1.3)),
+  baa: () => { tone(330, 0.3, 0, 'square', 0.35, 300); tone(336, 0.3, 0, 'triangle', 0.5, 310); },
   shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)
   thud: () => {

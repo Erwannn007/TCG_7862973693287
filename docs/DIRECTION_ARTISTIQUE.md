@@ -192,6 +192,9 @@ arrivant) et ses sons.
 Ennemis : éclaboussures (slime), griffes (gobelin, golem, dragon), lame d'os (squelette) ;
 boss : **Séisme** (le sol se fend sous les héros), **Souffle de feu** (flot de flammes).
 
+**Tenues** : chaque tenue a ses propres effets et sons (`SKIN_FX`, voir [`SKINS.md`](SKINS.md)),
+avec les mêmes cibles que le héros ; ses couleurs ne changent pas avec le rang.
+
 **Selon le rang** : les effets grandissent un peu à chaque rang ; au **rang 4** l'éclat devient
 doré, au **rang 5** l'effet est blanc et or.
 
