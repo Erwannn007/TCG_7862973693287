@@ -7,7 +7,7 @@ import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
 import { sceneBackground, sceneAnim, SH, CAMP_W, GATE } from './scene.js';
-import { installUiArt, iconSprite } from './ui-art.js';
+import { installUiArt, iconSprite, signUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
 
@@ -726,6 +726,7 @@ function buildMenu(u, title, items) {
     row.appendChild(el('span', '', `${it.label}${it.sub ? `<small>${it.sub}</small>` : ''}`));
     if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
     row._it = it;
+    row._seed = i + 1;
     m.appendChild(row);
     // les actions sortent du héros une à une, par paliers
     row.animate(
@@ -734,6 +735,7 @@ function buildMenu(u, title, items) {
     );
   });
   m.classList.remove('hidden');
+  m.querySelectorAll('.act').forEach(paintSign);
   sfx('menu');
   // à droite du héros (là où il s'arrête une fois avancé), centré sur lui, sans sortir de l'écran
   const [hx, hy, k] = battle.screenAt(u.cx0 + u.fxT + u.bm.w / 2, u.by - u.bm.h / 2);
@@ -744,6 +746,14 @@ function buildMenu(u, title, items) {
   m.style.setProperty('--tip', Math.round(hy - top) + 'px');
 }
 
+// Pancarte en bois dessinée à la taille exacte du bouton (dorée quand il est visé).
+function paintSign(row) {
+  const w = row.offsetWidth, h = row.offsetHeight;
+  if (!w) return;
+  row.style.backgroundImage = signUrl(w, h, row.classList.contains('hot') ? 'hot' : 'normal', row._seed);
+  row.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
+}
+
 // Glisser sur le menu : la ligne sous le doigt grossit ; relâcher = choisir.
 (() => {
   const m = $('#b-menu');
@@ -751,10 +761,14 @@ function buildMenu(u, title, items) {
   const rowAt = (e) => document.elementFromPoint(e.clientX, e.clientY)?.closest('#b-menu .act') || null;
   const setHot = (r) => {
     if (r === hot) return;
-    hot?.classList.remove('hot');
+    if (hot) {
+      hot.classList.remove('hot');
+      paintSign(hot);
+    }
     hot = r;
     if (r) {
       r.classList.add('hot');
+      paintSign(r);
       sfx('hover');
       haptic(5);
     }

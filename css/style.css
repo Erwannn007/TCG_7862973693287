@@ -266,10 +266,11 @@ small { font-size: 12px; }
   align-self: flex-start; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
   border: 6px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 6px stretch;
 }
+/* pancartes en bois : l'image est dessinée par js/ui-art.js à la taille du bouton (voir paintSign) */
 #b-menu .act {
-  position: relative; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 0 8px;
-  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
-  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
+  position: relative; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 8px 18px;
+  font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+  background: no-repeat center; image-rendering: pixelated;
 }
 /* magie : halo coloré par action (--mg), reflet qui balaie le bouton, étincelles qui montent.
    Tout reste en paliers (steps) pour garder le rendu pixel. */
@@ -288,16 +289,16 @@ small { font-size: 12px; }
 }
 /* reflet : une bande claire à bords nets traverse le bouton, puis longue pause */
 #b-menu .act::before {
-  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  content: ''; position: absolute; inset: 6px; z-index: 1; pointer-events: none;
   background: linear-gradient(110deg, transparent 42%, rgba(255, 250, 220, .28) 42%, rgba(255, 250, 220, .28) 47%,
     transparent 47%, transparent 50%, rgba(255, 250, 220, .18) 50%, rgba(255, 250, 220, .18) 52%, transparent 52%) 160% 0 / 300% 100% no-repeat;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mg) 55%, transparent), inset 0 0 8px color-mix(in srgb, var(--mg) 30%, transparent);
+  box-shadow: inset 0 0 10px color-mix(in srgb, var(--mg) 30%, transparent);
   animation: shine 3.6s steps(1) infinite; animation-delay: inherit;
 }
 #b-menu .act > canvas, #b-menu .act > span:not(.motes) { position: relative; z-index: 2; }
 #b-menu .act > canvas { filter: drop-shadow(0 0 3px var(--mg)); }
 /* étincelles : petits carrés de 2 px qui montent et clignotent autour du bouton */
-#b-menu .motes { position: absolute; inset: -8px; z-index: 3; pointer-events: none; }
+#b-menu .motes { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 #b-menu .motes i {
   position: absolute; bottom: 4px; width: 2px; height: 2px; background: #fff;
   box-shadow: 0 0 3px 2px var(--mg); opacity: 0; animation: mote 2.4s steps(1) infinite;
@@ -308,7 +309,7 @@ small { font-size: 12px; }
 #b-menu .motes i:nth-child(4) { left: 92%; animation-delay: -2s; width: 1px; height: 1px; }
 #b-menu .act.hot {
   width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
-  border-image-source: var(--f-gold); translate: 6px 0;
+  translate: 6px 0;
   --mg: #ffd86a;
   animation: levitate 1.6s steps(1) infinite, aura-hot .8s steps(1) infinite;
 }
@@ -321,7 +322,7 @@ small { font-size: 12px; }
 #b-menu .act small { display: none; font-size: 12px; font-weight: 400; }
 #b-menu .act.hot small { display: block; color: #5a3a22; }
 #b-menu .cd {
-  position: absolute; right: -6px; top: -10px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
+  position: absolute; right: 2px; top: -4px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
   background: var(--line); box-shadow: 0 0 0 2px #8a8088;
 }
 

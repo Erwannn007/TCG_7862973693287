@@ -173,3 +173,112 @@ export function iconSprite(name) {
   ICONS[name](s);
   return s;
 }
+
+// ---------------------------------------------------------------- pancartes en bois
+
+// Pancartes des actions de combat, dessinées à la taille exacte du bouton (pas d'étirement) :
+// cadre de bois sombre, planches veinées avec nœuds et clous, équerres de fer aux coins, usure.
+const WOOD = {
+  normal: {
+    planks: ['#8a5a32', '#94623a', '#7e522e'], grain: '#6a4226', grain2: '#a06c3e', gap: '#2e1c10',
+    hi: '#b8814a', lo: '#5a3820', frame: ['#4e3019', '#6a4228'], frameHi: '#8a5a32', metal: ['#2a262e', '#7a7480', '#c4c0c8'],
+  },
+  hot: {
+    planks: ['#d49a4e', '#dca458', '#c88e44'], grain: '#a8743a', grain2: '#ecc078', gap: '#5a3818',
+    hi: '#f8d690', lo: '#9a6630', frame: ['#7a4a12', '#a87a20'], frameHi: '#e0a93a', metal: ['#5a3408', '#e0a93a', '#fff4c0'],
+  },
+};
+const rnd = (a, b) => {
+  let h = (a * 374761393 + b * 668265263) | 0;
+  h = (h ^ (h >>> 13)) * 1274126177;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+};
+
+function drawSign(g, W, H, P, seed) {
+  const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  // contour noir, coins cassés d'un pixel
+  R(1, 0, W - 2, H, OUTLINE);
+  R(0, 1, W, H - 2, OUTLINE);
+  // cadre de bois sombre sur 2 px, éclairé en haut à gauche
+  R(1, 1, W - 2, H - 2, P.frame[0]);
+  R(2, 2, W - 4, H - 4, P.frame[1]);
+  R(2, 1, W - 4, 1, P.frameHi);
+  R(1, 2, 1, H - 4, P.frameHi);
+  // planches horizontales
+  const x0 = 3, x1 = W - 3, y0 = 3, y1 = H - 3, n = Math.max(2, Math.round((y1 - y0) / 8));
+  for (let i = 0; i < n; i++) {
+    const a = y0 + Math.round(((y1 - y0) * i) / n), b = y0 + Math.round(((y1 - y0) * (i + 1)) / n);
+    const k = seed * 7 + i;
+    R(x0, a, x1 - x0, b - a, P.planks[Math.floor(rnd(k, 1) * 3)]);
+    R(x0, a, x1 - x0, 1, P.hi);
+    R(x0, b - 1, x1 - x0, 1, P.lo);
+    if (i) R(x0, a - 1, x1 - x0, 1, P.gap);
+    // veinures : traits fins de longueurs variées, parfois ondulés
+    for (let j = 0; j < (x1 - x0) / 5; j++) {
+      const gx = x0 + Math.floor(rnd(k, j + 10) * (x1 - x0 - 4)), gy = a + 1 + Math.floor(rnd(k, j + 50) * Math.max(1, b - a - 3));
+      const len = 3 + Math.floor(rnd(k, j + 90) * 12), wave = rnd(k, j + 130) < 0.3;
+      R(gx, gy, Math.min(len, x1 - gx), 1, rnd(k, j + 170) < 0.75 ? P.grain : P.grain2);
+      if (wave && gy + 1 < b - 1) R(gx + (len >> 1), gy + 1, Math.min(3, x1 - gx - (len >> 1)), 1, P.grain);
+    }
+    // un nœud dans le bois, entouré de veines qui le contournent
+    if (rnd(k, 3) < 0.7 && b - a >= 6) {
+      const kx = x0 + 10 + Math.floor(rnd(k, 4) * (x1 - x0 - 20)), ky = a + ((b - a) >> 1);
+      R(kx - 3, ky - 2, 7, 1, P.grain);
+      R(kx - 3, ky + 2, 7, 1, P.grain);
+      R(kx - 1, ky - 1, 3, 3, P.grain);
+      R(kx, ky, 1, 1, P.lo);
+      R(kx - 5, ky - 1, 2, 1, P.grain);
+      R(kx + 4, ky + 1, 2, 1, P.grain);
+    }
+    // clous aux deux bouts de la planche
+    for (const nx of [x0 + 2, x1 - 3]) {
+      const ny = a + ((b - a) >> 1) - 1;
+      R(nx, ny, 2, 2, P.metal[1]);
+      R(nx, ny, 1, 1, P.metal[2]);
+      R(nx + 1, ny + 2, 1, 1, P.lo);
+    }
+  }
+  // équerres de fer aux quatre coins, avec un rivet
+  for (const [cx, cy, sx, sy] of [[1, 1, 1, 1], [W - 2, 1, -1, 1], [1, H - 2, 1, -1], [W - 2, H - 2, -1, -1]]) {
+    const L = 7;
+    for (let t = 0; t < L; t++) {
+      for (const [px, py] of [[cx + sx * t, cy], [cx + sx * t, cy + sy], [cx, cy + sy * t], [cx + sx, cy + sy * t]]) R(px, py, 1, 1, P.metal[1]);
+    }
+    for (let t = 0; t < L; t++) {
+      R(cx + sx * t, cy + sy * 2, 1, 1, P.metal[0]);
+      R(cx + sx * 2, cy + sy * t, 1, 1, P.metal[0]);
+    }
+    R(cx + sx * 4, cy, 1, 1, P.metal[2]);
+    R(cx, cy + sy * 4, 1, 1, P.metal[2]);
+    R(cx + sx, cy + sy, 1, 1, P.metal[2]);
+  }
+  // usure : éclats sur le bord, quelques rayures claires
+  for (let i = 0; i < 3; i++) {
+    const ex = 10 + Math.floor(rnd(seed, i + 300) * (W - 20));
+    g.clearRect(ex, rnd(seed, i + 310) < 0.5 ? 0 : H - 1, 2, 1);
+  }
+  for (let i = 0; i < 2; i++) {
+    const sx = 12 + Math.floor(rnd(seed, i + 320) * (W - 30)), sy = 5 + Math.floor(rnd(seed, i + 330) * (H - 10));
+    for (let t = 0; t < 4; t++) R(sx + t, sy + (t >> 1), 1, 1, P.grain2);
+  }
+}
+
+const signCache = new Map();
+// Image de pancarte (URL) pour un bouton de wCss × hCss pixels CSS ; kind : 'normal' ou 'hot'.
+export function signUrl(wCss, hCss, kind = 'normal', seed = 1) {
+  const W = Math.max(16, Math.round(wCss / U)), H = Math.max(12, Math.round(hCss / U)), key = `${W}x${H}-${kind}-${seed}`;
+  if (!signCache.has(key)) {
+    const art = document.createElement('canvas');
+    art.width = W;
+    art.height = H;
+    drawSign(art.getContext('2d'), W, H, WOOD[kind], seed);
+    const k = U * DPR, big = document.createElement('canvas');
+    big.width = W * k;
+    big.height = H * k;
+    const bg = big.getContext('2d');
+    bg.imageSmoothingEnabled = false;
+    bg.drawImage(art, 0, 0, W * k, H * k);
+    signCache.set(key, `url(${big.toDataURL()})`);
+  }
+  return signCache.get(key);
+}
