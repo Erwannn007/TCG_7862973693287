@@ -626,7 +626,8 @@ function startBattle(n) {
   fitCanvas(cv, width, H, innerWidth, innerHeight, false);
   $('#b-stage').textContent = `Étape ${n} · ${st.chapter.name}`;
   battle = new Battle({
-    canvas: cv, width, team: state.team, stage: st, owned: state.owned,
+    // zoom caméra d'un pixel d'écran de plus par pixel d'art : reste net (plafonné pour les petites échelles)
+    canvas: cv, width, zoom: Math.min((s + 1) / s, 1.2), team: state.team, stage: st, owned: state.owned,
     ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
   });
@@ -701,7 +702,7 @@ function hideMenu() {
 }
 
 function buildMenu(u, title, items) {
-  const m = $('#b-menu'), cv = $('#b-canvas');
+  const m = $('#b-menu');
   m.innerHTML = '';
   m.appendChild(el('div', 'm-title', title));
   items.forEach((it, i) => {
@@ -721,8 +722,7 @@ function buildMenu(u, title, items) {
   m.classList.remove('hidden');
   sfx('menu');
   // à droite du héros (là où il s'arrête une fois avancé), centré sur lui, sans sortir de l'écran
-  const k = cv.clientWidth / battle.W;
-  const [hx, hy] = toScreen(cv, battle.W, u.cx0 + u.fxT + u.bm.w / 2, u.by - u.bm.h / 2);
+  const [hx, hy, k] = battle.screenAt(u.cx0 + u.fxT + u.bm.w / 2, u.by - u.bm.h / 2);
   const h = m.offsetHeight + 24;
   const top = Math.max(64, Math.min(innerHeight - h - 8, hy - h / 2));
   m.style.left = Math.round(hx + 6 * k + 12) + 'px';

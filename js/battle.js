@@ -16,12 +16,16 @@ const SLOT_ORDER = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const WHITE = '#ffffff';
 // Mise en scène du tour : de combien celui qui agit s'avance, et les autres de son camp reculent.
 const STEP_IN = 14, STEP_BACK = 4, DARK_MAX = 4;
+// La cible d'un coup s'avance aussi, pour un face-à-face.
+const DUEL_STEP = 8;
+// Couleur de la charge avant une compétence.
+const CHARGE = { heal: '#9af098', boss: '#ff5a4a', other: '#c08aff' };
 const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 export class Battle {
-  constructor({ canvas, ui, team, stage, owned, onEnd, width = W }) {
+  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, zoom = 1 }) {
     this.g = canvas.getContext('2d');
     this.canvas = canvas;
     this.ui = ui;
@@ -36,6 +40,12 @@ export class Battle {
     this.dark = 0;
     this.darkT = 0;
     this.fTick = 0;
+    this.duel = null;
+    this.flashT = 0;
+    // caméra : zoom (z vers zT) autour de origin ; next = prochain point visé, appliqué une fois dézoomé
+    this.zoom = zoom;
+    this.cam = { z: 1, zT: 1, origin: [width / 2, H / 2], next: null, sx: 0, sy: 0, shakeUntil: 0, amp: 0, css: '' };
+    canvas.style.transform = '';
     this.active = null;
     this.targeting = null; // ennemis ciblables pendant le choix d'une cible
     this.onTargetTap = null;
@@ -88,6 +98,7 @@ export class Battle {
     sceneAnim(this.scene, g, fstep, this.W);
     const all = [...this.heroes, ...this.enemies];
     this.spotlight(t, all);
+    this.camera(t);
     const f = this.focus;
 
     // ombres au sol
@@ -107,14 +118,15 @@ export class Battle {
 
     all.forEach((u, i) => {
       if (!u.alive && (t - u.diedAt > 700 || Math.floor(t / 90) % 2)) return;
-      const bob = u.alive && !u.stun && (step + i) % 2 ? -1 : 0;
+      // pendant la charge, il se ramasse sur lui-même (1 px plus bas)
+      const bob = u.charge ? 1 : u.alive && !u.stun && (step + i) % 2 ? -1 : 0;
       const x = u.sx + u.dx, y = u.sy + bob;
       const white = t < u.flashUntil && Math.floor(t / 80) % 2 === 0;
       g.drawImage(white ? u.flash.canvas : u.bm.canvas, x, y);
       if (u.alive) drawFx(g, u.bm, x, y, step);
       if (!u.alive) return;
       // ceux qui n'agissent pas restent dans la pénombre (sauf les cibles qu'on peut toucher)
-      if (f && u !== f && this.dark && !this.targeting?.includes(u)) {
+      if (f && u !== f && u !== this.duel && this.dark && !this.targeting?.includes(u)) {
         g.globalAlpha = this.dark * 0.09;
         g.drawImage(u.shade.canvas, x, y);
         g.globalAlpha = 1;
@@ -133,6 +145,14 @@ export class Battle {
     if (this.targeting) for (const u of this.targeting) if (u.alive) this.reticle(u, step);
 
     this.drawPuffs(t);
+    for (const u of all) if (u.charge) this.drawCharge(u, t);
+    // éclair blanc sur tout l'écran (coup critique, attaque de boss)
+    if (t - this.flashT < 70) {
+      g.globalAlpha = 0.35;
+      g.fillStyle = WHITE;
+      g.fillRect(0, 0, this.W, H);
+      g.globalAlpha = 1;
+    }
     this.floats = this.floats.filter((fl) => t - fl.t0 < 760);
     for (const fl of this.floats) {
       const rise = Math.max(0, Math.min(7, Math.floor((t - fl.t0) / 80)));
@@ -178,6 +198,73 @@ export class Battle {
     g.globalAlpha = 1;
   }
 
+  // Caméra : zoome par paliers sur celui qui agit (dézoome d'abord s'il faut changer de cible),
+  // et tremble par sauts de pixels entiers. Appliqué en transform CSS sur le canvas.
+  camera(t) {
+    const c = this.cam, k = this.canvas.clientWidth / this.W;
+    if (t - (c.tick || 0) >= 40 / this.speed) {
+      c.tick = t;
+      if (c.next && c.z === 1) {
+        c.origin = c.next;
+        c.next = null;
+        c.zT = this.zoom;
+      }
+      const dz = (this.zoom - 1) / 3;
+      if (c.z !== c.zT) c.z = Math.abs(c.zT - c.z) <= dz + 1e-6 ? c.zT : c.z + Math.sign(c.zT - c.z) * dz;
+      const on = t < c.shakeUntil;
+      c.sx = on ? Math.round((Math.random() * 2 - 1) * c.amp) : 0;
+      c.sy = on ? Math.round((Math.random() * 2 - 1) * c.amp) : 0;
+    }
+    const css = `translate(${c.sx * k}px, ${c.sy * k}px) scale(${c.z})`, org = `${c.origin[0] * k}px ${c.origin[1] * k}px`;
+    if (css + org !== c.css) {
+      c.css = css + org;
+      this.canvas.style.transformOrigin = org;
+      this.canvas.style.transform = css;
+    }
+  }
+
+  shake(amp, ms) {
+    this.cam.amp = Math.max(amp, performance.now() < this.cam.shakeUntil ? this.cam.amp : 0);
+    this.cam.shakeUntil = Math.max(this.cam.shakeUntil, performance.now() + ms / this.speed);
+  }
+
+  // Point du décor (pixels d'art) → écran (pixels CSS), une fois la caméra posée. Renvoie aussi l'échelle.
+  screenAt(x, y) {
+    const c = this.canvas, cam = this.cam, k = c.clientWidth / this.W;
+    const z = this.focus ? this.zoom : 1, [ox, oy] = cam.next || cam.origin;
+    return [c.offsetLeft + (ox + (x - ox) * z) * k, c.offsetTop + (oy + (y - oy) * z) * k, k * z];
+  }
+
+  // Étincelles qui convergent vers celui qui prépare sa compétence, en 6 paliers.
+  drawCharge(u, t) {
+    const g = this.g, p = Math.min(5, Math.floor(((t - u.charge.t0) * this.speed) / 75));
+    const cx = u.cx + u.dx, cy = u.by - (u.bm.h >> 1), r = 22 - p * 4;
+    g.fillStyle = u.charge.col;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + p * 0.25;
+      const x = Math.round(cx + Math.cos(a) * r), y = Math.round(cy + Math.sin(a) * r * 0.7);
+      g.fillRect(x, y, 2, 2);
+      g.fillStyle = WHITE;
+      g.fillRect(x, y, 1, 1);
+      g.fillStyle = u.charge.col;
+    }
+    // halo au sol qui se resserre
+    g.globalAlpha = 0.5;
+    const w = u.bm.w + 12 - p * 2;
+    g.fillRect(u.cx - (w >> 1), u.by - 1, w, 1);
+    g.globalAlpha = 1;
+  }
+
+  // Pose de préparation : il se ramasse, la magie converge, puis il s'illumine.
+  async charge(u, col) {
+    u.charge = { t0: performance.now(), col };
+    sfx('charge');
+    await this.wait(450);
+    u.charge = null;
+    u.flashUntil = performance.now() + 160 / this.speed;
+    this.shake(1, 120);
+  }
+
   // Met un combattant en avant : il passe devant toute sa ligne, ses alliés reculent d'un pas.
   setFocus(u) {
     this.focus = u;
@@ -187,6 +274,9 @@ export class Battle {
     for (const v of [...this.heroes, ...this.enemies]) {
       v.fxT = !u ? 0 : v === u ? front + STEP_IN * dir - v.cx0 : v.side === u.side ? -STEP_BACK * dir : 0;
     }
+    // la caméra dézoome, puis vise celui qui s'avance
+    this.cam.zT = 1;
+    this.cam.next = u ? [u.cx0 + u.fxT, u.by - (u.bm.h >> 1)] : null;
     if (u) this.puffs.push({ x: u.cx, y: u.by, dir: u.side === 'h' ? 1 : -1, t0: performance.now() });
   }
 
@@ -289,6 +379,7 @@ export class Battle {
     this.stopped = true;
     this.over = true;
     cancelAnimationFrame(this.raf);
+    this.canvas.style.transform = '';
     if (this.resolveChoice) this.resolveChoice(null);
   }
 
@@ -412,6 +503,7 @@ export class Battle {
   async useSkill(u, target) {
     const s = u.skill, foes = this.alive('e');
     this.log(`${u.name} : ${s.name} !`);
+    await this.charge(u, s.kind === 'heal' ? CHARGE.heal : CHARGE.other);
     sfx(s.kind === 'heal' ? 'heal' : 'skill');
     if (s.kind === 'heal') {
       await this.lunge(u);
@@ -422,13 +514,16 @@ export class Battle {
       }
       await this.wait(500);
     } else if (s.kind === 'all') {
-      await this.lunge(u, () => foes.forEach((f) => this.hit(u, f, s.mult)));
+      await this.lunge(u, () => {
+        this.shake(2, 300);
+        foes.forEach((f) => this.hit(u, f, s.mult));
+      });
       await this.wait(400);
     } else if (s.kind === 'multi') {
       for (let i = 0; i < s.hits; i++) {
         const live = this.alive('e');
         if (!live.length) break;
-        await this.strike(u, rand(live), s.mult);
+        await this.strike(u, rand(live), s.mult, false);
       }
     } else {
       const t = target && target.alive ? target : foes[0];
@@ -441,9 +536,14 @@ export class Battle {
     const heroes = this.alive('h');
     if (u.boss && this.turns % u.boss.every === 0) {
       this.log(`${u.name} : ${u.boss.name} !`);
+      await this.charge(u, CHARGE.boss);
       sfx('boom');
       haptic(60);
-      await this.lunge(u, () => heroes.forEach((h) => this.hit(u, h, u.boss.mult)));
+      await this.lunge(u, () => {
+        this.shake(3, 450);
+        this.flashT = performance.now();
+        heroes.forEach((h) => this.hit(u, h, u.boss.mult));
+      });
       await this.wait(400);
       return;
     }
@@ -465,9 +565,19 @@ export class Battle {
     u.dx = 0;
   }
 
-  async strike(a, d, mult) {
+  // Un coup : la cible s'avance face à l'attaquant (sauf en rafale), il frappe, chacun reprend sa place.
+  async strike(a, d, mult, duel = true) {
+    if (duel && d.alive) {
+      this.duel = d;
+      d.fxT = (d.side === 'h' ? 1 : -1) * DUEL_STEP;
+      await this.wait(140);
+    }
     await this.lunge(a, () => this.hit(a, d, mult));
     await this.wait(350);
+    if (this.duel === d) {
+      this.duel = null;
+      d.fxT = 0;
+    }
   }
 
   hit(a, d, mult) {
@@ -480,6 +590,8 @@ export class Battle {
     d.hp = Math.max(0, d.hp - v);
     d.flashUntil = performance.now() + 320 / this.speed;
     this.float(d, crit ? v + '!' : String(v), crit ? '#fbe08a' : WHITE);
+    this.shake(crit ? 2 : 1, crit ? 260 : 120);
+    if (crit) this.flashT = performance.now();
     sfx(d.side === 'h' ? 'hurt' : crit ? 'crit' : 'hit');
     if (d.hp === 0) {
       d.alive = false;

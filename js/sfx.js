@@ -109,6 +109,8 @@ const SOUNDS = {
   // un pas en avant sous le projecteur : souffle court + deux notes qui montent (ou descendent pour l'ennemi)
   focus: () => { whoosh(0.22, 500, 2200, 0.9); tone(N.G4, 0.05, 0.03, 'square', 0.35); tone(N.C5, 0.08, 0.08, 'square', 0.35); },
   focusFoe: () => { whoosh(0.22, 1600, 300, 0.9); tone(N.E4, 0.05, 0.03, 'square', 0.35); tone(196, 0.1, 0.08, 'square', 0.35); },
+  // charge d'une compétence : souffle qui monte et note qui grimpe
+  charge: () => { whoosh(0.42, 300, 2600, 0.9); tone(220, 0.4, 0, 'square', 0.3, 880); },
   // les actions apparaissent une à une
   menu: () => [N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.04, 0.05 + i * 0.07, 'triangle', 0.5)),
 };
