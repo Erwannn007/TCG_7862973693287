@@ -34,7 +34,8 @@ export const HEROES = {
   //   heal (toute l'équipe), heal1 (l'allié le plus blessé), shield (bouclier : mult × ATQ, turns),
   //   buff { atk, turns } (ATQ de l'équipe en plus), taunt (attire les coups, turns),
   //   revive (relève un allié tombé avec pct de ses PV ; sinon soigne le plus blessé de mult × ATQ)
-  //   en plus, sur une compétence de soutien : heal (soin de heal × ATQ sur les alliés touchés)
+  //   en plus : heal (soin de heal × ATQ sur les alliés touchés, ou sur toute l'équipe après une attaque « all »),
+  //   taunt (tours de provocation pour le lanceur, sur une compétence de soutien)
   //   ico : icône de la compétence (js/ui-art.js)
   brann: {
     name: 'Brann', cls: 'Chevalier', rarity: 'C', hp: 150, atk: 16, def: 14, spd: 8,
@@ -155,6 +156,86 @@ export const HEROES = {
   sybil: {
     name: 'Sybil', cls: 'Voyante', rarity: 'L', hp: 100, atk: 26, def: 8, spd: 14,
     skill: { name: 'Prophétie', desc: 'ATQ de l’équipe +40 % 2 tours et soin (80 % ATQ).', cd: 4, kind: 'buff', atk: 0.4, turns: 2, heal: 0.8, ico: 'eye' },
+  },
+  grumli: {
+    name: 'Grumli', cls: 'Nain', rarity: 'C', hp: 160, atk: 15, def: 15, spd: 7,
+    skill: { name: 'Mur de pierre', desc: 'Attire tous les coups 2 tours et se soigne (120 % ATQ).', cd: 3, kind: 'taunt', turns: 2, heal: 1.2, ico: 'anvil' },
+  },
+  spike: {
+    name: 'Spike', cls: 'Homme cactus', rarity: 'C', hp: 120, atk: 19, def: 11, spd: 8,
+    skill: { name: 'Pluie d’épines', desc: '60 % sur tous les ennemis, saignement 2 tours.', cd: 3, kind: 'all', mult: 0.6, dot: { type: 'bleed', mult: 0.25, turns: 2 }, ico: 'cactus' },
+  },
+  bip: {
+    name: 'Bip', cls: 'Robot', rarity: 'C', hp: 105, atk: 21, def: 10, spd: 11,
+    skill: { name: 'Mitraille', desc: '4 tirs de 50 % sur des ennemis au hasard.', cd: 2, kind: 'multi', mult: 0.5, hits: 4, ico: 'robot' },
+  },
+  lulu: {
+    name: 'Lulu', cls: 'Boulangère', rarity: 'C', hp: 100, atk: 18, def: 7, spd: 12,
+    skill: { name: 'Pain chaud', desc: 'Soigne l’allié le plus blessé (220 % ATQ).', cd: 2, kind: 'heal1', mult: 2.2, ico: 'bread' },
+  },
+  djmax: {
+    name: 'DJ Max', cls: 'DJ', rarity: 'C', hp: 95, atk: 19, def: 7, spd: 13,
+    skill: { name: 'Le drop', desc: 'ATQ de l’équipe +25 % 2 tours et soin (40 % ATQ).', cd: 3, kind: 'buff', atk: 0.25, turns: 2, heal: 0.4, ico: 'disc' },
+  },
+  pablo: {
+    name: 'Pablo', cls: 'Facteur', rarity: 'C', hp: 100, atk: 21, def: 7, spd: 14,
+    skill: { name: 'Courrier express', desc: '3 lettres de 65 % sur des ennemis au hasard.', cd: 2, kind: 'multi', mult: 0.65, hits: 3, ico: 'letter' },
+  },
+  bob: {
+    name: 'Bob', cls: 'Zombie', rarity: 'C', hp: 130, atk: 20, def: 6, spd: 7,
+    skill: { name: 'Morsure contagieuse', desc: '130 % sur une cible, poison 3 tours.', cd: 3, kind: 'single', mult: 1.3, dot: { type: 'poison', mult: 0.4, turns: 3 }, ico: 'brain' },
+  },
+  zip: {
+    name: 'Zip', cls: 'Skateur', rarity: 'C', hp: 95, atk: 22, def: 6, spd: 17,
+    skill: { name: 'Ollie', desc: '140 % sur une cible, son ATQ −30 % 2 tours.', cd: 2, kind: 'single', mult: 1.4, weaken: { atk: 0.3, turns: 2 }, ico: 'skate' },
+  },
+  rexy: {
+    name: 'Rexy', cls: 'Enfant dino', rarity: 'C', hp: 110, atk: 21, def: 8, spd: 11,
+    skill: { name: 'Croc-croc', desc: '150 % sur une cible, rend 40 % des dégâts en PV.', cd: 3, kind: 'single', mult: 1.5, drain: 0.4, ico: 'dino' },
+  },
+  leo: {
+    name: 'Léo', cls: 'Homme-lion', rarity: 'R', hp: 130, atk: 25, def: 10, spd: 12,
+    skill: { name: 'Rugissement', desc: '80 % sur tous les ennemis, leur ATQ −25 % 2 tours.', cd: 3, kind: 'all', mult: 0.8, weaken: { atk: 0.25, turns: 2 }, ico: 'lion' },
+  },
+  tonnerre: {
+    name: 'Tonnerre', cls: 'Super-héros', rarity: 'R', hp: 110, atk: 27, def: 9, spd: 15,
+    skill: { name: 'Éclairs en chaîne', desc: '4 éclairs de 60 % sur des ennemis au hasard.', cd: 3, kind: 'multi', mult: 0.6, hits: 4, ico: 'bolt' },
+  },
+  ramses: {
+    name: 'Ramsès', cls: 'Pharaon momie', rarity: 'R', hp: 120, atk: 24, def: 10, spd: 9,
+    skill: { name: 'Bandelettes', desc: '140 % sur une cible et l’étourdit 2 tours.', cd: 4, kind: 'single', mult: 1.4, stun: 2, ico: 'mummy' },
+  },
+  elixa: {
+    name: 'Elixa', cls: 'Alchimiste', rarity: 'R', hp: 100, atk: 23, def: 8, spd: 12,
+    skill: { name: 'Élixir', desc: 'Bouclier sur l’équipe (120 % ATQ) 2 tours et soin (50 % ATQ).', cd: 3, kind: 'shield', mult: 1.2, turns: 2, heal: 0.5, ico: 'potion' },
+  },
+  mako: {
+    name: 'Mako', cls: 'Homme-requin', rarity: 'R', hp: 115, atk: 28, def: 8, spd: 13,
+    skill: { name: 'Frénésie des abysses', desc: '150 % sur une cible, double sous 50 % de PV, saignement 2 tours.', cd: 3, kind: 'single', mult: 1.5, exec: 0.5, dot: { type: 'bleed', mult: 0.3, turns: 2 }, ico: 'shark' },
+  },
+  pixel: {
+    name: 'Pixel', cls: 'Hackeuse', rarity: 'R', hp: 90, atk: 28, def: 6, spd: 15,
+    skill: { name: 'Piratage', desc: '3 attaques de 60 % au hasard, ignorent la DÉF.', cd: 2, kind: 'multi', mult: 0.6, hits: 3, pierce: true, ico: 'chip' },
+  },
+  lumi: {
+    name: 'Lumi', cls: 'Chevalière au sabre', rarity: 'R', hp: 105, atk: 28, def: 8, spd: 14,
+    skill: { name: 'Sabre de lumière', desc: '3 coups de 75 % sur des ennemis au hasard.', cd: 3, kind: 'multi', mult: 0.75, hits: 3, ico: 'saber' },
+  },
+  kero: {
+    name: 'Kero', cls: 'Grenouille ninja', rarity: 'R', hp: 100, atk: 26, def: 7, spd: 16,
+    skill: { name: 'Langue venimeuse', desc: '150 % sur une cible, poison 3 tours.', cd: 3, kind: 'single', mult: 1.5, dot: { type: 'poison', mult: 0.45, turns: 3 }, ico: 'frog' },
+  },
+  atlas: {
+    name: 'Atlas', cls: 'Méca-gardien', rarity: 'L', hp: 170, atk: 22, def: 16, spd: 8,
+    skill: { name: 'Protocole forteresse', desc: 'Bouclier sur l’équipe (200 % ATQ) 3 tours, attire les coups 2 tours.', cd: 4, kind: 'shield', mult: 2, turns: 3, taunt: 2, ico: 'mech' },
+  },
+  pyra: {
+    name: 'Pyra', cls: 'Phénix', rarity: 'L', hp: 115, atk: 31, def: 9, spd: 15,
+    skill: { name: 'Renaissance', desc: '100 % sur tous, brûlure 2 tours, puis soigne l’équipe (60 % ATQ).', cd: 4, kind: 'all', mult: 1, dot: { type: 'burn', mult: 0.4, turns: 2 }, heal: 0.6, ico: 'phoenix' },
+  },
+  mortis: {
+    name: 'Mortis', cls: 'Roi-liche', rarity: 'L', hp: 125, atk: 32, def: 10, spd: 11,
+    skill: { name: 'Hiver éternel', desc: '100 % sur tous, ATQ −30 % 2 tours, rend 20 % des dégâts en PV.', cd: 4, kind: 'all', mult: 1, weaken: { atk: 0.3, turns: 2 }, drain: 0.2, ico: 'crown' },
   },
 };
 export const HERO_IDS = Object.keys(HEROES);

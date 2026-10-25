@@ -69,8 +69,28 @@ mode infini rapporte de l'or et de l'XP.
 | Zara | Danseuse | Rare | soutien | **Danse des sabres** : ATQ de l'équipe +40 %, 2 tours |
 | Kitsune | Renarde à neuf queues | Légendaire | rafale + brûlure | **Feux follets** : 5 × 55 % au hasard + brûlure 2 tours |
 | Sybil | Voyante | Légendaire | soutien | **Prophétie** : ATQ de l'équipe +40 % 2 tours + soin (80 % ATQ) |
+| Grumli | Nain | Commune | tank | **Mur de pierre** : provocation 2 tours + se soigne (120 % ATQ) |
+| Spike | Homme cactus | Commune | saignement de zone | **Pluie d'épines** : 60 % sur tous + saignement 2 tours |
+| Bip | Robot | Commune | rafale | **Mitraille** : 4 × 50 % au hasard |
+| Lulu | Boulangère | Commune | soin | **Pain chaud** : soigne l'allié le plus blessé (220 % ATQ) |
+| DJ Max | DJ | Commune | soutien | **Le drop** : ATQ de l'équipe +25 % 2 tours + soin (40 % ATQ) |
+| Pablo | Facteur | Commune | rafale à distance | **Courrier express** : 3 × 65 % au hasard |
+| Bob | Zombie | Commune | poison | **Morsure contagieuse** : 130 % + poison 3 tours |
+| Zip | Skateur | Commune | affaiblissement | **Ollie** : 140 %, ATQ de la cible −30 % 2 tours |
+| Rexy | Enfant dino | Commune | vol de vie | **Croc-croc** : 150 %, rend 40 % en PV |
+| Léo | Homme-lion | Rare | affaiblissement de zone | **Rugissement** : 80 % sur tous, ATQ −25 % 2 tours |
+| Tonnerre | Super-héros | Rare | rafale | **Éclairs en chaîne** : 4 × 60 % au hasard |
+| Ramsès | Pharaon momie | Rare | contrôle | **Bandelettes** : 140 % + étourdit 2 tours |
+| Elixa | Alchimiste | Rare | bouclier + soin | **Élixir** : bouclier (120 % ATQ) 2 tours + soin (50 % ATQ) |
+| Mako | Homme-requin | Rare | exécution | **Frénésie des abysses** : 150 %, double sous 50 % + saignement |
+| Pixel | Hackeuse | Rare | perce-armure | **Piratage** : 3 × 60 % au hasard, ignore la DÉF |
+| Lumi | Chevalière au sabre | Rare | rafale | **Sabre de lumière** : 3 × 75 % au hasard |
+| Kero | Grenouille ninja | Rare | poison | **Langue venimeuse** : 150 % + poison 3 tours |
+| Atlas | Méca-gardien | Légendaire | tank + bouclier | **Protocole forteresse** : bouclier (200 % ATQ) 3 tours + provocation 2 tours |
+| Pyra | Phénix | Légendaire | zone + soin | **Renaissance** : 100 % sur tous + brûlure, puis soigne l'équipe (60 % ATQ) |
+| Mortis | Roi-liche | Légendaire | zone + vol de vie | **Hiver éternel** : 100 % sur tous, ATQ −30 % 2 tours, rend 20 % en PV |
 
-Objectif : **55 héros** (5 + 50 nouveaux, 25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
+**55 héros** : les 5 premiers + 50 nouveaux (25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
 
 **Statuts de combat** (comptés en tours de celui qui les porte, ils s'usent à la fin de son tour) :
 poison, brûlure, saignement (dégâts au début de son tour, sans tenir compte de la DÉF ; un même

@@ -158,6 +158,26 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Zara**, danseuse | bandeau de pièces, queue de cheval au vent | voile, ventre nu, ceinture de pièces | cimeterre à droite, foulard à gauche |
 | **Kitsune**, renarde à neuf queues | oreilles de renard | queues en éventail (plus nombreuses au rang 3), kimono blanc et rouge | feux follets bleus qui flottent |
 | **Sybil**, voyante | turban à joyau | cheveux noirs, anneaux d'or, châle étoilé | boule de cristal qui flotte, à droite |
+| **Grumli**, nain | casque rond à plaques d'oreilles | immense barbe à deux tresses et anneaux d'or, gros sourcils | marteau à tête d'enclume, à gauche |
+| **Spike**, homme cactus | sombrero à fleur rose | peau de cactus à épines, poncho rayé, bras de cactus | maraca à droite |
+| **Bip**, robot | tête-boîte à antenne | yeux lumineux, boulons, écran sur la poitrine | bras-blaster à droite |
+| **Lulu**, boulangère | foulard rouge noué | cheveux blonds bouclés, tablier enfariné | longue baguette à gauche, miche à droite |
+| **DJ Max**, DJ | casque audio, casquette à l'envers | chaîne en or, sweat noir, un point néon | vinyle à droite |
+| **Pablo**, facteur | casquette à bandeau jaune | moustache, bandoulière, sacoche à lettre | lettre levée (bras droit) |
+| **Bob**, zombie | cheveux en bataille | peau verte, cicatrice cousue, chemise déchirée | bras tendu vers l'avant |
+| **Zip**, skateur | casquette à l'envers | mèches blondes, sweat vert, genouillères | planche de skate debout à gauche |
+| **Rexy**, enfant dino | capuche de dino à dents | crête orange, ventre jaune | grosse queue à gauche |
+| **Léo**, homme-lion | crinière immense, oreilles rondes | museau clair, armure royale bleue | griffes de métal à droite |
+| **Tonnerre**, super-héros | banane, loup jaune | éclair sur la poitrine, cape violette | éclair qui crépite au-dessus de la main |
+| **Ramsès**, pharaon momie | coiffe rayée bleu et or | bandelettes, collier d'or, bandelette qui flotte | sceptre ânkh à droite |
+| **Elixa**, alchimiste | cheveux roses bouffants | lunettes de laiton relevées, ceinture de fioles | fiole ronde qui bouillonne, à droite |
+| **Mako**, homme-requin | aileron dorsal | dents pointues, ouïes, short orange | trident à droite |
+| **Pixel**, hackeuse | carré violet à mèche | visière lumineuse, câble | ordinateur portable ouvert, à gauche |
+| **Lumi**, chevalière au sabre | chignon | tunique croisée, cape de bure | sabre de lumière vert, à droite |
+| **Kero**, grenouille ninja | gros yeux sur le dessus | bandeau rouge aux pans flottants | shuriken à droite |
+| **Atlas**, méca-gardien | aileron d'or en V | visage-écran aux yeux cyan, grosses épaulières, réacteur | bouclier d'énergie à gauche, canon à droite |
+| **Pyra**, phénix | ailes de flammes déployées | cheveux de plumes de feu, robe rouge | ses ailes |
+| **Mortis**, roi-liche | couronne de glace | crâne aux yeux cyan, capuche, givre | bâton au crâne gelé, à droite |
 
 Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `js/chibi.js`).
 
@@ -249,6 +269,26 @@ arrivant) et ses sons.
 | Zara | cimeterre doré | **Danse des sabres** : foulards qui tournoient, flèches d'or | turquoise et or |
 | Kitsune | feu follet qui ondule | **Feux follets** : feux follets et anneaux | bleu |
 | Sybil | boule de cristal, étoiles | **Prophétie** : un œil d'or s'ouvre sur chaque allié | violet et or |
+| Grumli | la masse s'abat | **Mur de pierre** : un rempart de pierre sort du sol | orange |
+| Spike | épines qui filent | **Pluie d'épines** : gerbes d'épines, gouttes de sang | vert |
+| Bip | tir de blaster | **Mitraille** : tirs et étoiles d'impact | cyan |
+| Lulu | coup de baguette, miettes | **Pain chaud** : une miche dorée descend, cœurs | pain |
+| DJ Max | vinyle qui tourne | **Le drop** : ondes de basse, notes, flèches d'or | rose et cyan |
+| Pablo | lettre qui tournoie | **Courrier express** : lettres et étoiles | jaune |
+| Bob | griffure | **Morsure contagieuse** : bave verte qui coule | vert |
+| Zip | coup de planche | **Ollie** : la planche retombe, étoiles | orange |
+| Rexy | mâchoire de dino | **Croc-croc** : grosse mâchoire, des cœurs reviennent vers lui | vert |
+| Léo | trois griffures | **Rugissement** : ondes de choc vers les ennemis | or |
+| Tonnerre | éclair en zigzag | **Éclairs en chaîne** : la foudre tombe du ciel | jaune et violet |
+| Ramsès | bandelette qui fouette | **Bandelettes** : elles s'enroulent autour de la cible | sable |
+| Elixa | fiole qui éclate | **Élixir** : potions sur l'équipe, voile protecteur | orange |
+| Mako | trident | **Frénésie des abysses** : un aileron tourne, la mâchoire surgit | bleu |
+| Pixel | flot de bits | **Piratage** : carrés de bug qui clignotent | vert et cyan |
+| Lumi | coup de sabre lumineux | **Sabre de lumière** : le sabre lancé tourne et revient | vert |
+| Kero | shuriken | **Langue venimeuse** : longue langue, gouttes de poison | acier |
+| Atlas | roquette | **Protocole forteresse** : dôme hexagonal sur chaque allié | cyan |
+| Pyra | plume enflammée | **Renaissance** : un oiseau de feu traverse les ennemis | feu |
+| Mortis | orbe de glace à tête de mort | **Hiver éternel** : blizzard, pics de glace | glace |
 | (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 

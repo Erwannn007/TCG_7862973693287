@@ -766,6 +766,7 @@ export class Battle {
       await this.wait(600);
       this.shake(2, 300);
       foes.forEach((f) => this.hit(u, f, s.mult, s));
+      if (s.heal) for (const h of this.alive('h')) this.heal(u, h, atkOf(u) * s.heal); // ex. Renaissance du phénix
       await fxp;
       u.pose = null;
       await this.wait(250);

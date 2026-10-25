@@ -1145,6 +1145,389 @@ Object.assign(FX, {
       }
     }
   },
+  // --- Grumli : un rempart de pierre sort du sol devant lui
+  stoneWall(g, q, e) {
+    const d = e.d[0] || { tx: e.x, ty: e.y };
+    for (let i = 0; i < 4; i++) {
+      const h = Math.max(0, Math.min(5, Math.round(q * 20) - i * 2)), x = d.tx + 10 + (i % 2) * 3, y = d.ty + 10 - i * 5;
+      if (!h) continue;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 4, y - h - 1, 9, h + 2);
+      g.fillStyle = i % 2 ? '#8a8478' : '#a8a090';
+      g.fillRect(Math.round(x) - 3, y - h, 7, h);
+      px(g, x - 3, y - h, '#c8c0b0');
+    }
+    ring(g, d.tx, d.ty, q, e.cols[0], 16);
+  },
+  // --- Spike : épines qui filent
+  thorns(g, q, e) {
+    for (let i = 0; i < 3; i++) {
+      const k = Math.min(1, q * 1.3 - i * 0.12);
+      if (k <= 0 || k >= 1) continue;
+      const x = lerp(e.x + 8 * e.dir, e.tx, k), y = lerp(e.y - 4 + i * 3, e.ty - 3 + i * 3, k);
+      for (let j = 0; j < 4; j++) px(g, x - j * e.dir, y, j === 0 ? '#ffffff' : e.cols[1]);
+    }
+    if (q > 0.8) burst(g, e.tx, e.ty, (q - 0.8) / 0.2, e.cols, 6);
+  },
+  // Pluie d'épines : une gerbe d'épines tombe sur chaque ennemi
+  needleRain(g, q, e) {
+    for (const [i, d] of e.d.entries()) for (let j = 0; j < 5; j++) {
+      const k = Math.max(0, Math.min(1, q * 1.6 - i * 0.12 - j * 0.08));
+      if (k <= 0 || k >= 1) continue;
+      const x = d.tx - 8 + j * 4 + (1 - k) * 8, y = lerp(-6, d.ty + 2, k);
+      for (let t = 0; t < 4; t++) px(g, x + t, y - t * 2, t === 0 ? '#ffffff' : e.cols[1]);
+    }
+    if (q > 0.7) for (const d of e.d) drops(g, d.tx, d.ty, (q - 0.7) / 0.3, '#e2334a', 3);
+  },
+  // --- Bip : tir de blaster
+  blaster(g, q, e) {
+    const x = lerp(e.x + 10 * e.dir, e.tx, q), y = lerp(e.y + 2, e.ty, q);
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 2, 7, 4);
+    g.fillStyle = e.cols[0];
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 1, 5, 2);
+    px(g, x + e.dir, y - 1, '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 5);
+  },
+  blasterHit(g, q, e) {
+    FX.blaster(g, Math.min(1, q * 1.3), e);
+    if (q > 0.75) star(g, e.tx, e.ty, (q - 0.75) / 0.25, e.cols, 5);
+  },
+  // --- Lulu : coup de baguette
+  baguette(g, q, e) {
+    if (q < 0.45) {
+      const a = lerp(-2.2, 0.3, q / 0.45), L = 14;
+      for (let i = 0; i < L; i++) px(g, e.tx - 6 * e.dir + Math.cos(a) * i * e.dir, e.ty + Math.sin(a) * i, i % 4 === 2 ? '#a8702a' : '#d8a050', 2);
+    } else {
+      star(g, e.tx, e.ty - 2, (q - 0.45) / 0.55, ['#fbe08a', '#ffffff'], 6);
+      for (let i = 0; i < 4; i++) px(g, e.tx - 6 + i * 4, e.ty - 6 + (q - 0.45) * 12 + (i % 2) * 2, '#f2ead6');
+    }
+  },
+  // Pain chaud : une miche dorée descend sur l'allié, vapeur et cœurs
+  bread(g, q, e) {
+    const d = e.d[0];
+    if (!d) return;
+    const y = q < 0.4 ? lerp(d.ty - 26, d.ty - 14, q / 0.4) : d.ty - 14;
+    if (q < 0.85) {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(d.tx) - 6, Math.round(y) - 3, 13, 7);
+      g.fillStyle = '#d8a050';
+      g.fillRect(Math.round(d.tx) - 5, Math.round(y) - 2, 11, 5);
+      g.fillStyle = '#f0d8a0';
+      g.fillRect(Math.round(d.tx) - 4, Math.round(y), 9, 1);
+      px(g, d.tx - 4, y - 2, '#ffffff');
+      for (let i = 0; i < 3; i++) px(g, d.tx - 3 + i * 3, y - 5 - Math.round(((q * 3 + i * 0.3) % 1) * 5), '#f2ead6');
+    }
+    for (let i = 0; i < 3; i++) {
+      const t = (q * 1.3 + i * 0.3) % 1;
+      if (q > 0.3) heart(g, d.tx - 8 + i * 8, d.ty + 6 - t * 18, '#e2334a');
+    }
+  },
+  // --- DJ Max : un vinyle file en tournant
+  vinyl(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 2, e.ty, q) - Math.sin(q * Math.PI) * 6, f = Math.round(q * 12) % 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    g.fillStyle = '#1a1a22';
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+    px(g, x, y, e.cols[0]);
+    px(g, x + (f ? -2 : 2), y - 2, '#5a5a6a');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Le drop : des ondes de basse sur chaque allié, notes et flèches d'or
+  drop(g, q, e) {
+    for (const d of e.d) {
+      ring(g, d.tx, d.ty + 8, (q * 2) % 1, e.cols[0], 14);
+      ring(g, d.tx, d.ty + 8, (q * 2 + 0.5) % 1, e.cols[1], 14);
+      if (q > 0.3) note(g, d.tx + 8, d.ty - 2 - Math.round((q - 0.3) * 18), e.cols[0]);
+      if (q > 0.5) {
+        const y = d.ty - 12 - Math.round((q - 0.5) * 12);
+        for (const [dx, dy] of [[0, 0], [-1, 1], [1, 1], [-2, 2], [2, 2], [0, 1], [0, 2], [0, 3]]) px(g, d.tx + dx, y + dy, dy === 0 ? '#ffffff' : '#fbe08a');
+      }
+    }
+  },
+  // --- Pablo : une lettre file en tournoyant
+  letter(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 10, e.ty, q) - Math.sin(q * Math.PI) * 8, f = Math.round(q * 10) % 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 4, Math.round(y) - (f ? 3 : 2), 9, f ? 6 : 5);
+    g.fillStyle = '#f2eef4';
+    g.fillRect(Math.round(x) - 3, Math.round(y) - (f ? 2 : 1), 7, f ? 4 : 3);
+    px(g, x, y, '#d83a3a');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  parcel(g, q, e) {
+    FX.letter(g, Math.min(1, q * 1.3), e);
+    if (q > 0.75) star(g, e.tx, e.ty, (q - 0.75) / 0.25, e.cols, 6);
+  },
+  // --- Bob : griffure molle, morsure qui contamine
+  scratch(g, q, e) {
+    FX.claw(g, q, e);
+  },
+  infect(g, q, e) {
+    if (q < 0.5) FX.claw(g, q * 1.6, e);
+    else {
+      const k = (q - 0.5) / 0.5;
+      for (let i = 0; i < 6; i++) px(g, e.tx - 6 + i * 2.5, e.ty - 8 + Math.sin(i + k * 6) * 2 - k * 6, i % 2 ? e.cols[0] : e.cols[1], 2);
+      drops(g, e.tx, e.ty, k, e.cols[0], 4);
+    }
+  },
+  // --- Zip : coup de planche
+  kickflip(g, q, e) {
+    if (q < 0.5) {
+      const k = q / 0.5, y = e.ty + 6 - Math.sin(k * Math.PI) * 10;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(e.tx) - 7, Math.round(y) - 2, 15, 4);
+      g.fillStyle = Math.round(k * 6) % 2 ? e.cols[0] : '#2a2234';
+      g.fillRect(Math.round(e.tx) - 6, Math.round(y) - 1, 13, 2);
+    } else star(g, e.tx, e.ty, (q - 0.5) * 2, e.cols, 6);
+  },
+  // Ollie : il saute et retombe planche la première, étoiles
+  ollie(g, q, e) {
+    if (q < 0.5) {
+      const k = q / 0.5, y = lerp(e.ty - 24, e.ty - 2, k);
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(e.tx) - 8, Math.round(y) - 2, 17, 5);
+      g.fillStyle = e.cols[0];
+      g.fillRect(Math.round(e.tx) - 7, Math.round(y) - 1, 15, 2);
+      px(g, e.tx - 5, y + 2, '#f2eef4'); px(g, e.tx + 5, y + 2, '#f2eef4');
+    } else {
+      const k = (q - 0.5) / 0.5;
+      star(g, e.tx, e.ty, k, e.cols, 10);
+      dizzy(g, e.tx, e.ty, q, '#fbe08a', 3);
+    }
+  },
+  // --- Rexy : une mâchoire de dino se referme
+  chomp(g, q, e) {
+    const o = q < 0.5 ? Math.round((1 - q / 0.5) * 6) : 0;
+    if (q > 0.85) return;
+    for (const s of [-1, 1]) {
+      const y = e.ty + s * (o + 2);
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(e.tx) - 7, y - 2, 15, 4);
+      g.fillStyle = e.cols[0];
+      g.fillRect(Math.round(e.tx) - 6, y - 1, 13, 2);
+      for (let x = -5; x <= 5; x += 3) px(g, e.tx + x, y - s * 2, '#ffffff');
+    }
+    if (q > 0.5) star(g, e.tx, e.ty, (q - 0.5) * 2, e.cols, 6);
+  },
+  bigChomp(g, q, e) {
+    FX.chomp(g, Math.min(1, q * 1.4), e);
+    if (q > 0.55) for (let i = 0; i < 3; i++) {
+      const t = Math.max(0, Math.min(1, (q - 0.55) / 0.45 * 1.3 - i * 0.1));
+      heart(g, lerp(e.tx, e.x, t), lerp(e.ty, e.y, t) - Math.sin(t * Math.PI) * 8, '#e2334a');
+    }
+  },
+  // --- Léo : trois griffures dorées
+  claws(g, q, e) {
+    if (q > 0.85) return;
+    for (let s = 0; s < 3; s++) {
+      const k = Math.min(1, q * 2.5 - s * 0.25);
+      for (let i = 0; i < 14 * k; i++) px(g, e.tx - 6 + s * 5 - i * 0.4 * e.dir, e.ty - 8 + i, i > 14 * k - 3 ? '#ffffff' : e.cols[0], i % 3 ? 1 : 2);
+    }
+  },
+  // Rugissement : des ondes de choc partent de lui et secouent chaque ennemi
+  roarWave(g, q, e) {
+    for (let i = 0; i < 3; i++) {
+      const k = Math.max(0, Math.min(1, q * 1.4 - i * 0.15)), x = lerp(e.x + 10 * e.dir, e.x + 120 * e.dir, k);
+      for (let a = -60; a <= 60; a += 10) {
+        const rad = (a * Math.PI) / 180, r = 6 + i * 3;
+        px(g, x + Math.cos(rad) * r * e.dir, e.y + Math.sin(rad) * r * 1.4, i === 0 ? '#ffffff' : e.cols[i % 2]);
+      }
+    }
+    if (q > 0.6) for (const d of e.d) burst(g, d.tx, d.ty, (q - 0.6) / 0.4, e.cols, 9);
+  },
+  // --- Tonnerre : un éclair en zigzag part de sa main
+  zapBolt(g, q, e) {
+    if (q > 0.7) return burst(g, e.tx, e.ty, (q - 0.7) / 0.3, e.cols, 7);
+    const x0 = e.x + 8 * e.dir, y0 = e.y - 10, L = Math.min(1, q * 2.5), n = 10;
+    let px0 = x0, py0 = y0;
+    for (let i = 1; i <= n * L; i++) {
+      const t = i / n, x = lerp(x0, e.tx, t), y = lerp(y0, e.ty, t) + (i % 2 ? 3 : -3);
+      for (let k = 0; k <= 4; k++) px(g, lerp(px0, x, k / 4), lerp(py0, y, k / 4), k % 2 ? e.cols[0] : '#ffffff');
+      px0 = x; py0 = y;
+    }
+  },
+  // Éclair en chaîne : la foudre tombe du ciel sur la cible
+  chain(g, q, e) {
+    if (q < 0.55) {
+      let x = e.tx + 6, y = -4;
+      while (y < e.ty) {
+        const nx = e.tx + ((Math.round(y + q * 30) % 3) - 1) * 4, ny = y + 6;
+        for (let k = 0; k <= 4; k++) px(g, lerp(x, nx, k / 4), lerp(y, ny, k / 4), k % 2 ? e.cols[0] : '#ffffff', 2);
+        x = nx; y = ny;
+      }
+    } else {
+      const k = (q - 0.55) / 0.45;
+      star(g, e.tx, e.ty, k, e.cols, 10);
+      ring(g, e.tx, e.ty + 8, k, e.cols[1], 14);
+    }
+  },
+  // --- Ramsès : une bandelette fouette la cible
+  wrap(g, q, e) {
+    const k = Math.min(1, q * 1.6), L = 20;
+    for (let i = 0; i < L * k; i++) {
+      const t = i / L;
+      px(g, lerp(e.x + 8 * e.dir, e.tx, t), lerp(e.y - 4, e.ty, t) + Math.sin(t * 9 + q * 8) * 2, i % 3 ? e.cols[0] : '#c8b898', 2);
+    }
+    if (q > 0.7) burst(g, e.tx, e.ty, (q - 0.7) / 0.3, e.cols, 6);
+  },
+  // Bandelettes : elles s'enroulent autour de la cible, sable et étoiles
+  mummify(g, q, e) {
+    const n = Math.min(5, Math.round(q * 9));
+    for (let i = 0; i < n; i++) {
+      const y = e.ty - 8 + i * 4;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(e.tx) - 8, y - 1, 17, 4);
+      g.fillStyle = i % 2 ? e.cols[0] : '#c8b898';
+      g.fillRect(Math.round(e.tx) - 7, y, 15, 2);
+      px(g, e.tx - 7 + ((i * 5) % 12), y, '#ffffff');
+    }
+    if (q > 0.6) dizzy(g, e.tx, e.ty, q, '#fbe08a', 4);
+    if (q < 0.5) for (let i = 0; i < 5; i++) px(g, e.tx - 10 + i * 5, e.ty + 10 - q * 16, '#e8c860');
+  },
+  // --- Elixa : potions qui éclatent sur l'équipe, voile protecteur
+  elixir(g, q, e) {
+    for (const d of e.d) {
+      if (q < 0.4) {
+        const y = lerp(d.ty - 28, d.ty - 6, q / 0.4);
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(d.tx) - 2, Math.round(y) - 3, 5, 6);
+        px(g, d.tx - 1, y - 1, e.cols[0], 3);
+        px(g, d.tx, y - 2, '#d8f0ff');
+      } else {
+        const k = (q - 0.4) / 0.6;
+        for (let i = 0; i < 8; i++) px(g, d.tx - 8 + i * 2.3, d.ty - k * (6 + (i % 3) * 5), i % 2 ? e.cols[0] : e.cols[1], 2);
+        if (Math.round(q * 16) % 2) for (let a = 180; a <= 360; a += 15) {
+          const rad = (a * Math.PI) / 180;
+          px(g, d.tx + Math.cos(rad) * 12, d.ty + 8 + Math.sin(rad) * 15, '#8af0ff');
+        }
+      }
+    }
+  },
+  // --- Mako : un aileron tourne, puis la mâchoire du requin surgit
+  sharkAttack(g, q, e) {
+    if (q < 0.5) {
+      const a = q * 14, x = e.tx + Math.cos(a) * 12, y = e.ty + 8 + Math.sin(a) * 3;
+      for (let i = 0; i < 5; i++) for (let j = 0; j <= i; j++) px(g, x - 2 + j, y - 4 + i, j === 0 ? '#ffffff' : '#5a7a98');
+      for (let i = -4; i <= 4; i += 2) px(g, x + i, y + 1, '#c8f0ff');
+    } else {
+      const k = (q - 0.5) / 0.5;
+      FX.chomp(g, Math.min(0.84, k), { ...e, cols: ['#8aaac8', '#ffffff'] });
+      drops(g, e.tx, e.ty - 8, k, '#4a9ae0', 5);
+    }
+  },
+  // --- Pixel : un flot de bits verts
+  code(g, q, e) {
+    for (let i = 0; i < 8; i++) {
+      const k = Math.min(1, q * 1.3 - i * 0.05);
+      if (k <= 0 || k >= 1) continue;
+      const x = lerp(e.x + 8 * e.dir, e.tx, k), y = lerp(e.y, e.ty, k) + ((i * 3) % 5) - 2;
+      g.fillStyle = i % 2 ? e.cols[0] : e.cols[1];
+      if (i % 3) g.fillRect(Math.round(x), Math.round(y) - 1, 1, 3);
+      else { g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); g.fillStyle = OUTLINE; g.fillRect(Math.round(x), Math.round(y), 1, 1); }
+    }
+    if (q > 0.8) burst(g, e.tx, e.ty, (q - 0.8) / 0.2, e.cols, 6);
+  },
+  // Piratage : des carrés de « bug » clignotent autour de la cible
+  hack(g, q, e) {
+    FX.code(g, Math.min(1, q * 1.5), e);
+    if (q > 0.5) for (let i = 0; i < 7; i++) {
+      if ((i + Math.round(q * 12)) % 3 === 0) continue;
+      const x = e.tx - 10 + ((i * 7) % 20), y = e.ty - 10 + ((i * 11) % 20);
+      g.fillStyle = OUTLINE;
+      g.fillRect(x - 1, y - 1, 5, 4);
+      g.fillStyle = i % 2 ? e.cols[0] : '#ff4ab8';
+      g.fillRect(x, y, 3, 2);
+    }
+  },
+  // --- Lumi : coup de sabre lumineux
+  saber(g, q, e) {
+    slash(g, e.tx, e.ty, q, e.dir, e.cols, 11, -120, 80);
+    if (q < 0.6) slash(g, e.tx, e.ty, q, e.dir, ['#ffffff', '#ffffff'], 9, -120, 80);
+  },
+  // Sabre de lumière : le sabre lancé tourne vers la cible et revient
+  saberSpin(g, q, e) {
+    const k = q < 0.5 ? q / 0.5 : 1 - (q - 0.5) / 0.5, x = lerp(e.x + 8 * e.dir, e.tx, k), y = lerp(e.y - 4, e.ty, k), a = q * 20;
+    for (let i = -6; i <= 6; i++) px(g, x + Math.cos(a) * i, y + Math.sin(a) * i, Math.abs(i) < 2 ? '#ffffff' : e.cols[0], Math.abs(i) < 4 ? 2 : 1);
+    if (q > 0.4 && q < 0.7) burst(g, e.tx, e.ty, (q - 0.4) / 0.3, e.cols, 8);
+  },
+  // --- Kero : shuriken qui tourne
+  shuriken(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 2, e.ty, q), f = Math.round(q * 12) % 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    g.fillStyle = e.cols[0];
+    if (f) { g.fillRect(Math.round(x) - 2, Math.round(y), 5, 1); g.fillRect(Math.round(x), Math.round(y) - 2, 1, 5); }
+    else for (let i = -2; i <= 2; i++) { px(g, x + i, y + i, e.cols[0]); px(g, x + i, y - i, e.cols[0]); }
+    px(g, x, y, '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Langue venimeuse : une longue langue rose fouette la cible, gouttes de poison
+  tongue(g, q, e) {
+    const k = q < 0.5 ? q / 0.5 : 1 - (q - 0.5) / 0.5, x1 = lerp(e.x + 6 * e.dir, e.tx, k);
+    for (let x = Math.min(e.x + 6 * e.dir, x1); x <= Math.max(e.x + 6 * e.dir, x1); x++) px(g, x, lerp(e.y + 1, e.ty, (x - e.x) / (e.tx - e.x || 1)), '#ff6a9a', 2);
+    px(g, x1 - 1, lerp(e.y + 1, e.ty, k) - 1, '#ffb0c8', 3);
+    if (q > 0.45) drops(g, e.tx, e.ty, (q - 0.45) / 0.55, '#7af06a', 4);
+  },
+  // --- Atlas : une roquette part du canon
+  rocket(g, q, e) {
+    const x = lerp(e.x + 12 * e.dir, e.tx, q * q), y = lerp(e.y + 2, e.ty, q) - Math.sin(q * Math.PI) * 4;
+    if (q < 0.8) {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 4, Math.round(y) - 2, 9, 5);
+      g.fillStyle = '#e0e4ec';
+      g.fillRect(Math.round(x) - 3, Math.round(y) - 1, 7, 3);
+      px(g, x + 3 * e.dir, y, '#e2334a');
+      for (let i = 1; i < 5; i++) px(g, x - (3 + i * 2) * e.dir, y + ((i * 3) % 3) - 1, i < 2 ? '#fbe08a' : i < 4 ? '#ff6a1f' : '#8a8478', 2);
+    } else {
+      star(g, e.tx, e.ty, (q - 0.8) / 0.2, ['#ff6a1f', '#fbe08a'], 9);
+      ring(g, e.tx, e.ty, (q - 0.8) / 0.2, '#ffb030', 12);
+    }
+  },
+  // Protocole forteresse : un dôme hexagonal cyan se pose sur chaque allié
+  fortress(g, q, e) {
+    for (const d of e.d) {
+      const r = Math.min(14, Math.round(q * 40));
+      if (q > 0.8 && Math.round(q * 16) % 2) continue;
+      for (let a = 180; a <= 360; a += 10) {
+        const rad = (a * Math.PI) / 180, x = d.tx + Math.cos(rad) * r, y = d.ty + 9 + Math.sin(rad) * r * 1.4;
+        px(g, x, y, (a / 10) % 3 ? e.cols[0] : '#ffffff');
+      }
+      for (let x = -r; x <= r; x += 4) for (let y = 0; y < r; y += 5) if (((x + y) / 4) % 2 === 0 && x * x + (y * 1.2) ** 2 < r * r) px(g, d.tx + x, d.ty + 9 - y * 1.4, e.cols[1]);
+    }
+  },
+  // --- Pyra : plume enflammée
+  flameFeather(g, q, e) {
+    const x = lerp(e.x + 8 * e.dir, e.tx, q), y = lerp(e.y - 8, e.ty, q) + Math.sin(q * 10) * 2;
+    for (let i = 0; i < 7; i++) px(g, x - i * e.dir, y + (i > 2 ? (i % 2 ? 1 : -1) : 0), i < 2 ? '#ffffff' : i < 4 ? e.cols[1] : e.cols[0]);
+    for (let i = 1; i < 4; i++) px(g, x - (7 + i * 2) * e.dir, y + ((i * 5) % 3) - 1, '#ff6a1f');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Renaissance : un oiseau de feu traverse les ennemis, puis des étincelles tombent sur l'équipe
+  rebirth(g, q, e) {
+    if (q < 0.6) {
+      const k = q / 0.6, x = lerp(e.x, e.x + 170 * e.dir, k), y = e.y - 6 - Math.sin(k * Math.PI) * 10, w = Math.round(Math.sin(q * 30) * 4);
+      for (let i = 0; i < 8; i++) { px(g, x - i * e.dir, y - i * 0.5 - w + i * 0.2, i < 2 ? '#ffffff' : e.cols[1], 2); px(g, x - i * e.dir, y + i * 0.5 + w - i * 0.2, i < 2 ? '#ffffff' : e.cols[0], 2); }
+      for (let i = 1; i < 10; i++) px(g, x - (6 + i * 3) * e.dir, y + Math.sin(i + q * 20) * 2, i % 2 ? '#ff6a1f' : '#fbe08a');
+    } else for (const d of e.d) burst(g, d.tx, d.ty, (q - 0.6) / 0.4, ['#ff6a1f', '#fbe08a'], 12);
+  },
+  // --- Mortis : orbe de glace à tête de mort
+  frostBolt(g, q, e) {
+    FX.skullOrb(g, q, e);
+    if (q > 0.85) for (let i = 0; i < 4; i++) px(g, e.tx - 6 + i * 4, e.ty - 6 + (q - 0.85) * 40, '#ffffff');
+  },
+  // Hiver éternel : un blizzard balaie tous les ennemis, des pics de glace sortent du sol
+  blizzard(g, q, e) {
+    for (let i = 0; i < 40; i++) {
+      const x = ((i * 37 + q * 260) % 140) + (e.tx - 50), y = ((i * 23) % 70) + e.ty - 40 + q * 10;
+      px(g, x, y, i % 3 ? '#ffffff' : e.cols[0], i % 5 ? 1 : 2);
+    }
+    if (q > 0.4) for (const d of e.d) {
+      const h = Math.min(10, Math.round((q - 0.4) * 30));
+      for (const ox of [-6, 0, 6]) for (let j = 0; j < h - Math.abs(ox) / 3; j++) px(g, d.tx + ox, d.ty + 10 - j, j > h - 3 ? '#ffffff' : e.cols[0]);
+    }
+  },
   // Poison, brûlure, saignement : petite gerbe sur celui qui souffre (couleurs imposées)
   tick(g, q, e) {
     burst(g, e.tx, e.ty, q, e.cols, 6);
@@ -1208,6 +1591,26 @@ export const HERO_FX = {
   zara: { cols: ['#4fd8c8', '#fbe08a'], attack: 'scimitar', skill: 'dance', ranged: false, sound: 'slash', skillSound: 'dance' },
   kitsune: { cols: ['#5ac8ff', '#c8f0ff'], attack: 'foxfire', skill: 'foxfireRain', ranged: true, sound: 'chime', skillSound: 'chime' },
   sybil: { cols: ['#c8a8ff', '#fbe08a'], attack: 'crystal', skill: 'prophecy', ranged: true, sound: 'holy', skillSound: 'legend' },
+  grumli: { cols: ['#d8702a', '#fbe08a'], attack: 'smash', skill: 'stoneWall', ranged: false, sound: 'thud', skillSound: 'shout' },
+  spike: { cols: ['#6ab85a', '#f0e8c8'], attack: 'thorns', skill: 'needleRain', ranged: true, sound: 'arrow', skillSound: 'arrow' },
+  bip: { cols: ['#4ff0e8', '#ffffff'], attack: 'blaster', skill: 'blasterHit', ranged: true, sound: 'beep', skillSound: 'laser' },
+  lulu: { cols: ['#d8a050', '#f2ead6'], attack: 'baguette', skill: 'bread', ranged: false, sound: 'bonk', skillSound: 'heal' },
+  djmax: { cols: ['#ff4ab8', '#4ff0e8'], attack: 'vinyl', skill: 'drop', ranged: true, sound: 'scratch', skillSound: 'bass' },
+  pablo: { cols: ['#f0d040', '#ffffff'], attack: 'letter', skill: 'parcel', ranged: true, sound: 'paper', skillSound: 'paper' },
+  bob: { cols: ['#9ac08a', '#c8ffb8'], attack: 'scratch', skill: 'infect', ranged: false, sound: 'groan', skillSound: 'groan' },
+  zip: { cols: ['#c8603a', '#fbe08a'], attack: 'kickflip', skill: 'ollie', ranged: false, sound: 'skate', skillSound: 'skate' },
+  rexy: { cols: ['#5ac85a', '#fbe08a'], attack: 'chomp', skill: 'bigChomp', ranged: false, sound: 'crunch', skillSound: 'roar' },
+  leo: { cols: ['#e0a93a', '#fff0b0'], attack: 'claws', skill: 'roarWave', ranged: false, sound: 'slash', skillSound: 'roar' },
+  tonnerre: { cols: ['#fbe08a', '#c08aff'], attack: 'zapBolt', skill: 'chain', ranged: true, sound: 'thunder', skillSound: 'thunder' },
+  ramses: { cols: ['#e8dcc0', '#e0a93a'], attack: 'wrap', skill: 'mummify', ranged: true, sound: 'paper', skillSound: 'ghost' },
+  elixa: { cols: ['#ff8a2a', '#ffd080'], attack: 'flask', skill: 'elixir', ranged: true, sound: 'bubble', skillSound: 'bubble' },
+  mako: { cols: ['#8aaac8', '#c8f0ff'], attack: 'fork', skill: 'sharkAttack', ranged: false, sound: 'splash', skillSound: 'crunch' },
+  pixel: { cols: ['#9af098', '#4ff0e8'], attack: 'code', skill: 'hack', ranged: true, sound: 'beep', skillSound: 'beep' },
+  lumi: { cols: ['#5ae05a', '#d8ffd0'], attack: 'saber', skill: 'saberSpin', ranged: false, sound: 'hum', skillSound: 'hum' },
+  kero: { cols: ['#b9c6d2', '#ffffff'], attack: 'shuriken', skill: 'tongue', ranged: true, sound: 'arrow', skillSound: 'ribbit' },
+  atlas: { cols: ['#4ff0e8', '#c8f6ff'], attack: 'rocket', skill: 'fortress', ranged: true, sound: 'rocket', skillSound: 'shield' },
+  pyra: { cols: ['#ff6a1f', '#fbe08a'], attack: 'flameFeather', skill: 'rebirth', ranged: true, sound: 'burn', skillSound: 'legend' },
+  mortis: { cols: ['#8ae8ff', '#e8f8ff'], attack: 'frostBolt', skill: 'blizzard', ranged: true, sound: 'ice', skillSound: 'ghost' },
 };
 export const ENEMY_FX = {
   slime: { cols: ['#5cc85a', '#d8ffd0'], attack: 'splat', sound: 'hit' },

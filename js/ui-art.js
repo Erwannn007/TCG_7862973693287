@@ -258,6 +258,86 @@ const ICONS = {
     s.hl(3, 10, 5, '#f2eef4', true); s.hl(3, 10, 6, '#f2eef4', true); s.r(5, 4, 4, 4, '#5a3aa8', true); s.p(5, 5, '#ffffff', true);
     s.spark(1, 1, '#ffffff'); s.spark(12, 11, C.goldHi);
   },
+  anvil(s) { // enclume
+    s.hl(1, 12, 4, '#8e99a4'); s.hl(3, 11, 5, '#8e99a4'); s.r(5, 6, 4, 3, '#6a7480'); s.hl(3, 10, 9, '#6a7480'); s.hl(2, 11, 10, '#4a5058');
+    s.hl(2, 10, 4, '#b8c2cc', true); s.spark(12, 1, '#fbe08a'); s.spark(7, 1, '#ff8a2a');
+  },
+  cactus(s) { // cactus à fleur
+    s.r(6, 2, 3, 11, '#5aa04a'); s.r(2, 5, 2, 4, '#5aa04a'); s.hl(2, 5, 8, '#5aa04a'); s.r(10, 4, 2, 4, '#5aa04a'); s.hl(9, 11, 7, '#5aa04a');
+    s.p(7, 1, '#ff6ab8', true); s.p(6, 4, '#f0e8c8', true); s.p(8, 7, '#f0e8c8', true); s.p(6, 10, '#f0e8c8', true);
+  },
+  robot(s) { // tête de robot
+    s.r(3, 4, 8, 7, '#a8b0bc'); s.v(7, 1, 3, '#7a8290'); s.p(7, 0, '#e2334a', true); s.r(4, 6, 2, 2, '#4ff0e8', true); s.r(8, 6, 2, 2, '#4ff0e8', true);
+    s.hl(5, 8, 9, '#4a4a5a', true); s.p(2, 7, '#e0a93a'); s.p(11, 7, '#e0a93a');
+  },
+  bread(s) { // miche de pain
+    s.hl(4, 9, 3, '#d8a050'); s.r(2, 4, 10, 6, '#d8a050'); s.hl(3, 10, 10, '#a8702a');
+    for (const x of [4, 7, 10]) s.sline(x - 1, 8, x, 5, '#f0d8a0', true);
+    s.p(3, 4, '#f0c878', true);
+  },
+  disc(s) { // vinyle
+    s.r(3, 2, 8, 10, '#1a1a22'); s.r(2, 3, 10, 8, '#1a1a22'); s.r(6, 6, 2, 2, '#ff4ab8', true); s.p(4, 4, '#5a5a6a', true); s.p(3, 5, '#5a5a6a', true);
+  },
+  letter(s) { // enveloppe
+    s.r(1, 3, 12, 8, '#f2eef4'); s.sline(1, 3, 6, 7, '#c8c0d0', true); s.sline(12, 3, 7, 7, '#c8c0d0', true);
+    s.r(6, 7, 2, 2, '#d83a3a', true); s.r(10, 4, 2, 2, '#3ab86a', true);
+  },
+  brain(s) { // cerveau
+    s.r(2, 3, 10, 7, '#ff9ac8'); s.hl(3, 10, 2, '#ff9ac8'); s.hl(3, 10, 10, '#ff9ac8'); s.v(7, 3, 9, '#d8608a', true);
+    s.sline(3, 5, 5, 4, '#d8608a', true); s.sline(9, 6, 11, 5, '#d8608a', true); s.p(4, 3, '#ffd0e0', true);
+  },
+  skate(s) { // planche de skate
+    s.hl(2, 11, 7, '#c8603a'); s.hl(1, 12, 6, '#c8603a'); s.p(0, 5, '#c8603a'); s.p(13, 5, '#c8603a');
+    for (const x of [3, 10]) s.r(x, 8, 2, 2, '#f2eef4'); s.hl(3, 9, 6, '#f0a060', true);
+  },
+  dino(s) { // tête de dino en peluche
+    s.r(2, 4, 8, 6, '#5ac85a'); s.r(8, 6, 4, 4, '#5ac85a'); s.p(5, 5, '#21182a', true); s.p(5, 4, '#ffffff', true);
+    for (const x of [8, 10]) s.p(x, 10, '#ffffff', true); s.p(3, 3, '#f08a2a'); s.p(5, 2, '#f08a2a'); s.p(7, 3, '#f08a2a');
+  },
+  lion(s) { // tête de lion
+    s.r(1, 2, 12, 10, '#b8601e'); s.r(3, 4, 8, 7, '#e0a860'); s.r(5, 8, 4, 2, '#f8e0b8');
+    s.p(5, 6, '#21182a', true); s.p(8, 6, '#21182a', true); s.p(6, 8, '#6a3a2a', true); s.p(7, 8, '#6a3a2a', true); s.p(2, 3, '#d8803a', true);
+  },
+  bolt(s) { // éclair jaune
+    s.sline(9, 0, 4, 6, '#fbe08a', true); s.hl(4, 9, 6, '#fbe08a', true); s.sline(9, 7, 4, 13, '#fbe08a', true);
+    s.sline(10, 0, 5, 6, '#e0a93a', true); s.p(10, 7, '#e0a93a', true); s.spark(1, 2, '#c08aff'); s.spark(12, 11, '#ffffff');
+  },
+  mummy(s) { // tête de momie
+    s.r(3, 2, 8, 10, '#e8dcc0'); for (const y of [4, 7, 10]) s.hl(3, 10, y, '#c8b898', true);
+    s.p(5, 5, '#21182a', true); s.p(8, 6, '#e2334a', true); s.sline(10, 9, 13, 12, '#e8dcc0');
+  },
+  potion(s) { // fiole orange qui bouillonne
+    s.v(7, 1, 4, '#d8f0ff'); s.p(7, 0, '#8a5a32'); s.r(3, 5, 8, 6, '#d8f0ff'); s.hl(4, 9, 11, '#d8f0ff');
+    s.r(4, 7, 6, 4, '#ff8a2a', true); s.p(5, 6, '#ffd080', true); s.p(4, 5, '#ffffff', true); s.p(10, 2, '#ffd080', true);
+  },
+  shark(s) { // aileron dans les vagues
+    for (const [y, a, b] of [[1, 7, 7], [2, 6, 7], [3, 5, 7], [4, 4, 8], [5, 3, 8], [6, 3, 9], [7, 2, 9]]) s.hl(a, b, y, '#7a9ab8');
+    s.v(7, 1, 7, '#c8e0f0', true); s.hl(0, 13, 9, '#4a9ae0'); s.hl(1, 12, 10, '#2a6ab0'); s.p(2, 8, '#c8f0ff', true); s.p(11, 8, '#c8f0ff', true);
+  },
+  chip(s) { // puce électronique
+    s.r(3, 3, 8, 8, '#2a3440'); for (const v of [4, 6, 8]) { s.p(1, v, '#b9c6d2'); s.p(2, v, '#b9c6d2'); s.p(11, v, '#b9c6d2'); s.p(12, v, '#b9c6d2'); s.p(v + 1, 1, '#b9c6d2'); s.p(v + 1, 2, '#b9c6d2'); s.p(v + 1, 11, '#b9c6d2'); s.p(v + 1, 12, '#b9c6d2'); }
+    s.r(5, 5, 4, 4, '#9af098', true); s.p(5, 5, '#ffffff', true);
+  },
+  saber(s) { // sabre de lumière
+    s.sline(3, 10, 10, 3, '#5ae05a', true); s.sline(4, 10, 11, 3, '#d8ffd0', true); s.p(11, 2, '#ffffff', true);
+    s.sline(1, 12, 3, 10, '#b9c6d2'); s.p(2, 12, '#2a2234');
+  },
+  frog(s) { // tête de grenouille à bandeau
+    s.r(2, 5, 10, 6, '#6ac84a'); s.r(2, 2, 3, 3, '#6ac84a'); s.r(9, 2, 3, 3, '#6ac84a'); s.p(3, 3, '#ffffff', true); s.p(10, 3, '#ffffff', true);
+    s.p(3, 4, '#21182a', true); s.p(10, 4, '#21182a', true); s.hl(2, 11, 6, '#e2334a'); s.hl(4, 9, 9, '#4a9a34', true);
+  },
+  mech(s) { // tête de méca
+    s.r(3, 3, 8, 8, '#e0e4ec'); s.r(4, 5, 6, 5, '#4a5a7a'); s.r(5, 6, 1, 2, '#4ff0e8', true); s.r(8, 6, 1, 2, '#4ff0e8', true);
+    s.sline(7, 3, 4, 0, '#e0a93a'); s.sline(7, 3, 10, 0, '#e0a93a'); s.p(7, 3, '#4ff0e8', true);
+  },
+  phoenix(s) { // oiseau de feu
+    s.sline(1, 3, 6, 7, '#ff6a1f'); s.sline(1, 5, 6, 8, '#fbe08a'); s.sline(12, 3, 7, 7, '#ff6a1f'); s.sline(12, 5, 7, 8, '#fbe08a');
+    s.r(6, 5, 2, 5, '#e2334a'); s.p(6, 4, '#ff6a1f'); s.sline(6, 10, 4, 13, '#ff6a1f'); s.sline(7, 10, 9, 13, '#fbe08a'); s.p(7, 5, '#ffffff', true);
+  },
+  crown(s) { // couronne de glace
+    s.r(2, 7, 10, 4, '#5a8ab0'); for (const [x, h] of [[2, 3], [4, 5], [7, 6], [9, 5], [11, 3]]) s.v(x, 7 - h, 6, '#8ae8ff', true);
+    s.p(7, 1, '#ffffff', true); s.r(6, 8, 2, 2, '#e2334a', true); s.hl(2, 11, 10, '#3a5a8a');
+  },
   auto(s) { // engrenage
     s.r(4, 3, 6, 8, '#8e99a4'); s.r(3, 4, 8, 6, '#8e99a4'); s.r(6, 1, 2, 2, '#8e99a4'); s.r(6, 11, 2, 2, '#8e99a4');
     s.r(1, 6, 2, 2, '#8e99a4'); s.r(11, 6, 2, 2, '#8e99a4'); s.r(6, 6, 2, 2, OUTLINE, true); s.p(4, 4, '#e4ecf3', true);
