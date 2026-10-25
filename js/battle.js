@@ -28,6 +28,22 @@ const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
+// Signes des statuts (5 px de large) : '.' vide, 'w' reflet blanc, sinon la couleur du statut.
+const STATUS = {
+  poison: { c: '#7af06a', rows: ['..x..', '.xwx.', 'xxxxx', '.xxx.'] },
+  burn: { c: '#ff8a2a', rows: ['..x..', '.xx.x', 'xxwxx', '.xxx.'] },
+  bleed: { c: '#e2334a', rows: ['..x..', '.xwx.', 'xxxxx', '.xxx.'] },
+  buff: { c: '#fbe08a', rows: ['..w..', '.xxx.', 'xxxxx', '..x..'] },
+  weak: { c: '#b07af0', rows: ['..x..', 'xxxxx', '.xxx.', '..w..'] },
+  taunt: { c: '#ff5a4a', rows: ['x.x.x', 'xxxxx', 'xwxxx', '.xxx.'] },
+};
+// Couleurs des effets de dégâts sur la durée (chiffres et petites gerbes).
+const DOT_COLS = { poison: ['#7af06a', '#d8ffd0'], burn: ['#ff6a1f', '#fbe08a'], bleed: ['#e2334a', '#ff9aa8'] };
+// ATQ effective, avec les bonus et malus en cours.
+// Compétences qui visent les alliés (le reste frappe les ennemis : single, all, multi).
+const SUPPORT = ['heal', 'heal1', 'shield', 'buff', 'taunt', 'revive'];
+const atkOf = (u) => u.atk * (1 + (u.buff ? u.buff.k : 0) - (u.weak ? u.weak.k : 0));
+
 export class Battle {
   // look(id, rang) → { key, make } : l'apparence du héros (son skin s'il en porte un)
   // carry : PV gardés d'un combat à l'autre (mode infini), { idDuHéros: fraction des PV max }
@@ -95,6 +111,8 @@ export class Battle {
     const sx = cx - (bm.w >> 1);
     return {
       side, key, ...data, max: data.hp, cd: 0, stun: 0, guard: false, alive: true,
+      // statuts : dégâts sur la durée, ATQ en plus ou en moins, bouclier, provocation (voir tickStatus)
+      dots: [], buff: null, weak: null, barrier: 0, barrierT: 0, taunt: 0,
       trailHp: data.hp, trailT: 0, hitAt: 0, healAt: 0, // jauge de PV : traînée des dégâts, éclair de soin
       bm, flash, shade, cx, by, sx, sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
       // cx0/sx0 : place dans la formation ; fx : décalage de mise en scène (fxT = où il va)
@@ -162,6 +180,7 @@ export class Battle {
         g.fillRect(u.cx, u.sy - 4, 1, 1);
       }
       if (u.guard) this.shieldMark(u);
+      this.statusMarks(u, step);
     });
 
     // premier plan, devant les combattants (assombri lui aussi pendant la mise en scène)
@@ -290,8 +309,9 @@ export class Battle {
   // ---- effets de combat
 
   // Lance un effet (nom dans js/fx.js) de l'unité a vers les cibles d ; se résout à la fin.
-  addFx(name, ms, a, d, steps = 8) {
-    return new Promise((res) => this.vfx.push({ name, a, d, t0: performance.now(), dur: ms / this.speed, steps, res }));
+  // cols : couleurs imposées (sinon celles de la fiche de a).
+  addFx(name, ms, a, d, steps = 8, cols = null) {
+    return new Promise((res) => this.vfx.push({ name, a, d, t0: performance.now(), dur: ms / this.speed, steps, res, cols }));
   }
 
   drawVfx(t) {
@@ -306,7 +326,7 @@ export class Battle {
       drawEffect(v.name, g, Math.floor(p * v.steps) / v.steps, {
         x: a.cx + a.dx, y: a.by - (a.bm.h >> 1), tx: d0.tx, ty: d0.ty, d: v.d.map(at),
         // une tenue garde ses couleurs à tous les rangs
-        dir: a.side === 'h' ? 1 : -1, rank: a.rank || 1, cols: fxColors(a.prof, a.side === 'h' && !a.skin ? a.rank : 1),
+        dir: a.side === 'h' ? 1 : -1, rank: a.rank || 1, cols: v.cols || fxColors(a.prof, a.side === 'h' && !a.skin ? a.rank : 1),
       });
       return true;
     });
@@ -490,6 +510,34 @@ export class Battle {
     g.fillRect(x + 2, y, 1, 5);
   }
 
+  // Petits signes des statuts, empilés à gauche de la tête : goutte de poison, flamme, goutte de
+  // sang, flèche d'ATQ (dorée vers le haut, violette vers le bas), poing de la provocation.
+  // Le bouclier est une ligne cyan posée sur la jauge de PV.
+  statusMarks(u, step) {
+    const g = this.g, marks = [];
+    for (const d of u.dots) marks.push(STATUS[d.type]);
+    if (u.buff) marks.push(STATUS.buff);
+    if (u.weak) marks.push(STATUS.weak);
+    if (u.taunt) marks.push(STATUS.taunt);
+    marks.forEach((m, i) => {
+      const x = u.sx - 3, y = u.sy + 3 + i * 7;
+      g.fillStyle = OUTLINE;
+      m.rows.forEach((row, j) => [...row].forEach((ch, k) => ch !== '.' && g.fillRect(x + k - 1, y + j - 1, 3, 3)));
+      m.rows.forEach((row, j) => [...row].forEach((ch, k) => {
+        if (ch === '.') return;
+        g.fillStyle = ch === 'w' ? WHITE : m.c;
+        g.fillRect(x + k, y + j, 1, 1);
+      }));
+    });
+    if (u.barrier > 0) {
+      const seg = u.boss ? 14 : 8, IW = seg * 3 - 1, x = Math.round(u.cx - IW / 2) + 2, w = Math.max(2, Math.round(Math.min(1, u.barrier / u.max) * IW));
+      g.fillStyle = OUTLINE;
+      g.fillRect(x - 1, u.by + 1, w + 2, 3);
+      g.fillStyle = step % 2 ? '#8af0ff' : '#4fd8e0';
+      g.fillRect(x, u.by + 2, w, 1);
+    }
+  }
+
   float(u, txt, color) {
     this.floats.push({ txt, x: u.cx, y: u.sy - 4, color, t0: performance.now() });
   }
@@ -543,19 +591,57 @@ export class Battle {
         sfx(u.side === 'h' ? 'focus' : 'focusFoe');
         await this.wait(260);
         if (this.over) return;
+        if (u.dots.length) {
+          await this.tickDots(u);
+          if (this.checkEnd()) return;
+          if (!u.alive) {
+            this.queue.shift();
+            continue;
+          }
+        }
         if (u.stun) {
           u.stun--;
           this.log(`${u.name} est étourdi !`);
           await this.wait(650);
+          this.endTurn(u);
           this.queue.shift();
           continue;
         }
         if (u.side === 'h') await this.heroTurn(u);
         else await this.enemyTurn(u);
+        this.endTurn(u);
         this.queue.shift();
         if (this.checkEnd()) return;
       }
     }
+  }
+
+  // Poison, brûlure, saignement : au début de son tour, il perd des PV (sans tenir compte de sa DÉF).
+  async tickDots(u) {
+    for (const d of u.dots) {
+      const v = Math.min(u.hp, d.dmg);
+      u.hp -= v;
+      u.taken = (u.taken || 0) + v;
+      if (d.from) d.from.dealt = (d.from.dealt || 0) + v;
+      u.hitAt = performance.now();
+      u.flashUntil = performance.now() + 200 / this.speed;
+      this.float(u, '-' + v, DOT_COLS[d.type][0]);
+      this.addFx('tick', 360, u, [u], 6, DOT_COLS[d.type]);
+      d.turns--;
+    }
+    sfx(u.dots[0].type === 'burn' ? 'burn' : 'drip');
+    u.dots = u.dots.filter((d) => d.turns > 0);
+    this.log(`${u.name} souffre…`);
+    await this.wait(520);
+    if (u.hp === 0) this.kill(u);
+  }
+
+  // Fin de son tour : ses bonus, malus, bouclier et provocation s'usent d'un tour.
+  endTurn(u) {
+    if (u.buff && --u.buff.t <= 0) u.buff = null;
+    if (u.weak && --u.weak.t <= 0) u.weak = null;
+    if (u.taunt) u.taunt--;
+    if (u.barrierT && --u.barrierT <= 0) u.barrier = 0;
   }
 
   checkEnd() {
@@ -592,7 +678,9 @@ export class Battle {
     const foes = this.alive('e');
     const target = [...foes].sort((a, b) => a.hp - b.hp)[0];
     if (u.cd > 0) return { type: 'attack', target };
-    if (u.skill.kind === 'heal') return this.alive('h').some((h) => h.hp / h.max < 0.6) ? { type: 'skill' } : { type: 'attack', target };
+    const k = u.skill.kind, allies = this.alive('h');
+    if (k === 'heal' || k === 'heal1') return allies.some((h) => h.hp / h.max < 0.6) ? { type: 'skill' } : { type: 'attack', target };
+    if (k === 'revive') return this.heroes.some((h) => !h.alive) || allies.some((h) => h.hp / h.max < 0.5) ? { type: 'skill' } : { type: 'attack', target };
     return { type: 'skill', target };
   }
 
@@ -634,28 +722,49 @@ export class Battle {
     this.log(`${u.name} : ${s.name} !`);
     await this.charge(u, u.prof.cols[0]);
     sfx(u.prof.skillSound || 'skill');
-    if (s.kind === 'heal') {
-      // il lève son bâton : des colonnes de lumière tombent sur l'équipe
-      const allies = this.alive('h');
+    const allies = this.alive('h');
+    if (SUPPORT.includes(s.kind)) {
+      // compétences de soutien : l'effet tombe sur les alliés touchés
+      const dead = this.heroes.filter((h) => !h.alive);
+      const wounded = [...allies].sort((a, b) => a.hp / a.max - b.hp / b.max)[0];
+      const to = s.kind === 'heal1' ? [wounded] : s.kind === 'taunt' ? [u] : s.kind === 'revive' ? [dead[0] || wounded] : allies;
       u.pose = 'cast';
-      const fxp = this.addFx(u.prof.skill, 800, u, allies, 10);
+      const fxp = this.addFx(u.prof.skill, 800, u, to, 10);
       await this.wait(300);
-      for (const h of allies) {
-        const v = Math.min(h.max - h.hp, Math.round(u.atk * s.mult));
-        h.hp += v;
-        u.healed = (u.healed || 0) + v;
+      if (s.kind === 'revive' && dead.length) {
+        const h = dead[0];
+        h.alive = true;
+        h.hp = h.trailHp = Math.round(h.max * s.pct);
+        h.stun = 0;
+        h.dots = [];
+        h.pose = null;
         h.healAt = performance.now();
-        this.float(h, '+' + v, '#5cc85a');
+        h.flashUntil = performance.now() + 400 / this.speed;
+        u.healed = (u.healed || 0) + h.hp;
+        this.float(h, '+' + h.hp, '#5cc85a');
+        this.log(`${h.name} se relève !`);
+      } else if (s.kind === 'heal' || s.kind === 'heal1' || s.kind === 'revive') for (const h of to) this.heal(u, h, atkOf(u) * s.mult);
+      else if (s.kind === 'shield') for (const h of to) {
+        h.barrier = Math.round(atkOf(u) * s.mult);
+        h.barrierT = s.turns || 3;
+        this.float(h, '+' + h.barrier, '#8af0ff');
+      } else if (s.kind === 'buff') for (const h of to) {
+        h.buff = { k: s.atk, t: s.turns };
+        h.flashUntil = performance.now() + 200 / this.speed;
+      } else if (s.kind === 'taunt') {
+        u.taunt = s.turns;
+        this.log(`${u.name} attire tous les coups !`);
       }
+      if (s.taunt && s.kind !== 'taunt') u.taunt = s.taunt;
       await fxp;
-      u.pose = null;
+      u.pose = s.kind === 'taunt' ? 'guard' : null;
       await this.wait(200);
     } else if (s.kind === 'all') {
       u.pose = 'cast';
       const fxp = this.addFx(u.prof.skill, 1000, u, foes, 12);
       await this.wait(600);
       this.shake(2, 300);
-      foes.forEach((f) => this.hit(u, f, s.mult));
+      foes.forEach((f) => this.hit(u, f, s.mult, s));
       await fxp;
       u.pose = null;
       await this.wait(250);
@@ -663,13 +772,20 @@ export class Battle {
       for (let i = 0; i < s.hits; i++) {
         const live = this.alive('e');
         if (!live.length) break;
-        await this.strike(u, rand(live), s.mult, false, 'skill');
+        await this.strike(u, rand(live), s.mult, false, 'skill', s);
       }
     } else {
       const t = target && target.alive ? target : foes[0];
-      await this.strike(u, t, s.mult, true, 'skill');
-      if (s.stun && t.alive) t.stun = s.stun;
+      await this.strike(u, t, s.mult, true, 'skill', s);
     }
+  }
+
+  heal(u, h, amount) {
+    const v = Math.min(h.max - h.hp, Math.round(amount));
+    h.hp += v;
+    u.healed = (u.healed || 0) + v;
+    h.healAt = performance.now();
+    this.float(h, '+' + v, '#5cc85a');
   }
 
   async enemyTurn(u) {
@@ -690,7 +806,8 @@ export class Battle {
       await this.wait(200);
       return;
     }
-    const t = Math.random() < 0.3 ? [...heroes].sort((a, b) => a.hp - b.hp)[0] : rand(heroes);
+    const tank = heroes.find((h) => h.taunt);
+    const t = tank || (Math.random() < 0.3 ? [...heroes].sort((a, b) => a.hp - b.hp)[0] : rand(heroes));
     this.log(`${u.name} attaque ${t.name}.`);
     await this.strike(u, t, 1);
   }
@@ -716,7 +833,8 @@ export class Battle {
 
   // Un coup : la cible s'avance face à l'attaquant (sauf en rafale), il frappe, chacun reprend sa place.
   // mode : 'attack' ou 'skill' (l'effet vient de la fiche du personnage, js/fx.js).
-  async strike(a, d, mult, duel = true, mode = 'attack') {
+  // s : la compétence, dont les effets en plus (étourdir, poison, vol de vie…) suivent le coup.
+  async strike(a, d, mult, duel = true, mode = 'attack', s = null) {
     if (duel && d.alive) {
       this.duel = d;
       d.fxT = (d.side === 'h' ? 1 : -1) * DUEL_STEP;
@@ -730,14 +848,14 @@ export class Battle {
       a.pose = mode === 'skill' || name === 'bolt' || name === 'holy' ? 'cast' : 'strike';
       sfx(mode === 'skill' ? P.skillSound || P.sound : P.sound);
       await this.addFx(name, mode === 'skill' ? 520 : 300, a, [d]);
-      this.hit(a, d, mult);
+      this.hit(a, d, mult, s);
       await this.wait(120);
       a.pose = null;
     } else {
       await this.lunge(a, () => {
         sfx(mode === 'skill' ? P.skillSound || P.sound : P.sound);
         this.addFx(name, mode === 'skill' ? 480 : 320, a, [d]);
-        this.hit(a, d, mult);
+        this.hit(a, d, mult, s);
       });
     }
     await this.wait(300);
@@ -747,13 +865,29 @@ export class Battle {
     }
   }
 
-  hit(a, d, mult) {
+  // s : compétence utilisée (perce-armure, exécution, puis ses effets sur la cible).
+  hit(a, d, mult, s = null) {
     if (!d.alive) return;
-    let v = a.atk * mult * (1 - d.def / (d.def + 60)) * (0.9 + Math.random() * 0.2);
+    let v = atkOf(a) * mult * (s?.pierce ? 1 : 1 - d.def / (d.def + 60)) * (0.9 + Math.random() * 0.2);
+    if (s?.exec && d.hp / d.max < s.exec) v *= 2;
     const crit = Math.random() < 0.1;
     if (crit) v *= 1.5;
     if (d.guard) v *= 0.5;
+    if (d.taunt) v *= 0.7; // celui qui provoque se protège aussi
     v = Math.max(1, Math.round(v));
+    // le bouclier encaisse d'abord
+    if (d.barrier > 0) {
+      const b = Math.min(d.barrier, v);
+      d.barrier -= b;
+      v -= b;
+      if (!d.barrier) d.barrierT = 0;
+      if (!v) {
+        this.float(d, '0', '#8af0ff');
+        d.flashUntil = performance.now() + 160 / this.speed;
+        sfx('shield');
+        return;
+      }
+    }
     // statistiques du combat (affichées sur la plaque de fin)
     a.dealt = (a.dealt || 0) + Math.min(v, d.hp);
     d.taken = (d.taken || 0) + Math.min(v, d.hp);
@@ -771,10 +905,26 @@ export class Battle {
     this.shake(crit ? 2 : 1, crit ? 260 : 120);
     if (crit) this.flashT = performance.now();
     sfx(d.side === 'h' ? 'hurt' : crit ? 'crit' : 'hit');
-    if (d.hp === 0) {
-      d.alive = false;
-      d.diedAt = performance.now();
-      setTimeout(() => sfx('die'), 120);
+    if (s?.drain) this.heal(a, a, v * s.drain);
+    if (d.hp === 0) return this.kill(d);
+    if (!s) return;
+    if (s.stun) d.stun = Math.max(d.stun, s.stun);
+    if (s.weaken) d.weak = { k: s.weaken.atk, t: s.weaken.turns };
+    if (s.dot) {
+      // un même poison ne se cumule pas : il se renouvelle
+      const dmg = Math.max(1, Math.round(atkOf(a) * s.dot.mult)), old = d.dots.find((x) => x.type === s.dot.type);
+      if (old) Object.assign(old, { dmg: Math.max(old.dmg, dmg), turns: s.dot.turns, from: a });
+      else d.dots.push({ type: s.dot.type, dmg, turns: s.dot.turns, from: a });
     }
+  }
+
+  kill(d) {
+    d.alive = false;
+    d.diedAt = performance.now();
+    d.dots = [];
+    d.buff = d.weak = null;
+    d.barrier = d.taunt = 0;
+    d.guard = false;
+    setTimeout(() => sfx('die'), 120);
   }
 }

@@ -128,6 +128,18 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Elio**, mage | grand chapeau pointu dont la pointe retombe | étoile sur le chapeau, longue barbe blanche texturée, sourcils blancs, robe longue | bâton à orbe, à droite |
 | **Séra**, prêtresse | voile blanc | liseré rose du voile, mèches dorées, étole blanche à croix d'or, robe longue | bâton à anneau, à gauche |
 | **Volt**, cyber-ninja | cheveux noirs en pointes | bandeau aux pans qui flottent, masque à ligne néon, cimier doré en V (rang 4) | lame plasma, à droite |
+| **Brann**, chevalier | heaume rond à couvre-joues | grand bouclier au pal brodé, crête (rang 3) | masse d'armes à droite, bouclier à gauche |
+| **Mira**, barde | béret penché à longue plume | longs cheveux blonds, broche (rang 2) | luth à gauche |
+| **Nina**, infirmière | coiffe blanche à croix rouge | cheveux au carré, robe blanche, poche de tablier | seringue géante à droite |
+| **Pip**, voleur | capuche ronde | foulard rouge sur le bas du visage, bourse d'or | dagues, une à droite, une inversée à gauche |
+| **Gus**, mineur | casque de chantier jaune | lampe frontale, barbe touffue, salopette sur chemise rouge | pioche à gauche |
+| **Lenny**, pompier | casque rouge à long bord arrière | insigne de métal, veste marine à poignets jaunes | lance à incendie et tuyau enroulé, à droite |
+| **Vex**, vampire | haut col dressé noir et rouge | peau pâle, cheveux plaqués, croc, cape rouge à tous les rangs | rapière à pommeau de rubis, à droite |
+| **Gideon**, paladin | grande crête de crin bleue | soleil d'or sur la poitrine, couvre-joues | marteau de guerre à droite |
+| **Aurélia**, valkyrie | casque ailé | tresses blondes, cape bleue, étincelles | lance à droite |
+| **Nova**, super-héroïne | poing levé, cheveux au vent | éclair d'or, cape rouge qui claque à gauche, gant blanc | son poing (bras droit levé) |
+
+Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `js/chibi.js`).
 
 ### 2.6 Créer un nouveau héros
 
@@ -187,6 +199,17 @@ arrivant) et ses sons.
 | Elio | orbe magique avec traînée | **Météore** : un rocher de feu tombe sur chaque ennemi et explose | bleu |
 | Séra | orbe de lumière qui scintille en croix | **Bénédiction** : colonnes de lumière sur l'équipe, croix qui montent | rose et or |
 | Volt | double entaille de néon | **Lame plasma** : ruée en ligne de néon, entailles, éclat | cyan néon |
+| Brann | la masse s'abat, étoile d'impact, poussière | **Provocation** : anneaux rouges, « ! » qui sautent | turquoise |
+| Mira | note de musique en cloche | **Ballade héroïque** : notes qui montent sur l'équipe, flèches d'or | orange |
+| Nina | fléchette-seringue | **Piqûre de rappel** : croix verte qui pulse, cœurs | vert |
+| Pip | deux coups de dague croisés | **Coupe-jarret** : trois entailles en Z, le sang goutte | acier |
+| Gus | coup de pioche, éclats de roche | **Coup de pioche** : la pointe traverse la cible | pierre |
+| Lenny | jet d'eau en cloche | **Lance à incendie** : une vague déferle sur chaque ennemi | bleu |
+| Vex | coup d'estoc | **Morsure** : deux crocs se referment, le sang revient vers lui | rouge |
+| Gideon | la masse s'abat (or) | **Égide** : dôme d'or sur chaque allié | or et cyan |
+| Aurélia | longue pointe de lumière | **Chant du Valhalla** : rai de lumière, plumes qui tombent | bleu et or |
+| Nova | étoile d'impact, traits de vitesse | **Poing météore** : ruée, impact énorme, onde, étoiles | rouge et or |
+| (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 
 Ennemis : éclaboussures (slime), griffes (gobelin, golem, dragon), lame d'os (squelette) ;
@@ -226,6 +249,8 @@ toujours un peu de blanc à la tête de l'effet. **Nouveau héros** : une ligne 
   | Mage | Elio | bleu `#3a64c8` | `#26408a` | or `#e0a93a` | `#26408a` (barbe `#e8e4dc`) |
   | Prêtresse | Séra | rose `#d9548c` | `#9a3264` | `#ffd0e0` | `#6a3a5a` |
   | Cyber-ninja | Volt | violet `#7a3cc8` | `#4a2386` | `#a878e8` | `#2e2440` (néon `#4ff0e8`) |
+
+  Les couleurs des nouveaux héros sont dans `NEW_CLASS` (`js/heroes.js`).
 
   Au rang 4, toutes les broderies passent à l'or.
 

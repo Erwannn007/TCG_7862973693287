@@ -190,10 +190,17 @@ small { font-size: 12px; }
    glissant les héros (voir dragSource dans js/main.js). */
 #t-roster {
   position: absolute; z-index: 2; left: var(--safe-l); top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 2px); width: 124px;
-  display: flex; flex-direction: column; justify-content: center; gap: 6px;
 }
+/* la liste défile au doigt (voir dragSource) ; marge à droite pour la plaque choisie qui avance */
+#t-roster .r-list {
+  position: absolute; inset: 0 -14px 0 0; padding: 4px 14px 4px 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#t-roster .r-list::-webkit-scrollbar { display: none; }
+#t-roster .r-list > :first-child { margin-top: auto; }
+#t-roster .r-list > :last-child { margin-bottom: auto; }
 .r-sign {
-  position: relative; touch-action: none; cursor: grab; display: flex; align-items: center; gap: 8px; height: 52px; flex-shrink: 1; min-height: 44px; padding: 4px 10px;
+  position: relative; touch-action: none; cursor: grab; display: flex; align-items: center; gap: 8px; height: 52px; flex-shrink: 0; padding: 4px 10px;
   font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: var(--txt-out);
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2s steps(1) infinite;

@@ -26,6 +26,55 @@ export const HEROES = {
     name: 'Volt', cls: 'Cyber-ninja', rarity: 'L', hp: 105, atk: 32, def: 8, spd: 18,
     skill: { name: 'Lame plasma', desc: '3 coups de 80 % sur des ennemis au hasard.', cd: 2, kind: 'multi', mult: 0.8, hits: 3 },
   },
+
+  // ---- nouveaux héros (dessins dans js/heroes.js). Types de compétence :
+  //   single, all, multi : dégâts (mult × ATQ), avec en plus, au choix : stun (tours), dot
+  //     { type: poison | burn | bleed, mult, turns }, drain (part des dégâts rendue en PV),
+  //     weaken { atk, turns } (ATQ de la cible en moins), pierce (ignore la DÉF), exec (×2 sous ce % de PV)
+  //   heal (toute l'équipe), heal1 (l'allié le plus blessé), shield (bouclier : mult × ATQ, turns),
+  //   buff { atk, turns } (ATQ de l'équipe en plus), taunt (attire les coups, turns),
+  //   revive (relève un allié tombé avec pct de ses PV ; sinon soigne le plus blessé de mult × ATQ)
+  //   ico : icône de la compétence (js/ui-art.js)
+  brann: {
+    name: 'Brann', cls: 'Chevalier', rarity: 'C', hp: 150, atk: 16, def: 14, spd: 8,
+    skill: { name: 'Provocation', desc: 'Attire tous les coups 2 tours, dégâts reçus −30 %.', cd: 3, kind: 'taunt', turns: 2, ico: 'taunt' },
+  },
+  mira: {
+    name: 'Mira', cls: 'Barde', rarity: 'C', hp: 95, atk: 18, def: 7, spd: 13,
+    skill: { name: 'Ballade héroïque', desc: 'ATQ de l’équipe +30 % pendant 2 tours.', cd: 3, kind: 'buff', atk: 0.3, turns: 2, ico: 'note' },
+  },
+  nina: {
+    name: 'Nina', cls: 'Infirmière', rarity: 'C', hp: 100, atk: 18, def: 7, spd: 12,
+    skill: { name: 'Piqûre de rappel', desc: 'Soigne l’allié le plus blessé (250 % ATQ).', cd: 2, kind: 'heal1', mult: 2.5, ico: 'cross' },
+  },
+  pip: {
+    name: 'Pip', cls: 'Voleur', rarity: 'C', hp: 90, atk: 24, def: 6, spd: 16,
+    skill: { name: 'Coupe-jarret', desc: '130 % sur une cible, saignement 3 tours.', cd: 2, kind: 'single', mult: 1.3, dot: { type: 'bleed', mult: 0.35, turns: 3 }, ico: 'dagger' },
+  },
+  gus: {
+    name: 'Gus', cls: 'Mineur', rarity: 'C', hp: 115, atk: 22, def: 9, spd: 9,
+    skill: { name: 'Coup de pioche', desc: '170 % sur une cible, ignore sa DÉF.', cd: 2, kind: 'single', mult: 1.7, pierce: true, ico: 'pick' },
+  },
+  lenny: {
+    name: 'Lenny', cls: 'Pompier', rarity: 'C', hp: 110, atk: 19, def: 9, spd: 10,
+    skill: { name: 'Lance à incendie', desc: '80 % sur tous les ennemis, leur ATQ −25 % 2 tours.', cd: 3, kind: 'all', mult: 0.8, weaken: { atk: 0.25, turns: 2 }, ico: 'drop' },
+  },
+  vex: {
+    name: 'Vex', cls: 'Vampire', rarity: 'R', hp: 105, atk: 27, def: 7, spd: 13,
+    skill: { name: 'Morsure', desc: '180 % sur une cible, rend 60 % des dégâts en PV.', cd: 3, kind: 'single', mult: 1.8, drain: 0.6, ico: 'fang' },
+  },
+  gideon: {
+    name: 'Gideon', cls: 'Paladin', rarity: 'R', hp: 135, atk: 20, def: 13, spd: 9,
+    skill: { name: 'Égide', desc: 'Bouclier sur l’équipe (150 % ATQ) pendant 3 tours.', cd: 3, kind: 'shield', mult: 1.5, turns: 3, ico: 'aegis' },
+  },
+  aurelia: {
+    name: 'Aurélia', cls: 'Valkyrie', rarity: 'L', hp: 125, atk: 28, def: 11, spd: 14,
+    skill: { name: 'Chant du Valhalla', desc: 'Relève un allié tombé (50 % PV), sinon soigne le plus blessé (200 % ATQ).', cd: 4, kind: 'revive', pct: 0.5, mult: 2, ico: 'wing' },
+  },
+  nova: {
+    name: 'Nova', cls: 'Super-héroïne', rarity: 'L', hp: 115, atk: 31, def: 9, spd: 16,
+    skill: { name: 'Poing météore', desc: '280 % sur une cible et l’étourdit 1 tour.', cd: 3, kind: 'single', mult: 2.8, stun: 1, ico: 'fist' },
+  },
 };
 export const HERO_IDS = Object.keys(HEROES);
 

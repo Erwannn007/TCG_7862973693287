@@ -124,6 +124,57 @@ const ICONS = {
     s.sline(9, 1, 5, 6, C.neon, true); s.hl(5, 9, 6, C.neon, true); s.sline(9, 7, 4, 12, C.neon, true);
     s.sline(10, 1, 6, 6, '#ffffff', true); s.p(10, 7, '#2fb8c8', true);
   },
+  // icônes de compétence des nouveaux héros (HEROES[id].skill.ico)
+  taunt(s) { // poing rouge et cris
+    s.r(4, 5, 6, 5, '#e2334a'); s.hl(4, 8, 4, '#e2334a'); s.r(5, 10, 4, 2, '#e2334a');
+    for (const x of [5, 7]) s.v(x, 5, 6, '#a8203a', true);
+    s.p(5, 4, '#ff8a9a', true); s.p(4, 5, '#ff8a9a', true);
+    s.v(11, 2, 5, '#fbe08a', true); s.p(11, 7, '#fbe08a', true); s.v(1, 3, 5, '#fbe08a', true);
+  },
+  note(s) { // double croche
+    s.r(2, 9, 3, 3, '#f0a050'); s.r(8, 8, 3, 3, '#f0a050'); s.v(4, 3, 10, '#f0a050'); s.v(10, 2, 9, '#f0a050');
+    s.sline(4, 3, 10, 2, '#f0a050'); s.sline(4, 4, 10, 3, '#f0a050');
+    s.p(2, 9, '#fff0b0', true); s.p(8, 8, '#fff0b0', true); s.spark(12, 11, C.goldHi);
+  },
+  cross(s) { // croix verte de soin
+    s.r(5, 2, 4, 10, '#5ae0a0'); s.r(2, 5, 10, 4, '#5ae0a0'); s.v(6, 3, 10, '#b8ffd8', true); s.hl(3, 10, 6, '#b8ffd8', true);
+    s.spark(12, 1, '#ffffff');
+  },
+  dagger(s) { // dague et goutte de sang
+    s.sline(3, 10, 9, 4, '#e4ecf3'); s.sline(4, 10, 10, 4, '#b9c6d2'); s.p(10, 3, '#ffffff', true);
+    s.sline(1, 9, 4, 12, C.gold); s.p(2, 11, C.grip); s.p(1, 12, C.grip);
+    s.v(11, 9, 11, '#e2334a', true); s.r(10, 11, 3, 2, '#e2334a', true);
+  },
+  pick(s) { // pioche
+    s.sline(3, 12, 9, 6, '#8a5a32'); s.sline(4, 12, 10, 6, '#a8703a');
+    s.sline(5, 2, 9, 4, '#b9c6d2'); s.sline(9, 4, 12, 8, '#b9c6d2'); s.hl(7, 9, 3, '#e4ecf3', true);
+  },
+  drop(s) { // goutte d'eau
+    s.v(6, 1, 2, '#4a9ae0'); s.hl(5, 7, 3, '#4a9ae0'); s.hl(4, 8, 4, '#4a9ae0'); s.r(3, 5, 7, 5, '#4a9ae0'); s.hl(4, 8, 10, '#4a9ae0'); s.hl(5, 7, 11, '#4a9ae0');
+    s.v(4, 6, 8, '#c8f0ff', true); s.p(5, 5, '#ffffff', true);
+  },
+  fang(s) { // deux crocs et une goutte
+    s.r(1, 2, 12, 3, '#c8323c'); s.hl(2, 11, 1, '#c8323c');
+    for (const x of [3, 9]) { s.r(x, 5, 2, 3, '#ffffff', true); s.p(x, 8, '#ffffff', true); }
+    s.p(4, 10, '#e2334a', true); s.r(3, 11, 3, 2, '#e2334a', true);
+  },
+  aegis(s) { // bouclier d'or et de cyan
+    s.hl(3, 10, 1, C.gold); s.r(2, 2, 10, 6, C.gold); s.r(3, 2, 8, 6, '#4fd8e0');
+    s.hl(3, 10, 8, C.gold); s.hl(4, 9, 9, C.gold); s.hl(5, 8, 10, C.gold); s.hl(6, 7, 11, C.gold);
+    s.hl(4, 9, 8, '#4fd8e0'); s.hl(5, 8, 9, '#4fd8e0'); s.hl(6, 7, 10, '#4fd8e0');
+    s.v(6, 3, 9, '#ffffff', true); s.hl(4, 9, 5, '#c8f6ff', true);
+  },
+  wing(s) { // aile blanche
+    for (const [y, a, b] of [[3, 7, 11], [4, 5, 12], [5, 4, 12], [6, 3, 11], [7, 2, 9], [8, 2, 7], [9, 3, 5]]) s.hl(a, b, y, '#f2eef4');
+    s.hl(5, 10, 6, '#c8c0d0', true); s.hl(4, 8, 8, '#c8c0d0', true); s.p(11, 3, '#ffffff', true);
+    s.spark(1, 11, C.goldHi); s.spark(12, 10, '#ffffff');
+  },
+  fist(s) { // poing et étoile d'impact
+    s.r(5, 4, 6, 5, '#f2eef4'); s.r(4, 5, 1, 4, '#f2eef4'); s.r(6, 9, 4, 3, '#3a4ad0');
+    for (const x of [6, 8]) s.v(x, 4, 5, '#c8c0d0', true);
+    s.p(5, 4, '#ffffff', true);
+    s.p(12, 2, '#fbe08a', true); s.p(13, 4, '#fbe08a', true); s.p(1, 2, '#fbe08a', true);
+  },
   auto(s) { // engrenage
     s.r(4, 3, 6, 8, '#8e99a4'); s.r(3, 4, 8, 6, '#8e99a4'); s.r(6, 1, 2, 2, '#8e99a4'); s.r(6, 11, 2, 2, '#8e99a4');
     s.r(1, 6, 2, 2, '#8e99a4'); s.r(11, 6, 2, 2, '#8e99a4'); s.r(6, 6, 2, 2, OUTLINE, true); s.p(4, 4, '#e4ecf3', true);

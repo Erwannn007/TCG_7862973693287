@@ -140,6 +140,15 @@ const SOUNDS = {
   cannon: () => { noise(0.2, 0, 1); tone(90, 0.25, 0, 'square', 0.7, 40); },
   bubble: () => [N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.04, i * 0.05, 'triangle', 0.6, f * 1.3)),
   baa: () => { tone(330, 0.3, 0, 'square', 0.35, 300); tone(336, 0.3, 0, 'triangle', 0.5, 310); },
+  // nouveaux héros et statuts
+  shout: () => { tone(196, 0.12, 0, 'square', 0.6, 262); tone(262, 0.18, 0.1, 'square', 0.6, 392); noise(0.06, 0.1, 0.4); },
+  lute: () => [N.E5, N.G5, N.C6].forEach((f, i) => tone(f, 0.09, i * 0.06, 'triangle', 0.8, f * 0.98)),
+  chop: () => { noise(0.05, 0, 0.7); tone(392, 0.04, 0, 'square', 0.5, 196); tone(130, 0.08, 0.04, 'triangle', 0.8); },
+  splash: () => { whoosh(0.3, 900, 3200, 1.2); noise(0.12, 0.12, 0.5); },
+  drain: () => { tone(N.E5, 0.25, 0, 'triangle', 0.6, 196); tone(N.A4, 0.25, 0.05, 'square', 0.3, 147); },
+  punch: () => { noise(0.07, 0, 0.9); tone(165, 0.1, 0, 'square', 0.8, 70); tone(N.E5, 0.04, 0.02, 'square', 0.4); },
+  burn: () => { noise(0.18, 0, 0.5); tone(220, 0.12, 0, 'square', 0.3, 330); },
+  drip: () => { tone(N.A5, 0.04, 0, 'triangle', 0.6, N.E5); tone(N.E5, 0.05, 0.06, 'triangle', 0.4, N.C5); },
   shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)
   thud: () => {

@@ -30,7 +30,7 @@ Combattre (histoire, tour, infini) → or + XP (+ éclats à la tour) → invoqu
 tour des épreuves donne des éclats, de l'or et de l'XP à une difficulté qu'on choisit, et le
 mode infini rapporte de l'or et de l'XP.
 
-## 4. Personnages (version 1 : 5 personnages × 5 rangs)
+## 4. Personnages (5 rangs chacun)
 
 | Perso | Classe | Rareté | Rôle | Compétence |
 |---|---|---|---|---|
@@ -39,6 +39,25 @@ mode infini rapporte de l'or et de l'XP.
 | Elio | Mage | Rare | dégâts de zone | **Météore** : 110 % sur tous les ennemis |
 | Séra | Prêtresse | Rare | soin | **Bénédiction** : soigne toute l'équipe (120 % ATQ) |
 | Volt | Cyber-ninja | Légendaire | rafale | **Lame plasma** : 3 coups de 80 % sur des cibles au hasard |
+| Brann | Chevalier | Commune | tank | **Provocation** : attire tous les coups 2 tours, dégâts reçus −30 % |
+| Mira | Barde | Commune | soutien | **Ballade héroïque** : ATQ de l'équipe +30 % pendant 2 tours |
+| Nina | Infirmière | Commune | soin | **Piqûre de rappel** : soigne l'allié le plus blessé (250 % ATQ) |
+| Pip | Voleur | Commune | dégâts sur la durée | **Coupe-jarret** : 130 % + saignement 3 tours |
+| Gus | Mineur | Commune | perce-armure | **Coup de pioche** : 170 %, ignore la DÉF |
+| Lenny | Pompier | Commune | affaiblissement | **Lance à incendie** : 80 % sur tous, ATQ ennemie −25 % 2 tours |
+| Vex | Vampire | Rare | vol de vie | **Morsure** : 180 %, rend 60 % des dégâts en PV |
+| Gideon | Paladin | Rare | bouclier | **Égide** : bouclier sur l'équipe (150 % ATQ), 3 tours |
+| Aurélia | Valkyrie | Légendaire | réanimation | **Chant du Valhalla** : relève un allié (50 % PV), sinon soigne |
+| Nova | Super-héroïne | Légendaire | burst | **Poing météore** : 280 % + étourdit 1 tour |
+
+Objectif : **55 héros** (5 + 50 nouveaux, 25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
+
+**Statuts de combat** (comptés en tours de celui qui les porte, ils s'usent à la fin de son tour) :
+poison, brûlure, saignement (dégâts au début de son tour, sans tenir compte de la DÉF ; un même
+statut se renouvelle au lieu de se cumuler), bonus d'ATQ, malus d'ATQ, bouclier (encaisse avant
+les PV, ligne cyan sur la jauge), provocation (les ennemis le visent, −30 % de dégâts reçus).
+Réanimation : l'allié se relève avec une part de ses PV max. Le détail des types de compétence est
+en tête des nouveaux héros dans `js/data.js`.
 
 - Statistiques : PV, ATQ, DÉF, VIT.
 - Chaque compétence a un temps de recharge (en tours).
@@ -199,5 +218,4 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
 
 ## 9. Hors périmètre (plus tard)
 
-Nouveaux personnages et classes (fantasy, moderne, imaginaire : aucune limite),
-rangs 6 à 8 (mythril, obsidienne…), équipements, événements, nouvelles salles de tour.
+Rangs 6 à 8 (mythril, obsidienne…), équipements, événements, nouvelles salles de tour.

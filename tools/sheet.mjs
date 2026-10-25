@@ -1,11 +1,14 @@
-// Planche de tous les sprites : node tools/sheet.mjs sortie.png
+// Planche de tous les sprites : node tools/sheet.mjs sortie.png [id1,id2,…]
+// Sans liste : tous les héros (5 rangs) puis les ennemis. Avec une liste : seulement ces héros.
 import { writeFileSync } from 'node:fs';
 import { Image } from './png.mjs';
 import { heroSprite, enemySprite } from '../js/sprites.js';
+import { HERO_IDS } from '../js/data.js';
 
 const K = 8, CELL = 30 * K;
-const heroes = ['kael', 'lyra', 'elio', 'sera', 'volt'];
-const enemies = [
+const only = process.argv[3]?.split(',');
+const heroes = only || HERO_IDS;
+const enemies = only ? [] : [
   ['slime', 'vert'], ['slime', 'bleu'], ['slime', 'violet'], ['slime', 'rouge'],
   ['goblin', 'vert'], ['goblin', 'gris'], ['goblin', 'rouge'],
   ['skeleton', 'os'], ['skeleton', 'spectre'], ['skeleton', 'obsidienne'],

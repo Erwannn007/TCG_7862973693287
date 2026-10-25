@@ -31,6 +31,8 @@ const ROOM_NAMES = { team: 'Équipe', camp: 'Camp', summon: 'Invocation' };
 const heroCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}`, () => heroSprite(id, rank), k);
 const lockedCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}-lock`, () => heroSprite(id, rank).silhouette(LOCKED), k);
 const icon = (name, k = 2) => spriteCanvas('ico-' + name, () => iconSprite(name), k);
+// Icône de la compétence d'un héros (les cinq premiers ont la leur, les autres en prennent une du jeu commun).
+const heroIco = (id) => HEROES[id].skill.ico || id;
 // Apparence d'un héros : sa tenue (skin) s'il en porte une — la même à tous les rangs —, sinon le
 // dessin de son rang. skin : forcer une tenue (null : tenue d'origine).
 const look = (id, rank, skin = state.wear[id]) => (skin
@@ -358,11 +360,18 @@ function campItems() {
     }));
   }
   if (towerPick.room === 'shards' && !towerPick.hero) {
-    const heroes = HERO_IDS.filter((id) => state.owned[id] && state.owned[id].rank < MAX_RANK);
-    return [...heroes.map((id) => ({
-      ico: id, mg: '#c08aff', label: HEROES[id].name, sub: `éclats ${state.owned[id].frags}/${UPGRADE[state.owned[id].rank - 1].frags}`, showSub: true,
+    // quatre héros par page, pour que les pancartes ne se chevauchent pas
+    const heroes = HERO_IDS.filter((id) => state.owned[id] && state.owned[id].rank < MAX_RANK), P = 4;
+    const page = Math.min(towerPick.page || 0, Math.max(0, Math.ceil(heroes.length / P) - 1));
+    const items = heroes.slice(page * P, page * P + P).map((id) => ({
+      ico: heroIco(id), mg: '#c08aff', label: HEROES[id].name, sub: `éclats ${state.owned[id].frags}/${UPGRADE[state.owned[id].rank - 1].frags}`, showSub: true,
       go: () => { towerPick.hero = id; swapCampSigns(); },
-    })), back];
+    }));
+    if (heroes.length > P) items.push({
+      ico: 'speed', mg: '#d8c8b0', label: 'Suivants', sub: `page ${page + 1}/${Math.ceil(heroes.length / P)}`, showSub: true,
+      go: () => { towerPick.page = (page + 1) % Math.ceil(heroes.length / P); swapCampSigns(); },
+    });
+    return [...items, back];
   }
   const R = TOWER_ROOMS[towerPick.room];
   return [...TOWER_DIFF.map((D, d) => {
@@ -765,11 +774,14 @@ const CAR_CY = 92, CAR_RY = 10, CAR_STEP = 8; // centre et profondeur du carrous
 
 function renderTeam() {
   if (!selected || !HEROES[selected]) selected = state.team[0];
-  const roster = $('#t-roster');
-  roster.innerHTML = '';
-  HERO_IDS.forEach((id, i) => {
+  // la colonne défile (glisser vers le haut ou le bas) : les héros obtenus d'abord, puis les avis de recherche
+  const old = $('#t-roster .r-list'), top = old ? old.scrollTop : 0;
+  const roster = el('div', 'r-list');
+  $('#t-roster').replaceChildren(roster);
+  [...HERO_IDS.filter((id) => state.owned[id]), ...HERO_IDS.filter((id) => !state.owned[id])].forEach((id, i) => {
     const own = state.owned[id], pos = state.team.indexOf(id);
     const b = el('div', 'r-sign' + (id === selected && pos < 0 ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
+    b.dataset.id = id;
     b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
     // héros pas encore obtenu : avis de recherche ; déjà dans l'équipe : on le voit, mais il se
     // touche et se déplace sur son socle, pas ici
@@ -787,9 +799,12 @@ function renderTeam() {
     else dragSource(b, id, -1);
     roster.appendChild(b);
   });
+  roster.scrollTop = top;
   renderDetail(selected);
   requestAnimationFrame(layoutTeam);
 }
+
+const rosterSign = (id) => $(`#t-roster .r-sign[data-id="${id}"]`);
 
 // Toucher un héros : il devient le héros choisi ; s'il est dans l'équipe, le carrousel tourne
 // pour l'amener devant.
@@ -874,7 +889,7 @@ function heroSigns() {
   let hx, hy;
   if (pos >= 0) [hx, hy] = [teamSlots[pos].sx + 12 * k, teamSlots[pos].sy - 12 * k];
   else {
-    const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(id)].getBoundingClientRect();
+    const r = rosterSign(id).getBoundingClientRect();
     [hx, hy] = [r.right - 30, r.top + r.height / 2];
   }
   const cost = UPGRADE[own.rank - 1];
@@ -1196,10 +1211,18 @@ function dragSource(elm, id, slot) {
     e.stopPropagation(); // ne pas changer de pièce en glissant
     unlock();
     if (teamDrag || teamMode) return;
-    const st = { x: e.clientX, y: e.clientY, moved: false };
+    const list = slot < 0 && elm.closest('.r-list');
+    const st = { x: e.clientX, y: e.clientY, moved: false, scroll: false, top: list ? list.scrollTop : 0 };
     elm.setPointerCapture(e.pointerId);
     const move = (ev) => {
+      // dans la colonne, un geste vertical la fait défiler ; un geste vers le côté sort le héros
+      if (st.scroll) return void (list.scrollTop = st.top - (ev.clientY - st.y));
       if (!st.moved && Math.hypot(ev.clientX - st.x, ev.clientY - st.y) > 8) {
+        if (list && Math.abs(ev.clientY - st.y) > Math.abs(ev.clientX - st.x)) {
+          st.scroll = true;
+          $('#t-menu').classList.add('hidden');
+          return;
+        }
         if (!state.owned[id]) return;
         st.moved = true;
         beginDrag(id, slot);
@@ -1212,7 +1235,7 @@ function dragSource(elm, id, slot) {
       elm.removeEventListener('pointerup', up);
       elm.removeEventListener('pointercancel', up);
       if (st.moved) dragEnd(ev, ev.type === 'pointercancel');
-      else selectHero(id, elm);
+      else if (!st.scroll) selectHero(id, elm);
     };
     elm.addEventListener('pointermove', move);
     elm.addEventListener('pointerup', up);
@@ -1308,7 +1331,7 @@ function dragEnd(e, cancel) {
   }
   // rien de valable sous le doigt : le héros repart d'où il vient
   const back = d.from >= 0 ? [teamSlots[d.from].sx, teamSlots[d.from].sy - 40] : (() => {
-    const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(d.id)].getBoundingClientRect();
+    const r = rosterSign(d.id).getBoundingClientRect();
     return [r.left + 26, r.top + r.height / 2];
   })();
   const g = d.ghost, x0 = parseFloat(g.style.left), y0 = parseFloat(g.style.top);
@@ -1469,7 +1492,7 @@ async function upgrade(id) {
   let cx, cy;
   if (pos >= 0) [cx, cy] = [teamSlots[pos].sx, teamSlots[pos].sy - 36];
   else {
-    const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(id)].getBoundingClientRect();
+    const r = rosterSign(id).getBoundingClientRect();
     [cx, cy] = [r.left + 26, r.top + r.height / 2];
   }
   sfx('charge');
@@ -1523,9 +1546,10 @@ function renderSummon(layout = true) {
     info.appendChild(el('div', 'muted', `Une tenue garde son allure à tous les rangs. Doublon : +${SKIN_GACHA.dupGold} or.`));
   } else {
     info.appendChild(el('div', 'h', 'Autel d’invocation'));
-    const line = el('div', 'lineup');
-    HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 2) : lockedCanvas(id, 1, 2)));
+    const line = el('div', 'lineup wrap');
+    HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 1) : lockedCanvas(id, 1, 1)));
     info.appendChild(line);
+    info.appendChild(el('div', '', `Héros obtenus : <b>${HERO_IDS.filter((id) => state.owned[id]).length}/${HERO_IDS.length}</b>`));
     for (const [k, r] of Object.entries(RARITY)) {
       const row = el('div', 'rate');
       row.appendChild(starsRow(k));
@@ -1907,7 +1931,7 @@ function showMenu(u) {
   buildMenu(u, u.name, [
     { ico: 'attack', mg: '#ff8a4a', label: 'Attaque', sub: 'Frappe un ennemi', go: () => pickTarget(u, 'attack') },
     {
-      ico: u.id, mg: '#c08aff', label: u.skill.name, sub: u.cd ? `Prête dans ${u.cd} tour${u.cd > 1 ? 's' : ''}` : u.skill.desc,
+      ico: heroIco(u.id), mg: '#c08aff', label: u.skill.name, sub: u.cd ? `Prête dans ${u.cd} tour${u.cd > 1 ? 's' : ''}` : u.skill.desc,
       cd: u.cd, go: () => (single ? pickTarget(u, 'skill') : battle.submit({ type: 'skill' })),
     },
     { ico: 'guard', mg: '#5ae0ee', label: 'Garde', sub: 'Dégâts reçus ÷ 2', go: () => battle.submit({ type: 'guard' }) },
