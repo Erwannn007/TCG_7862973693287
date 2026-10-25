@@ -111,12 +111,14 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    droite, sa fiche sur une plaque de bois (rang en gemmes, stats en segments, compétence,
    aperçu des 5 rangs). Monter de rang : la magie dorée converge vers le héros, il
    s'illumine, la salle tremble.
-3. **Invocation** (à droite) : salle sans porte, le cristal posé sur une estrade au-dessus
-   d'un cercle de runes qui s'illuminent, bougies, bannières violettes, rai de lumière et
-   poussière de magie sur le cristal. Deux pancartes en arc autour du cristal (×1 / ×10) ;
-   une plaque de bois flottante donne les héros, les taux et la jauge de pitié. Choisir une
-   pancarte lance un rituel (salle assombrie, magie qui converge, tremblement, éclair) puis la
-   révélation, avec des dos de cartes en bois et un éclat selon la rareté.
+3. **Invocation** (à droite) : salle sans porte, bannières violettes. L'autel : un grand
+   cristal facetté qui flotte au-dessus d'un socle de pierre gravé de runes, avec trois éclats
+   en orbite, un cercle de runes au sol, des bougies, un rai de lumière et de la poussière de
+   magie. Il est centré entre le bord gauche et deux grandes pancartes en arc (×1 / ×10) ;
+   une plaque de bois flottante, du haut jusqu'en bas à droite, donne les héros, les taux et
+   la jauge de pitié. Choisir une pancarte lance un rituel (salle assombrie, magie qui
+   converge, tremblement, éclair) puis la révélation : dos en bois frappés du cristal, faces
+   en pancartes verticales (héros dans une fenêtre, nom sur un ruban), éclat selon la rareté.
 
 ## 9. Hors périmètre (plus tard)
 

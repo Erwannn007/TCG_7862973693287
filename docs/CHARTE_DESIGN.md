@@ -82,7 +82,10 @@ Chaque pancarte a sa graine (`_seed`) : jamais deux bois identiques.
 
 **Disposition** : en **arc de cercle** autour du sujet (le héros, le cristal), jamais empilées
 en colonne. `layoutSigns(m, titre, items, x, y, rayon, écart)` ; rayon de 112 px et écart de
-0,72 rad en combat, 120 px et 0,9 rad pour deux grandes pancartes.
+0,72 rad en combat. Quand le sujet doit se centrer dans l'espace libre (l'autel d'invocation),
+on range d'abord les pancartes contre la plaque d'informations, puis on place le sujet au milieu
+de ce qui reste ; le rayon est la distance entre les deux. Variante `big` (pancartes plus
+grandes) pour les écrans avec peu d'actions.
 
 **Couleur magique** (`mg`) : une par action, utilisée pour le halo, les étincelles et la traînée.
 

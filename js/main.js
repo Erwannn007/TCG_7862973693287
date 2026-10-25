@@ -2,11 +2,11 @@
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
 import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
-import { heroSprite, coinSprite, starSprite, rankGemSprite, crystalSprite } from './sprites.js';
+import { heroSprite, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
-import { sceneBackground, sceneAnim, SH, CAMP_W, GATE } from './scene.js';
+import { sceneBackground, sceneAnim, altar, ALTAR_Y, SH, CAMP_W, GATE } from './scene.js';
 import { installUiArt, iconSprite, signUrl, U } from './ui-art.js';
 import { sfx, haptic, unlock, setSound, setHaptics } from './sfx.js';
 import { OUTLINE } from './spr.js';
@@ -265,38 +265,10 @@ function drawCampLife(g) {
   });
 }
 
+// L'autel d'invocation, à la place choisie par layoutSummon (pixels d'art).
+let summonAltarX = 110;
 function drawAltar(g) {
-  const crystal = bitmap('crystal', crystalSprite);
-  const cy = 56 - (roomStep % 8 < 4 ? 0 : 1), mx = 96 + (crystal.w >> 1);
-  // rai de lumière qui tombe sur le cristal, élargi par bandes de 4 px (comme en combat)
-  g.fillStyle = '#e8d0ff';
-  g.globalAlpha = altarCharge ? 0.16 : 0.08;
-  for (let y = 0; y < 88; y += 4) {
-    const w = 10 + Math.floor((y / 88) * 8) * 2;
-    g.fillRect(mx - (w >> 1), y, w, 4);
-  }
-  g.globalAlpha = 1;
-  // poussière de magie qui monte autour du cristal
-  for (let i = 0; i < 7; i++) {
-    const t = (roomStep + i * 5) % 24, x = mx - 14 + ((i * 13) % 29) + (t % 4 < 2 ? 0 : 1);
-    if (t < 20) {
-      g.fillStyle = t < 12 ? '#c89af0' : '#7a4ab8';
-      g.fillRect(x, 92 - t * 3, 1, 1);
-    }
-  }
-  g.drawImage(crystal.canvas, 96, cy);
-  drawFx(g, crystal, 96, cy, roomStep);
-  // pendant le rituel : anneaux de lumière qui partent du cristal, par paliers
-  if (altarCharge) {
-    const cx = 96 + (crystal.w >> 1), cc = cy + (crystal.h >> 1);
-    for (const r of [4 + ((roomStep * 3) % 21), 4 + ((roomStep * 3 + 10) % 21)]) {
-      g.fillStyle = roomStep % 2 ? '#c89af0' : '#ffffff';
-      for (let i = 0; i < 28; i++) {
-        const t = (i / 28) * Math.PI * 2;
-        g.fillRect(Math.round(cx + Math.cos(t) * r), Math.round(cc + Math.sin(t) * r * 0.8), 1, 1);
-      }
-    }
-  }
+  altar(g, summonAltarX, roomStep, altarCharge);
 }
 
 // Panneau d'affichage en bois sur le mur de gauche.
@@ -415,13 +387,17 @@ $('#btn-options').onclick = () => {
 
 // ---------------------------------------------------------------- cartes
 
+// Face de carte : une petite pancarte en hauteur (bois doré pour une Légendaire), le héros dans
+// une fenêtre sur la salle d'armes, son nom sur un ruban, ses étoiles et son rang.
 function card(id, opts = {}) {
   const h = HEROES[id], own = state.owned[id], k = opts.k || 2;
-  const c = el('button', `card r-${h.rarity}${own ? '' : ' locked'}${opts.sel ? ' sel' : ''}`);
-  c.appendChild(portrait(id, own ? own.rank : 1, k, 28, 30, !own));
-  c.appendChild(el('div', 'name', own ? h.name : '???'));
-  c.appendChild(starsRow(h.rarity));
-  c.appendChild(el('div', 'rank', own ? `Rang ${own.rank}` : 'Inconnu'));
+  const c = el('div', `card face r-${h.rarity}`);
+  const win = el('div', 'c-win');
+  win.appendChild(portrait(id, own ? own.rank : 1, k, 28, 30, !own));
+  c.appendChild(win);
+  c.appendChild(el('div', 'c-name', own ? h.name : '???'));
+  c.appendChild(starsRow(h.rarity, k > 2 ? 2 : 1));
+  c.appendChild(el('div', 'rank', `${k > 2 ? h.cls + ' · ' : ''}Rang ${own ? own.rank : 1}`));
   if (opts.badge) c.appendChild(el('div', 'badge ' + (opts.badgeCls || ''), opts.badge));
   return c;
 }
@@ -634,6 +610,9 @@ function renderSummon() {
   requestAnimationFrame(layoutSummon);
 }
 
+// Les pancartes se rangent contre la plaque d'informations ; l'autel se centre entre le bord
+// gauche et les pancartes, qui forment un arc autour de lui.
+const BIG_SIGN_HOT = 268; // largeur d'une grande pancarte visée (voir .signs.big)
 function layoutSummon() {
   if (screen !== 'summon' && $('#scr-summon').classList.contains('hidden')) return;
   paintSign($('#s-info'));
@@ -643,11 +622,14 @@ function layoutSummon() {
     c.height = SH;
     fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
   }
-  const cr = bitmap('crystal', crystalSprite), [x, y] = toScreen(c, CAMP_W, 96 + cr.w / 2, 56 + cr.h / 2);
+  const k = c.clientWidth / CAMP_W, signsLeft = $('#s-info').getBoundingClientRect().left - 24 - BIG_SIGN_HOT;
+  const cx = Math.max(100, signsLeft / 2 + 8), cy = c.offsetTop + ALTAR_Y * k, R = Math.max(110, signsLeft - cx);
+  summonAltarX = (cx - c.offsetLeft) / k;
+  drawRooms(false, 'summon');
   layoutSigns($('#s-menu'), null, [
     { ico: 'summon', mg: '#c08aff', label: 'Invoquer ×1', sub: `${GACHA.single} or`, showSub: true, off: state.gold < GACHA.single, go: () => ritual(1) },
     { ico: 'summon', mg: '#ffd86a', label: 'Invoquer ×10', sub: `${GACHA.multi} or · 1 Rare min.`, showSub: true, off: state.gold < GACHA.multi, go: () => ritual(10) },
-  ], x, y, 120, 0.9);
+  ], cx, cy, R, 2 * Math.asin(Math.min(0.9, 58 / R)), 'big');
 }
 
 // Rituel : la salle s'assombrit, la magie converge vers le cristal qui charge, la salle tremble,
@@ -659,7 +641,7 @@ async function ritual(count) {
   summoning = true;
   const sec = $('#scr-summon'), veil = $('#s-veil'), c = $('#summon-canvas');
   $('#s-menu').classList.add('hidden');
-  const cr = bitmap('crystal', crystalSprite), [cx, cy] = toScreen(c, CAMP_W, 96 + cr.w / 2, 56 + cr.h / 2);
+  const [cx, cy] = toScreen(c, CAMP_W, summonAltarX, ALTAR_Y);
   for (const o of [0.2, 0.4, 0.55]) {
     veil.style.opacity = o;
     await wait(60);
@@ -758,8 +740,10 @@ async function reveal(results) {
       }
     }
     const face = card(r.id, { badge: r.isNew ? 'NEW' : '+1', k: results.length > 1 ? 2 : 4 });
-    face.classList.add('flash-' + r.rar);
+    face._seed = back._seed;
     back.replaceWith(face);
+    face.style.backgroundImage = signUrl(face.offsetWidth, face.offsetHeight, r.rar === 'L' ? 'hot' : 'normal', face._seed);
+    face.style.backgroundSize = '100% 100%';
     // éclat à la révélation, plus fort selon la rareté ; une Légendaire fait trembler l'écran
     const fr = face.getBoundingClientRect();
     sparks(fr.left + fr.width / 2, fr.top + fr.height / 2, { C: '#d0d6dc', R: '#7ab0f0', L: '#fbe08a' }[r.rar], { C: 6, R: 14, L: 30 }[r.rar], r.rar === 'L' ? 2 : 1.2);
@@ -896,9 +880,9 @@ function buildMenu(u, title, items) {
 }
 
 // items : { ico, mg (couleur magique), label, sub, sub always visible si showSub, cd, off, go }
-function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP) {
+function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '') {
   m.innerHTML = '';
-  m.className = 'signs';
+  m.className = 'signs ' + cls;
   const n = items.length, span = R * Math.sin((step * (n - 1)) / 2);
   const cy = Math.max(96 + span, Math.min(innerHeight - 40 - span, hy));
   let first = null;

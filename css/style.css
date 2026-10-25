@@ -163,7 +163,6 @@ small { font-size: 12px; }
 }
 .card.r-R { border-image-source: var(--f-cardR); }
 .card.r-L { border-image-source: var(--f-cardL); }
-.card canvas { box-shadow: 0 0 0 2px var(--line); }
 .card.sel { border-image-source: var(--f-sel); }
 .card.locked { filter: brightness(.7) saturate(.6); }
 .card:active { transform: translateY(2px); }
@@ -218,8 +217,8 @@ small { font-size: 12px; }
 /* invocation : même langage que le combat — pancartes en arc autour du cristal,
    plaque d'informations en bois qui flotte en haut à droite, voile sombre pendant le rituel */
 #s-info {
-  position: absolute; z-index: 2; top: calc(var(--safe-t) + 50px); right: var(--safe-r); width: 264px;
-  display: flex; flex-direction: column; gap: 3px; padding: 12px 18px 14px;
+  position: absolute; z-index: 2; top: calc(var(--safe-t) + 50px); bottom: calc(var(--safe-b) + 4px); right: var(--safe-r); width: 264px;
+  display: flex; flex-direction: column; justify-content: space-evenly; gap: 3px; padding: 12px 18px 14px;
   font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2.2s steps(1) infinite;
@@ -306,6 +305,12 @@ small { font-size: 12px; }
 .signs .act.hot::before { animation-duration: 1.6s; }
 .signs .act.hot .motes i { animation-duration: 1.4s; background: #fff8d0; }
 .signs .act.hot canvas { width: 42px !important; height: 42px !important; }
+/* big : grandes pancartes (invocation) */
+.signs.big .act { width: 214px; min-height: 66px; font-size: 18px; }
+.signs.big .act canvas { width: 36px !important; height: 36px !important; }
+.signs.big .act.hot { width: 262px; min-height: 86px; font-size: 20px; }
+.signs.big .act.hot canvas { width: 48px !important; height: 48px !important; }
+.signs.big .act small { font-size: 13px; }
 .signs .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
 .signs .act.off .motes, .signs .act.off::before { display: none; }
 .signs .act small { display: none; font-size: 12px; font-weight: 400; }
@@ -335,20 +340,33 @@ small { font-size: 12px; }
 .stage-list .btn { font-size: 14px; padding: 0 4px; }
 
 #reveal-grid { display: grid; gap: 12px 10px; }
-#reveal-grid.grid1 { grid-template-columns: 150px; }
+#reveal-grid.grid1 { grid-template-columns: 172px; }
 #reveal-grid.grid10 { grid-template-columns: repeat(5, 92px); }
-#reveal-grid .card { font-size: 14px; }
-#reveal-grid .card .pedestal { min-height: 60px; }
+#reveal-grid .card { min-height: 148px; font-size: 12px; }
+#reveal-grid.grid1 .card { min-height: 246px; font-size: 15px; }
+/* face de carte : pancarte en hauteur, héros dans une fenêtre, nom sur un ruban */
+.card.face {
+  justify-content: center; gap: 4px; padding: 10px 8px; border: 0; border-image: none;
+  background: no-repeat center; image-rendering: pixelated;
+}
+.card.face.r-R { filter: drop-shadow(0 0 4px var(--R)); }
+.card.face.r-L { filter: drop-shadow(0 0 6px var(--gold-hi)); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.card .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px #c8a870; }
+.card.r-R .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--R); }
+.card.r-L .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--gold-hi); }
+.card .c-name {
+  margin-top: 4px; padding: 0 6px; color: #fff; text-shadow: 1px 1px 0 var(--line); white-space: nowrap;
+  border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
+}
+.card.face .rank { font-size: .85em; }
+.card.face.r-L .rank { color: #5a3a22; }
 .card.back {
   min-height: 120px; justify-content: center; border-image: none; background: no-repeat center; image-rendering: pixelated;
 }
-#reveal-grid.grid10 .card.back { min-height: 131px; }
 .card.back canvas { box-shadow: none; filter: drop-shadow(0 0 3px #c08aff); }
 .card.back.b-R { filter: drop-shadow(0 0 4px var(--R)); }
 .card.back.b-L { filter: drop-shadow(0 0 6px var(--gold-hi)); }
 .card.back.blink { filter: brightness(1.8); }
-.card.flash-L { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--L), 0 0 0 4px var(--gold-hi); }
-.card.flash-R { box-shadow: inset 0 0 0 2px var(--line), inset 0 0 0 4px var(--R), 0 0 0 4px var(--R); }
 
 /* portrait : on demande de tourner le téléphone */
 #rotate { display: none; }

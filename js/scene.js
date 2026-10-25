@@ -947,35 +947,136 @@ function teamRoom(g) {
   g.fillRect(174, 56, 14, 3);
 }
 
-// Salle d'invocation : cercle de runes, bougies, bannières violettes.
-const RUNE = { x: 110, y: 101, rx: 40, ry: 9 };
+// Salle d'invocation : murs, piliers et bannières. L'autel (cristal, socle, cercle de runes,
+// bougies) est dessiné à part par altar(), à une position choisie selon l'écran.
 function summonRoom(g) {
-  const lights = [{ x: 60, y: 28, r: [6, 14, 26] }, { x: 240, y: 28, r: [6, 14, 26] }, { x: 110, y: 74, r: [10, 22, 40] }];
+  const lights = [{ x: 60, y: 28, r: [6, 14, 26] }, { x: 240, y: 28, r: [6, 14, 26] }];
   dungeon(g, { w: CAMP_W, lights, pillars: [20, 196] });
-  // lueur violette tramée autour du cristal et du cercle
-  for (let y = 30; y < SH; y++)
-    for (let x = 50; x < 170; x++) {
-      const d = Math.hypot((x - 110) / 1.6, y - 80);
-      if (d < 22 ? (x + y) % 2 === 0 : d < 34 && (x + y) % 4 === 0) px(g, x, y, d < 14 ? '#4a2c5c' : '#3a2448');
-    }
   banner(g, 78, 8, 24, '#62349a', '#4a2386');
   banner(g, 142, 8, 24, '#62349a', '#4a2386');
-  // estrade de pierre
-  g.fillStyle = '#1a1114';
-  g.fillRect(84, 88, 53, 8);
-  g.fillStyle = '#6a6068';
-  g.fillRect(85, 88, 51, 6);
-  g.fillStyle = '#8a8088';
-  g.fillRect(85, 88, 51, 1);
-  g.fillStyle = '#4a4048';
-  g.fillRect(85, 93, 51, 1);
-  // cercle de runes au sol
+}
+
+// Grand cristal facetté (losange de 23 × 41 px) : facettes claires à gauche, sombres à droite,
+// arête centrale et ceinture lumineuses, cœur qui pulse.
+function bigCrystal(g, cx, cy, step) {
+  const TOP = 22, BOT = 18, W = 11;
+  const half = (dy) => (dy <= 0 ? Math.round(W * (1 + dy / TOP)) : Math.round(W * (1 - dy / BOT)));
+  for (let dy = -TOP - 1; dy <= BOT + 1; dy++) {
+    const hw = half(Math.max(-TOP, Math.min(BOT, dy))) + 1;
+    g.fillStyle = OUTLINE;
+    g.fillRect(cx - hw, cy + dy, hw * 2 + 1, 1);
+  }
+  for (let dy = -TOP; dy <= BOT; dy++) {
+    const hw = half(dy);
+    for (let dx = -hw; dx <= hw; dx++) {
+      const up = dy < 0;
+      let c = dx < 0 ? (up ? '#e6d0ff' : '#a878e8') : (up ? '#9a62d8' : '#6a3aa8');
+      if (Math.abs(dx) === Math.round(hw * 0.55) && hw > 2) c = dx < 0 ? (up ? '#c8a0f0' : '#8a58d0') : (up ? '#7a48c0' : '#4e2888');
+      if (dx === 0) c = up ? '#ffffff' : '#c8a0f0';
+      if (dy === 0) c = dx < 0 ? '#ffffff' : '#e6d0ff';
+      if (dx === -hw) c = up ? '#f4e8ff' : '#c8a0f0';
+      g.fillStyle = c;
+      g.fillRect(cx + dx, cy + dy, 1, 1);
+    }
+  }
+  // cœur qui pulse
+  const p = step % 6 < 3 ? 2 : 3;
+  g.globalAlpha = 0.7;
+  g.fillStyle = '#ffffff';
+  for (let dy = -p - 2; dy <= p; dy++) {
+    const w = p - Math.abs(dy + 1);
+    if (w >= 0) g.fillRect(cx - w, cy - 4 + dy, w * 2 + 1, 1);
+  }
+  g.globalAlpha = 1;
+  // reflets qui scintillent sur les facettes
+  if (step % 8 === 0) px(g, cx - 5, cy - 9, '#ffffff');
+  if (step % 8 === 4) px(g, cx + 4, cy + 6, '#ffffff');
+}
+
+// Petit éclat de cristal (3 × 5) en orbite.
+function shard(g, x, y, lit) {
+  g.fillStyle = OUTLINE;
+  g.fillRect(x - 2, y - 2, 5, 5);
+  g.fillRect(x - 1, y - 3, 3, 7);
+  g.fillStyle = lit ? '#e6d0ff' : '#9a62d8';
+  g.fillRect(x - 1, y - 2, 3, 5);
+  g.fillRect(x, y - 3, 1, 7);
+  px(g, x - 1, y - 1, '#ffffff');
+}
+
+// L'autel au complet, centré en x (pixels d'art) : lueur au sol, cercle de runes, bougies,
+// socle de pierre gravé, rai de lumière, grand cristal flottant et ses éclats, poussière de magie.
+// charge : pendant le rituel (plus de lumière, anneaux qui partent du cristal).
+export const ALTAR_Y = 50; // centre du cristal
+export function altar(g, x, step, charge = false) {
+  x = Math.round(x);
+  const cy = ALTAR_Y - (step % 8 < 4 ? 0 : 1), fy = 101;
+  // lueur violette tramée au sol et sur le mur
+  for (let y = 30; y < SH; y++)
+    for (let dx = -62; dx <= 62; dx++) {
+      const d = Math.hypot(dx / 1.6, y - 82);
+      if (d < 22 ? (dx + y) % 2 === 0 : d < 36 && (dx + y) % 4 === 0) px(g, x + dx, y, d < 14 ? '#4a2c5c' : '#3a2448');
+    }
+  // rai de lumière qui tombe sur le cristal, élargi par bandes de 4 px
+  g.fillStyle = '#e8d0ff';
+  g.globalAlpha = charge ? 0.16 : 0.08;
+  for (let y = 0; y < 92; y += 4) {
+    const w = 14 + Math.floor((y / 92) * 9) * 2;
+    g.fillRect(x - (w >> 1), y, w, 4);
+  }
+  g.globalAlpha = 1;
+  // cercle de runes au sol, runes qui s'allument tour à tour
+  const RX = 46, RY = 9;
   for (let a = 0; a < 360; a += 2) {
     const r = (a * Math.PI) / 180;
-    px(g, Math.round(RUNE.x + Math.cos(r) * RUNE.rx), Math.round(RUNE.y + Math.sin(r) * RUNE.ry), '#62349a');
-    px(g, Math.round(RUNE.x + Math.cos(r) * (RUNE.rx - 4)), Math.round(RUNE.y + Math.sin(r) * (RUNE.ry - 2)), '#4a2386');
+    px(g, Math.round(x + Math.cos(r) * RX), Math.round(fy + Math.sin(r) * RY), '#62349a');
+    px(g, Math.round(x + Math.cos(r) * (RX - 5)), Math.round(fy + Math.sin(r) * (RY - 2)), '#4a2386');
+  }
+  for (let i = 0; i < 6; i++) {
+    const a = ((step * 8 + i * 60) * Math.PI) / 180;
+    const rx = Math.round(x + Math.cos(a) * (RX - 2)), ry = Math.round(fy + Math.sin(a) * (RY - 1));
+    px(g, rx, ry, '#c89af0');
+    px(g, rx + 1, ry, '#ffffff');
+  }
+  // bougies autour du cercle (celles du fond d'abord)
+  [[-30, 94], [30, 94], [-44, 100], [44, 100], [-34, 108], [34, 108]].forEach(([dx, y], i) => candle(g, x + dx, y, step + i));
+  // socle de pierre : plateau, fût gravé de runes, base évasée
+  const R = (rx, ry, w, h, c) => { g.fillStyle = c; g.fillRect(x + rx, ry, w, h); };
+  R(-14, 96, 29, 5, OUTLINE); R(-13, 96, 27, 4, '#5c5258'); R(-13, 96, 27, 1, '#8a8088');
+  R(-7, 80, 15, 16, OUTLINE); R(-6, 80, 13, 16, '#6a6068'); R(-6, 80, 3, 16, '#8a8088'); R(4, 80, 3, 16, '#4a4048');
+  R(-11, 75, 23, 6, OUTLINE); R(-10, 75, 21, 5, '#7a7078'); R(-10, 75, 21, 1, '#a8a0a8'); R(-10, 79, 21, 1, '#4a4048');
+  for (const [rx, ry] of [[-2, 83], [1, 86], [-2, 89], [1, 92]]) R(rx, ry, 2, 1, (step + ry) % 4 < 2 || charge ? '#c89af0' : '#62349a');
+  // éclats en orbite : derrière le cristal quand ils passent au fond
+  const shards = [0, 1, 2].map((i) => {
+    const a = step * 0.18 + (i * Math.PI * 2) / 3;
+    return { x: Math.round(x + Math.cos(a) * 20), y: Math.round(cy + 2 + Math.sin(a) * 6), front: Math.sin(a) > 0 };
+  });
+  for (const s of shards) if (!s.front) shard(g, s.x, s.y, false);
+  // halo tramé autour du cristal
+  for (let dy = -28; dy <= 24; dy++)
+    for (let dx = -18; dx <= 18; dx++) {
+      const d = Math.hypot(dx * 1.4, dy * 0.8);
+      if (d > 16 && d < 21 && (dx + dy + step) % 3 === 0) px(g, x + dx, cy + dy, charge ? '#e6d0ff' : '#7a4ab8');
+    }
+  bigCrystal(g, x, cy, step);
+  for (const s of shards) if (s.front) shard(g, s.x, s.y, true);
+  // poussière de magie qui monte
+  for (let i = 0; i < 9; i++) {
+    const t = (step + i * 5) % 26, mx = x - 18 + ((i * 13) % 37) + (t % 4 < 2 ? 0 : 1);
+    if (t < 22) px(g, mx, 94 - t * 3, t < 12 ? '#c89af0' : '#7a4ab8');
+  }
+  // pendant le rituel : anneaux de lumière qui partent du cristal
+  if (charge) {
+    for (const r of [6 + ((step * 3) % 24), 6 + ((step * 3 + 12) % 24)]) {
+      g.fillStyle = step % 2 ? '#c89af0' : '#ffffff';
+      for (let i = 0; i < 32; i++) {
+        const t = (i / 32) * Math.PI * 2;
+        g.fillRect(Math.round(x + Math.cos(t) * r), Math.round(cy - 2 + Math.sin(t) * r * 0.8), 1, 1);
+      }
+    }
   }
 }
+
 // Brasero sur pied (crypte).
 function brazier(g, x, y, step) {
   g.fillStyle = OUTLINE;
@@ -989,8 +1090,6 @@ function brazier(g, x, y, step) {
   g.fillRect(x - 5, y - 3, 11, 1);
   flame(g, x, y - 3, step, true);
 }
-
-const CANDLES = [[72, 104], [84, 110], [136, 110], [148, 104], [96, 96], [124, 96]];
 
 function candle(g, x, y, step) {
   g.fillStyle = '#1a1114';
@@ -1028,14 +1127,6 @@ const SCENES = {
     anim(g, step) {
       torch(g, 60, 28, step);
       torch(g, 240, 28, step + 1);
-      CANDLES.forEach(([x, y], i) => candle(g, x, y, step + i));
-      // runes qui s'allument tour à tour sur le cercle
-      for (let i = 0; i < 6; i++) {
-        const a = ((step * 8 + i * 60) * Math.PI) / 180;
-        const x = Math.round(RUNE.x + Math.cos(a) * (RUNE.rx - 2)), y = Math.round(RUNE.y + Math.sin(a) * (RUNE.ry - 1));
-        px(g, x, y, '#c89af0');
-        px(g, x + 1, y, '#ffffff');
-      }
     },
   },
 };

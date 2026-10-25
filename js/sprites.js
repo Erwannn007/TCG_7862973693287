@@ -535,24 +535,3 @@ export function rankGemSprite(on) {
   s.p(3, 2, hi, true); s.p(2, 3, hi, true);
   return s;
 }
-
-// Cristal d'invocation sur son socle (28×32).
-export function crystalSprite() {
-  const s = new Spr(28, 32), a = '#9a5ad8', d = '#62349a', l = '#c89af0', st = '#8a8478', sd = '#5e584e';
-  // socle
-  s.r(7, 25, 14, 3, st); s.r(5, 28, 18, 2, sd); s.hl(8, 19, 24, sd);
-  s.p(9, 26, C.gem, true); s.p(14, 26, C.gold, true); s.p(18, 26, C.gem, true);
-  // cristal (losange)
-  const rows = [[2, 13, 14], [3, 12, 15], [4, 11, 16], [5, 10, 17], [6, 10, 17], [7, 9, 18], [8, 9, 18], [9, 8, 19], [10, 8, 19],
-    [11, 8, 19], [12, 8, 19], [13, 9, 18], [14, 9, 18], [15, 10, 17], [16, 10, 17], [17, 11, 16], [18, 11, 16], [19, 12, 15], [20, 12, 15], [21, 13, 14]];
-  for (const [y, x0, x1] of rows) s.hl(x0, x1, y, a, true);
-  for (const [y, x0, x1] of rows) { s.p(x0, y, l, true); s.p(x1, y, d, true); }
-  s.v(13, 3, 20, l, true);
-  s.v(11, 7, 12, '#ffffff', true);
-  s.p(12, 5, '#ffffff', true);
-  s.r(14, 9, 3, 8, d, true);
-  // rayons
-  s.v(13, 22, 23, l, true); s.v(14, 22, 23, a, true);
-  for (const [x, y] of [[3, 6], [24, 4], [2, 16], [25, 14], [6, 1], [21, 20], [1, 22], [26, 23]]) s.spark(x, y, (x + y) % 2 ? '#ffffff' : C.goldHi);
-  return s;
-}
