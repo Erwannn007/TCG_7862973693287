@@ -1528,6 +1528,104 @@ Object.assign(FX, {
       for (const ox of [-6, 0, 6]) for (let j = 0; j < h - Math.abs(ox) / 3; j++) px(g, d.tx + ox, d.ty + 10 - j, j > h - 3 ? '#ffffff' : e.cols[0]);
     }
   },
+  // --- Shoto : un éclat de glace puis une flammèche, en alternance
+  iceFire(g, q, e) {
+    FX.iceShard(g, q, { ...e, cols: ['#8ae8ff', '#ffffff'] });
+    if (q > 0.2) FX.fireball(g, Math.max(0, q - 0.2) / 0.8, { ...e, cols: ['#ff6a1f', '#fbe08a'] });
+  },
+  // Glace et feu : un glacier jaillit sous chaque ennemi, puis les flammes
+  glacier(g, q, e) {
+    for (const [i, d] of e.d.entries()) {
+      const k = Math.max(0, Math.min(1, q * 1.5 - i * 0.12)), h = Math.round(Math.min(1, k * 2) * 14);
+      for (const [ox, hh] of [[-8, 0.6], [-3, 1], [2, 0.8], [7, 0.5]]) {
+        const H = Math.round(h * hh);
+        for (let j = 0; j < H; j++) { px(g, d.tx + ox, d.ty + 10 - j, j > H - 2 ? '#ffffff' : '#8ae8ff', 2); }
+      }
+      if (k > 0.5) for (let j = 0; j < 6; j++) px(g, d.tx - 6 + j * 2.4, d.ty - 4 - (k - 0.5) * 16 - (j % 2) * 3, j % 2 ? '#fbe08a' : '#ff6a1f', 2);
+    }
+  },
+  // --- Bakugo : petite explosion au contact
+  blast(g, q, e) {
+    if (q < 0.25) { px(g, e.tx - 2, e.ty - 2, '#ffffff', 4); return; }
+    const k = (q - 0.25) / 0.75;
+    burst(g, e.tx, e.ty, k, ['#ff6a1f', '#fbe08a'], 10);
+    for (let i = 0; i < 4; i++) px(g, e.tx - 6 + i * 4, e.ty - 6 - k * 10, k < 0.5 ? '#ff6a1f' : '#6a6070', 2);
+  },
+  // Howitzer Impact : une tornade d'explosions tourne, puis tout explose
+  howitzer(g, q, e) {
+    if (q < 0.5) {
+      for (let i = 0; i < 10; i++) {
+        const a = q * 30 + i * 0.63, r = 4 + i;
+        px(g, e.tx + Math.cos(a) * r, e.ty - 6 + Math.sin(a) * r * 0.5 - i, i % 2 ? '#ff6a1f' : '#fbe08a', 2);
+      }
+    } else {
+      const k = (q - 0.5) / 0.5;
+      star(g, e.tx, e.ty, k, ['#ff6a1f', '#fbe08a'], 16);
+      ring(g, e.tx, e.ty, k, '#ffb030', 22);
+      ring(g, e.tx, e.ty, Math.max(0, k - 0.2), '#ffffff', 16);
+      for (let i = 0; i < 6; i++) px(g, e.tx - 10 + i * 4, e.ty - 8 - k * 14, '#6a6070', 2);
+    }
+  },
+  // --- Red Riot : coup de poing durci, éclats de roche
+  hardPunch(g, q, e) {
+    star(g, e.tx, e.ty, q, ['#e2334a', '#ffffff'], 7 + e.rank);
+    if (q > 0.3) cubes(g, e.tx, e.ty, (q - 0.3) / 0.7, ['#a8a0a8', '#d8d0d8'], 5);
+  },
+  // Roc indestructible : sa peau devient de pierre, anneaux rouges, éclats
+  harden(g, q, e) {
+    const d = e.d[0] || { tx: e.x, ty: e.y };
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2, r = 14 - q * 8;
+      if (q < 0.7) px(g, d.tx + Math.cos(a) * r, d.ty + Math.sin(a) * r, i % 2 ? '#a8a0a8' : '#d8d0d8', 2);
+    }
+    if (q > 0.5) { ring(g, d.tx, d.ty, (q - 0.5) * 2, e.cols[0], 16); star(g, d.tx, d.ty - 4, (q - 0.5) * 2, ['#a8a0a8', '#ffffff'], 8); }
+  },
+  // --- Deku : coup de poing entouré d'éclairs verts
+  smashPunch(g, q, e) {
+    FX.punch(g, q, e);
+    for (let i = 0; i < 4; i++) {
+      const a = q * 12 + i * 1.6;
+      px(g, e.tx + Math.cos(a) * 9, e.ty + Math.sin(a) * 6, i % 2 ? '#5af08a' : '#ffffff');
+    }
+  },
+  // Detroit Smash : éclairs verts qui crépitent, puis un souffle qui traverse tout l'écran
+  detroit(g, q, e) {
+    if (q < 0.35) {
+      for (let i = 0; i < 6; i++) {
+        const a = q * 20 + i;
+        px(g, e.x + Math.cos(a) * (6 + (i % 3) * 3), e.y + Math.sin(a) * 8, i % 2 ? '#5af08a' : '#ffffff', 2);
+      }
+    } else {
+      const k = (q - 0.35) / 0.65;
+      for (let j = -3; j <= 3; j++) {
+        const L = Math.round(k * 140);
+        for (let i = 0; i < L; i += 3) px(g, e.x + 8 * e.dir + i * e.dir, e.ty + j * 3 + Math.sin(i * 0.3) * (j === 0 ? 0 : 1), j === 0 ? '#ffffff' : Math.abs(j) % 2 ? e.cols[0] : e.cols[1]);
+      }
+      star(g, e.tx, e.ty, k, ['#5af08a', '#ffffff'], 14);
+    }
+  },
+  // --- All Might : coup de poing qui fait vibrer l'air
+  texas(g, q, e) {
+    star(g, e.tx, e.ty, q, e.cols, 9);
+    ring(g, e.tx, e.ty, q, e.cols[1], 12);
+  },
+  // United States of Smash : un poing géant, le souffle balaie tous les ennemis
+  usaSmash(g, q, e) {
+    if (q < 0.4) {
+      const k = q / 0.4, x = lerp(e.x + 10 * e.dir, e.x + 40 * e.dir, k), y = e.y - 4;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 7, Math.round(y) - 7, 15, 15);
+      g.fillStyle = '#e2334a';
+      g.fillRect(Math.round(x) - 6, Math.round(y) - 6, 13, 13);
+      g.fillStyle = '#ff8a8a';
+      g.fillRect(Math.round(x) - 6, Math.round(y) - 6, 13, 2);
+      for (let i = 0; i < 6; i++) px(g, x - (10 + i * 4) * e.dir, y - 6 + i * 2, '#ffffff');
+    } else {
+      const k = (q - 0.4) / 0.6;
+      for (const d of e.d) { star(g, d.tx, d.ty, k, ['#fbe08a', '#e2334a'], 14); ring(g, d.tx, d.ty, k, '#ffffff', 18); }
+      for (let j = -4; j <= 4; j++) for (let i = 0; i < k * 150; i += 4) px(g, e.x + 30 * e.dir + i * e.dir, e.y + j * 5, j % 2 ? e.cols[1] : '#ffffff');
+    }
+  },
   // Poison, brûlure, saignement : petite gerbe sur celui qui souffre (couleurs imposées)
   tick(g, q, e) {
     burst(g, e.tx, e.ty, q, e.cols, 6);
@@ -1611,6 +1709,11 @@ export const HERO_FX = {
   atlas: { cols: ['#4ff0e8', '#c8f6ff'], attack: 'rocket', skill: 'fortress', ranged: true, sound: 'rocket', skillSound: 'shield' },
   pyra: { cols: ['#ff6a1f', '#fbe08a'], attack: 'flameFeather', skill: 'rebirth', ranged: true, sound: 'burn', skillSound: 'legend' },
   mortis: { cols: ['#8ae8ff', '#e8f8ff'], attack: 'frostBolt', skill: 'blizzard', ranged: true, sound: 'ice', skillSound: 'ghost' },
+  shoto: { cols: ['#8ae8ff', '#ff6a1f'], attack: 'iceFire', skill: 'glacier', ranged: true, sound: 'ice', skillSound: 'burn' },
+  bakugo: { cols: ['#ff6a1f', '#fbe08a'], attack: 'blast', skill: 'howitzer', ranged: false, sound: 'explode', skillSound: 'explode' },
+  redriot: { cols: ['#e2334a', '#d8d0d8'], attack: 'hardPunch', skill: 'harden', ranged: false, sound: 'punch', skillSound: 'clank' },
+  deku: { cols: ['#5af08a', '#c8ffd8'], attack: 'smashPunch', skill: 'detroit', ranged: false, sound: 'punch', skillSound: 'smash' },
+  allmight: { cols: ['#fbe08a', '#8ab4ff'], attack: 'texas', skill: 'usaSmash', ranged: false, sound: 'punch', skillSound: 'smash' },
 };
 export const ENEMY_FX = {
   slime: { cols: ['#5cc85a', '#d8ffd0'], attack: 'splat', sound: 'hit' },

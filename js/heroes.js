@@ -56,6 +56,11 @@ export const NEW_CLASS = {
   atlas: { main: '#e0e4ec', dark: '#9aa0b8', trim: '#e0a93a', pants: '#4a5a7a' },
   pyra: { main: '#d83a2a', dark: '#9a2018', trim: '#fbe08a', pants: '#d83a2a' },
   mortis: { main: '#2a3a6a', dark: '#1a2648', trim: '#8ae8ff', pants: '#2a3a6a' },
+  shoto: { main: '#3a4a7a', dark: '#26305e', trim: '#b9c6d2', pants: '#3a4a7a' },
+  bakugo: { main: '#2a2234', dark: '#160f1c', trim: '#e8702a', pants: '#2a2234' },
+  redriot: { main: '#2a2234', dark: '#160f1c', trim: '#e2334a', pants: '#2a2234' },
+  deku: { main: '#3a8a5a', dark: '#26603e', trim: '#2a2234', pants: '#3a8a5a' },
+  allmight: { main: '#2a5ad8', dark: '#1a3a98', trim: '#e2334a', pants: '#2a5ad8' },
 };
 
 const trimOf = (K, rank) => (rank >= 4 ? C.gold : K.trim);
@@ -1506,10 +1511,149 @@ function mortis(rank) {
   return s.recolor({ [C.skin]: BO, [C.skinSh]: '#b8ac90', ['#f0907a']: BO });
 }
 
+// ---------------------------------------------------------------- clins d'œil : My Hero Academia
+
+// Shoto : cheveux moitié blancs moitié rouges, cicatrice de brûlure, glace à gauche, feu à droite.
+function shoto(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.shoto, HW = '#f2eef4', HR = '#d8402a', IC = '#8ae8ff', ICD = '#4ab8d8';
+  // glace qui couvre le côté gauche (pics de glace derrière le bras)
+  const big = rank >= 3;
+  for (const [x, y] of big ? [[4, 9], [3, 11], [2, 14], [3, 17], [4, 20], [5, 12]] : [[4, 12], [3, 15], [4, 18]]) { s.v(x, y, y + 2, IC); s.p(x, y, '#ffffff', true); s.p(x + 1, y + 2, ICD); }
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, ...boots(m), cape: rank >= 4 && K.dark, belt: '#b9c6d2', buckle: rank >= 4 ? C.gold : m.c });
+  // harnais argenté sur la poitrine, bras gauche givré
+  s.v(9, 14, 17, K.trim); s.v(14, 14, 17, K.trim); s.hl(9, 14, 16, K.trim);
+  s.r(6, 14, 2, 3, IC); s.p(6, 14, '#ffffff', true);
+  // cheveux : blancs à gauche, rouges à droite
+  s.r(8, 4, 4, 4, HW); s.r(12, 4, 4, 4, HR); s.hl(9, 11, 3, HW); s.hl(12, 14, 3, HR);
+  s.v(7, 5, 11, HW); s.v(16, 5, 11, HR);
+  s.p(8, 8, HW); s.p(9, 8, HW); s.p(14, 8, HR); s.p(15, 8, HR);
+  s.p(9, 4, '#ffffff', true); s.p(13, 4, '#ff7a5a', true);
+  // cicatrice de brûlure autour de l'œil droit
+  s.p(14, 9, '#b8606a'); s.p(14, 10, '#b8606a'); s.p(15, 10, '#b8606a'); s.p(14, 11, '#c87a7a');
+  if (rank >= 2) { s.p(10, 16, m.c); s.p(13, 16, m.c); }
+  if (rank >= 4) tiara(s, 7);
+  if (rank >= 3) pauldrons(s, m);
+  // flamme dans la main droite (plus grande au rang 3)
+  const cy = big ? 14 : 16;
+  s.r(17, cy, 3, 3, '#ff8a2a', true); s.p(18, cy - 1, '#ff8a2a', true); s.p(18, cy - 2, '#fbe08a', true);
+  if (big) { s.p(19, cy - 2, '#e2334a', true); s.p(17, cy - 1, '#e2334a', true); s.p(20, cy + 1, '#ff8a2a', true); }
+  s.p(18, cy + 1, '#ffffff', true);
+  return s;
+}
+
+// Bakugo : cheveux blond cendré en pétard, regard furieux, X orange sur la poitrine, gantelets-grenades.
+function bakugo(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.bakugo, H = '#f0e0a0', HS = '#c8b070', O = K.trim, GR = '#e8702a';
+  body(s, { tunic: K.main, dark: K.dark, trim: '#4a3e5a', pants: K.pants, ...boots(m), mouth: false, cape: rank >= 4 && '#8c1f2e', belt: GR, buckle: rank >= 4 ? C.gold : m.c });
+  // le grand X orange sur la poitrine
+  s.sline(9, 14, 14, 17, O); s.sline(14, 14, 9, 17, O);
+  // grimace furieuse (dents serrées), sourcils froncés
+  s.hl(10, 13, 12, '#ffffff'); s.hl(10, 13, 13, '#6a2a2a');
+  s.p(9, 9, HS); s.p(10, 9, '#21182a'); s.p(13, 9, '#21182a'); s.p(14, 9, HS);
+  // cheveux en pétard : pointes partout
+  s.r(8, 4, 8, 4, H);
+  for (const [x, y] of [[7, 4], [6, 6], [8, 2], [9, 3], [10, 1], [12, 2], [13, 1], [14, 2], [16, 3], [17, 5], [16, 4], [7, 7], [6, 8], [16, 8], [17, 8]]) s.p(x, y, H);
+  s.v(7, 5, 10, H); s.v(16, 5, 10, H);
+  s.p(8, 8, H); s.p(11, 8, H); s.p(15, 8, H);
+  s.p(10, 4, HS); s.p(13, 5, HS); s.p(9, 5, '#fff8d0', true);
+  if (rank >= 2) { s.hl(9, 14, 7, m.c); s.p(10, 7, m.hi, true); }
+  if (rank >= 4) { s.hl(9, 14, 7, C.gold); s.r(11, 6, 2, 1, C.gem, true); }
+  if (rank >= 3) pauldrons(s, m);
+  // gantelets-grenades énormes aux deux bras (goupille au rang 2)
+  const G = rank >= 4 ? C.gold : GR;
+  for (const x0 of [4, 16]) {
+    s.hl(x0 + 1, x0 + 2, 15, G); s.r(x0, 16, 4, 4, G); s.hl(x0 + 1, x0 + 2, 20, G);
+    s.hl(x0, x0 + 3, 16, m.c); s.p(x0 + 1, 17, rank >= 4 ? C.goldHi : '#ffa060', true);
+    s.p(x0 + (x0 < 10 ? 0 : 3), 14, m.c); s.p(x0 + (x0 < 10 ? 0 : 3), 13, m.hi, true); // goupille
+  }
+  return s;
+}
+
+// Red Riot : cheveux rouges dressés en pointes, cicatrice, sourire à dents pointues, torse nu, épaulières crantées.
+function redriot(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.redriot, H = '#e2334a', HS = '#a8203a', RK = '#a8a0a8';
+  body(s, { tunic: C.skin, dark: C.skinSh, trim: C.skin, pants: K.pants, ...boots(m), mouth: false, cape: rank >= 4 && '#8c1f2e', belt: H, buckle: rank >= 4 ? C.gold : '#2a2234' });
+  // torse nu, abdos ; short noir à bandes rouges
+  s.p(10, 16, C.skinSh); s.p(13, 16, C.skinSh); s.p(11, 15, C.skinSh); s.p(12, 15, C.skinSh);
+  s.r(8, 19, 8, 1, K.main); s.p(10, 20, H); s.p(13, 20, H);
+  // sourire à dents pointues, cicatrice sur l'œil gauche
+  s.hl(10, 13, 12, '#ffffff'); s.p(10, 13, '#ffffff'); s.p(12, 13, '#ffffff'); s.p(11, 13, '#6a2a2a'); s.p(13, 13, '#6a2a2a');
+  s.v(9, 9, 10, '#c87a6a');
+  // cheveux rouges dressés en lames
+  s.r(8, 4, 8, 3, H);
+  // trois grandes lames qui montent vers l'arrière
+  for (const [x0, top] of [[8, 1], [11, 0], [14, 1]]) for (let y = top; y < 4; y++) s.hl(x0, x0 + Math.min(2, y - top), y, H);
+  s.v(7, 4, 9, H); s.v(16, 5, 9, H); s.hl(8, 15, 7, H); s.p(16, 3, H); s.p(17, 4, H);
+  s.p(8, 2, '#ff7a8a', true); s.p(11, 1, '#ff7a8a', true); s.p(13, 5, HS); s.p(10, 4, HS);
+  // épaulières crantées noires et rouges (métal du rang aux dents)
+  for (const x of [4, 16]) { s.r(x, 13, 4, 3, K.main); s.hl(x, x + 3, 13, H); }
+  s.p(3, 13, rank >= 2 ? m.c : H); s.p(20, 13, rank >= 2 ? m.c : H); s.p(4, 12, rank >= 2 ? m.c : H); s.p(19, 12, rank >= 2 ? m.c : H);
+  if (rank >= 4) tiara(s, 7);
+  // poings durcis comme de la roche (dès le rang 3, les bras aussi)
+  for (const x of [6, 16]) { s.r(x, 17, 2, 2, RK); s.p(x, 17, '#d8d0d8', true); }
+  if (rank >= 3) for (const x of [6, 16]) { s.v(x, 14, 16, RK); s.p(x + 1, 15, '#7a7280'); }
+  if (rank >= 4) { s.p(6, 18, C.gold); s.p(17, 18, C.gold); }
+  return s;
+}
+
+// Deku : cheveux verts en bataille, capuche à oreilles pointues, combinaison verte, baskets rouges, éclairs verts.
+function deku(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.deku, H = '#2a5a3a', HH = '#4a8a5a', GL = '#5af08a';
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#d83a3a', bootsHi: '#ff8a8a', sole: '#f2eef4', cape: rank >= 4 && '#2a5a3a', belt: '#e2334a', buckle: rank >= 4 ? C.gold : m.c });
+  // lignes noires de la combinaison, genouillères
+  s.v(11, 15, 17, K.trim); s.p(9, 20, K.trim); s.p(14, 20, K.trim);
+  // capuche dans le dos : deux oreilles pointues
+  s.v(7, 2, 5, K.dark); s.p(6, 1, K.dark); s.v(16, 2, 5, K.dark); s.p(17, 1, K.dark);
+  // cheveux vert foncé en bataille, mèches claires
+  s.r(8, 4, 8, 4, H);
+  for (const [x, y] of [[8, 3], [10, 2], [11, 3], [13, 2], [15, 3], [7, 6], [16, 6]]) s.p(x, y, H);
+  s.v(7, 7, 10, H); s.v(16, 7, 10, H);
+  s.p(8, 8, H); s.p(10, 8, H); s.p(13, 8, H); s.p(15, 8, H);
+  s.p(9, 5, HH, true); s.p(12, 4, HH, true); s.p(14, 6, HH, true);
+  // taches de rousseur
+  s.p(9, 11, '#c8806a', true); s.p(14, 11, '#c8806a', true);
+  if (rank >= 2) { s.hl(9, 14, 7, m.c); s.p(10, 7, m.hi, true); }
+  if (rank >= 4) { s.hl(9, 14, 7, C.gold); s.r(11, 6, 2, 1, C.gem, true); }
+  if (rank >= 3) pauldrons(s, m);
+  // gros gant blanc à bandes rouges, éclairs verts autour du bras droit
+  s.r(16, 16, 3, 3, '#f2eef4'); s.hl(16, 18, 18, '#e2334a'); s.p(16, 16, '#ffffff', true);
+  const bolts = rank >= 3 ? [[19, 12], [20, 13], [19, 14], [21, 15], [5, 13], [4, 14], [20, 18]] : [[19, 13], [20, 14], [19, 15], [5, 14]];
+  for (const [x, y] of bolts) s.p(x, y, GL, true);
+  s.p(20, rank >= 3 ? 11 : 12, '#ffffff', true);
+  return s;
+}
+
+// All Might : les deux mèches blondes dressées, grand sourire, ombre sur les yeux, costume bleu, blanc et rouge, carrure énorme.
+function allmight(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.allmight, H = '#f8d850', HS = '#d8a830', Y = '#f0c030';
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, ...boots(m), mouth: false, cape: rank >= 4 && '#e2334a', belt: Y, buckle: rank >= 4 ? C.gold : m.c });
+  // carrure énorme : épaules larges, plastron blanc en V, bande rouge
+  for (const x of [5, 16]) s.r(x, 13, 3, 3, K.main);
+  s.hl(9, 14, 14, '#f2eef4'); s.hl(10, 13, 15, '#f2eef4'); s.p(11, 16, '#f2eef4'); s.p(12, 16, '#f2eef4');
+  s.p(9, 17, K.trim); s.p(14, 17, K.trim);
+  // cheveux blonds, les deux grandes mèches en V qui se dressent
+  s.r(8, 4, 8, 4, H); s.v(7, 5, 10, H); s.v(16, 5, 10, H);
+  s.sline(10, 4, 7, 0, H); s.sline(11, 4, 8, 0, H); s.sline(13, 4, 16, 0, H); s.sline(12, 4, 15, 0, H);
+  s.p(8, 1, '#fff8c0', true); s.p(15, 1, '#fff8c0', true);
+  s.p(9, 8, H); s.p(14, 8, H); s.p(11, 8, H); s.p(12, 8, H);
+  // ombre sur les yeux, grand sourire plein de dents
+  s.hl(9, 14, 9, '#a87850');
+  s.hl(10, 13, 12, '#ffffff'); s.p(9, 12, '#a8584a'); s.p(14, 12, '#a8584a'); s.hl(10, 13, 13, '#a8584a');
+  s.p(12, 12, '#e8e0d8');
+  if (rank >= 2) { s.p(5, 13, m.c); s.p(18, 13, m.c); s.p(5, 14, m.hi, true); s.p(18, 14, m.hi, true); }
+  if (rank >= 4) { s.r(11, 5, 2, 1, C.gem, true); s.hl(9, 14, 4, C.gold); }
+  if (rank >= 3) { s.r(4, 12, 3, 2, m.c); s.r(17, 12, 3, 2, m.c); s.p(5, 12, m.hi, true); s.p(18, 12, m.hi, true); }
+  // gros poing ganté de rouge en avant, à droite
+  s.r(17, 15, 4, 4, '#e2334a'); s.p(17, 15, '#ff8a8a', true); s.hl(17, 20, 18, Y);
+  for (const [x, y] of [[22, 6], [2, 4], [21, 13]]) s.spark(x, y, (x + y) % 2 ? '#ffffff' : C.goldHi);
+  return s;
+}
+
 export const NEW_DRAW = {
   brann, mira, nina, pip, gus, lenny, vex, gideon, aurelia, nova,
   rok, tobo, hugo, kiki, bjorn, sven, astra, nyx, ignis, drakon,
   tess, doc, ozzy, yuki, sylva, thorn, gorm, zara, kitsune, sybil,
   grumli, spike, bip, lulu, djmax, pablo, bob, zip, rexy, leo,
   tonnerre, ramses, elixa, mako, pixel, lumi, kero, atlas, pyra, mortis,
+  shoto, bakugo, redriot, deku, allmight,
 };

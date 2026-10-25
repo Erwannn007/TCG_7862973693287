@@ -32,7 +32,7 @@ export const HEROES = {
   //     { type: poison | burn | bleed, mult, turns }, drain (part des dégâts rendue en PV),
   //     weaken { atk, turns } (ATQ de la cible en moins), pierce (ignore la DÉF), exec (×2 sous ce % de PV)
   //   heal (toute l'équipe), heal1 (l'allié le plus blessé), shield (bouclier : mult × ATQ, turns),
-  //   buff { atk, turns } (ATQ de l'équipe en plus), taunt (attire les coups, turns),
+  //   buff { atk, turns } (ATQ de l'équipe en plus), taunt (attire les coups, turns ; avec mult : bouclier sur lui),
   //   revive (relève un allié tombé avec pct de ses PV ; sinon soigne le plus blessé de mult × ATQ)
   //   en plus : heal (soin de heal × ATQ sur les alliés touchés, ou sur toute l'équipe après une attaque « all »),
   //   taunt (tours de provocation pour le lanceur, sur une compétence de soutien)
@@ -236,6 +236,28 @@ export const HEROES = {
   mortis: {
     name: 'Mortis', cls: 'Roi-liche', rarity: 'L', hp: 125, atk: 32, def: 10, spd: 11,
     skill: { name: 'Hiver éternel', desc: '100 % sur tous, ATQ −30 % 2 tours, rend 20 % des dégâts en PV.', cd: 4, kind: 'all', mult: 1, weaken: { atk: 0.3, turns: 2 }, drain: 0.2, ico: 'crown' },
+  },
+
+  // ---- clins d'œil : My Hero Academia
+  shoto: {
+    name: 'Shoto', cls: 'Glace et feu', rarity: 'R', hp: 105, atk: 27, def: 8, spd: 13,
+    skill: { name: 'Glace et feu', desc: '100 % sur tous, brûlure 2 tours, leur ATQ −20 % 2 tours.', cd: 3, kind: 'all', mult: 1, dot: { type: 'burn', mult: 0.3, turns: 2 }, weaken: { atk: 0.2, turns: 2 }, ico: 'icefire' },
+  },
+  bakugo: {
+    name: 'Bakugo', cls: 'Explosion', rarity: 'R', hp: 105, atk: 30, def: 7, spd: 15,
+    skill: { name: 'Howitzer Impact', desc: '240 % sur une cible.', cd: 3, kind: 'single', mult: 2.4, ico: 'grenade' },
+  },
+  redriot: {
+    name: 'Red Riot', cls: 'Durcissement', rarity: 'R', hp: 150, atk: 20, def: 15, spd: 9,
+    skill: { name: 'Roc indestructible', desc: 'Attire tous les coups 2 tours, bouclier sur lui (150 % ATQ).', cd: 3, kind: 'taunt', turns: 2, mult: 1.5, ico: 'harden' },
+  },
+  deku: {
+    name: 'Deku', cls: 'One For All', rarity: 'L', hp: 115, atk: 31, def: 9, spd: 16,
+    skill: { name: 'Detroit Smash', desc: '250 % sur une cible, double sous 50 % de PV.', cd: 3, kind: 'single', mult: 2.5, exec: 0.5, ico: 'smash' },
+  },
+  allmight: {
+    name: 'All Might', cls: 'Symbole de la paix', rarity: 'L', hp: 150, atk: 33, def: 12, spd: 12,
+    skill: { name: 'United States of Smash', desc: '140 % sur tous les ennemis, les étourdit 1 tour.', cd: 4, kind: 'all', mult: 1.4, stun: 1, ico: 'plusultra' },
   },
 };
 export const HERO_IDS = Object.keys(HEROES);

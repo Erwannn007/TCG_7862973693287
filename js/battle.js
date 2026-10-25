@@ -753,6 +753,11 @@ export class Battle {
         h.flashUntil = performance.now() + 200 / this.speed;
       } else if (s.kind === 'taunt') {
         u.taunt = s.turns;
+        if (s.mult) { // provocation avec bouclier sur lui (ex. durcissement)
+          u.barrier = Math.round(atkOf(u) * s.mult);
+          u.barrierT = s.turns + 1;
+          this.float(u, '+' + u.barrier, '#8af0ff');
+        }
         this.log(`${u.name} attire tous les coups !`);
       }
       if (s.heal) for (const h of to) this.heal(u, h, atkOf(u) * s.heal); // soin en plus (ex. buff + soin)

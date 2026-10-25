@@ -170,6 +170,9 @@ const SOUNDS = {
   hum: () => { tone(110, 0.2, 0, 'sawtooth', 0.4, 165); tone(220, 0.2, 0, 'square', 0.2, 330); },
   ribbit: () => { tone(220, 0.05, 0, 'square', 0.5, 330); tone(196, 0.07, 0.07, 'square', 0.5, 294); },
   rocket: () => { whoosh(0.35, 400, 2000, 1.2); noise(0.15, 0.3, 0.8); tone(90, 0.2, 0.3, 'square', 0.5, 40); },
+  explode: () => { noise(0.25, 0, 1); tone(130, 0.2, 0, 'square', 0.7, 50); tone(N.E5, 0.04, 0, 'square', 0.4); },
+  clank: () => { tone(N.A5, 0.05, 0, 'square', 0.6); tone(N.E5, 0.12, 0.04, 'triangle', 0.7); noise(0.05, 0, 0.5); },
+  smash: () => { whoosh(0.4, 200, 3000, 1.6); noise(0.4, 0.15, 1); tone(65, 0.45, 0.15, 'square', 0.8, 40); },
   drip: () => { tone(N.A5, 0.04, 0, 'triangle', 0.6, N.E5); tone(N.E5, 0.05, 0.06, 'triangle', 0.4, N.C5); },
   shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)

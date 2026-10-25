@@ -178,6 +178,14 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Atlas**, méca-gardien | aileron d'or en V | visage-écran aux yeux cyan, grosses épaulières, réacteur | bouclier d'énergie à gauche, canon à droite |
 | **Pyra**, phénix | ailes de flammes déployées | cheveux de plumes de feu, robe rouge | ses ailes |
 | **Mortis**, roi-liche | couronne de glace | crâne aux yeux cyan, capuche, givre | bâton au crâne gelé, à droite |
+| **Shoto** (clin d'œil MHA) | cheveux moitié blancs, moitié rouges | cicatrice de brûlure, harnais argenté, bras givré | pics de glace à gauche, flamme dans la main droite |
+| **Bakugo** (clin d'œil MHA) | cheveux blond cendré en pétard | grimace, X orange sur la poitrine | gantelets-grenades aux deux mains |
+| **Red Riot** (clin d'œil MHA) | cheveux rouges en trois lames | sourire à dents pointues, cicatrice, torse nu | épaulières crantées, poings de pierre |
+| **Deku** (clin d'œil MHA) | cheveux verts en bataille, capuche à oreilles | taches de rousseur, combinaison verte, baskets rouges | gant blanc et éclairs verts |
+| **All Might** (clin d'œil MHA) | les deux grandes mèches blondes en V | ombre sur les yeux, grand sourire, carrure énorme | gros poing rouge en avant |
+
+Les héros clins d'œil (pop culture) suivent les règles de [`SKINS.md`](SKINS.md#2-pop-culture-et-clins-dœil--oui-à-fond) :
+un trait culte reconnaissable, redessiné en chibi, sans logo.
 
 Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `js/chibi.js`).
 
@@ -289,6 +297,11 @@ arrivant) et ses sons.
 | Atlas | roquette | **Protocole forteresse** : dôme hexagonal sur chaque allié | cyan |
 | Pyra | plume enflammée | **Renaissance** : un oiseau de feu traverse les ennemis | feu |
 | Mortis | orbe de glace à tête de mort | **Hiver éternel** : blizzard, pics de glace | glace |
+| Shoto | éclat de glace puis flammèche | **Glace et feu** : un glacier jaillit sous chaque ennemi, puis les flammes | glace et feu |
+| Bakugo | petite explosion au contact | **Howitzer Impact** : tornade d'explosions, puis énorme explosion | feu |
+| Red Riot | poing durci, éclats de roche | **Roc indestructible** : sa peau devient de pierre, anneaux rouges | rouge et pierre |
+| Deku | coup de poing, éclairs verts | **Detroit Smash** : éclairs, puis un souffle qui traverse l'écran | vert |
+| All Might | coup de poing, l'air vibre | **United States of Smash** : poing géant, souffle sur tous les ennemis | or et bleu |
 | (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 

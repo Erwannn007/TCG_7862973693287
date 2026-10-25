@@ -89,8 +89,14 @@ mode infini rapporte de l'or et de l'XP.
 | Atlas | Méca-gardien | Légendaire | tank + bouclier | **Protocole forteresse** : bouclier (200 % ATQ) 3 tours + provocation 2 tours |
 | Pyra | Phénix | Légendaire | zone + soin | **Renaissance** : 100 % sur tous + brûlure, puis soigne l'équipe (60 % ATQ) |
 | Mortis | Roi-liche | Légendaire | zone + vol de vie | **Hiver éternel** : 100 % sur tous, ATQ −30 % 2 tours, rend 20 % en PV |
+| Shoto | Glace et feu (MHA) | Rare | zone | **Glace et feu** : 100 % sur tous + brûlure 2 tours, ATQ −20 % 2 tours |
+| Bakugo | Explosion (MHA) | Rare | burst | **Howitzer Impact** : 240 % sur une cible |
+| Red Riot | Durcissement (MHA) | Rare | tank | **Roc indestructible** : provocation 2 tours + bouclier sur lui (150 % ATQ) |
+| Deku | One For All (MHA) | Légendaire | burst | **Detroit Smash** : 250 %, double sous 50 % de PV |
+| All Might | Symbole de la paix (MHA) | Légendaire | zone + contrôle | **United States of Smash** : 140 % sur tous + étourdit 1 tour |
 
 **55 héros** : les 5 premiers + 50 nouveaux (25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
+Plus 5 clins d'œil à My Hero Academia (3 Rares, 2 Légendaires) : **60 héros** en tout.
 
 **Statuts de combat** (comptés en tours de celui qui les porte, ils s'usent à la fin de son tour) :
 poison, brûlure, saignement (dégâts au début de son tour, sans tenir compte de la DÉF ; un même

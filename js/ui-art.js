@@ -338,6 +338,27 @@ const ICONS = {
     s.r(2, 7, 10, 4, '#5a8ab0'); for (const [x, h] of [[2, 3], [4, 5], [7, 6], [9, 5], [11, 3]]) s.v(x, 7 - h, 6, '#8ae8ff', true);
     s.p(7, 1, '#ffffff', true); s.r(6, 8, 2, 2, '#e2334a', true); s.hl(2, 11, 10, '#3a5a8a');
   },
+  icefire(s) { // moitié glace, moitié feu
+    for (const [y, a, b] of [[2, 4, 6], [3, 3, 6], [4, 2, 6], [5, 2, 6], [6, 1, 6], [7, 1, 6], [8, 2, 6], [9, 2, 6], [10, 3, 6]]) s.hl(a, b, y, '#8ae8ff', true);
+    for (const [y, a, b] of [[1, 8, 8], [2, 7, 9], [3, 7, 10], [4, 7, 11], [5, 7, 11], [6, 7, 12], [7, 7, 12], [8, 7, 11], [9, 7, 11], [10, 7, 10]]) s.hl(a, b, y, '#ff6a1f', true);
+    s.p(3, 4, '#ffffff', true); s.r(8, 6, 2, 3, '#fbe08a', true);
+  },
+  grenade(s) { // gantelet-grenade
+    s.r(3, 3, 8, 8, '#e8702a'); s.hl(4, 9, 2, '#e8702a'); s.hl(4, 9, 11, '#e8702a'); s.hl(3, 10, 4, '#8e99a4'); s.hl(3, 10, 9, '#8e99a4');
+    s.p(4, 5, '#ffa060', true); s.p(11, 1, '#b9c6d2'); s.p(12, 0, '#b9c6d2'); s.spark(1, 12, '#fbe08a');
+  },
+  harden(s) { // poing de pierre
+    s.r(3, 3, 8, 7, '#a8a0a8'); s.r(4, 10, 6, 2, '#e2334a'); for (const x of [5, 7, 9]) s.v(x, 3, 5, '#7a7280', true);
+    s.p(3, 3, '#d8d0d8', true); s.p(4, 7, '#d8d0d8', true); s.p(12, 2, '#e2334a', true); s.p(1, 2, '#e2334a', true);
+  },
+  smash(s) { // poing vert entouré d'éclairs
+    s.r(4, 4, 6, 5, '#f2eef4'); s.r(3, 5, 1, 3, '#f2eef4'); s.hl(5, 8, 9, '#e2334a'); s.r(5, 10, 4, 2, '#3a8a5a');
+    s.sline(11, 2, 12, 5, '#5af08a', true); s.sline(1, 9, 2, 12, '#5af08a', true); s.p(12, 9, '#5af08a', true); s.p(5, 4, '#ffffff', true);
+  },
+  plusultra(s) { // les deux mèches d'All Might et un éclat
+    s.sline(5, 9, 2, 1, '#f8d850'); s.sline(6, 9, 3, 1, '#f8d850'); s.sline(8, 9, 11, 1, '#f8d850'); s.sline(7, 9, 10, 1, '#f8d850');
+    s.r(4, 9, 6, 3, '#f8d850'); s.p(3, 2, '#fff8c0', true); s.p(10, 2, '#fff8c0', true); s.hl(5, 8, 11, '#ffffff', true);
+  },
   auto(s) { // engrenage
     s.r(4, 3, 6, 8, '#8e99a4'); s.r(3, 4, 8, 6, '#8e99a4'); s.r(6, 1, 2, 2, '#8e99a4'); s.r(6, 11, 2, 2, '#8e99a4');
     s.r(1, 6, 2, 2, '#8e99a4'); s.r(11, 6, 2, 2, '#8e99a4'); s.r(6, 6, 2, 2, OUTLINE, true); s.p(4, 4, '#e4ecf3', true);
