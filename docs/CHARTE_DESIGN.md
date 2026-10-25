@@ -117,6 +117,20 @@ Pour choisir parmi une liste (les héros de l'équipe), une **colonne de petites
 plaque choisie en bois doré et décalée de 6 px ; le sujet choisi est mis en scène dans le décor
 (debout sous un rai de lumière), pas dans une vignette.
 
+## 6 bis. Glisser-déposer
+
+Quand on range ou place quelque chose (l'équipe), on le **prend avec le doigt** :
+
+- les emplacements existent **dans le décor** (socles de pierre numérotés), pas dans une liste ;
+  un emplacement vide montre un contour en pointillés qui attend ;
+- l'objet pris suit le doigt en se balançant (±4°), avec une traînée d'étincelles ;
+- tous les emplacements possibles s'allument en pointillés dorés ; celui qui est visé reçoit
+  un rai de lumière et son numéro grossit en doré ; la zone pour retirer devient rouge avec
+  « Lâche ici pour le retirer » ;
+- au dépôt : flash blanc, étincelles et copeaux, son de bois, vibration ; un dépôt impossible
+  fait trembler la zone et repartir l'objet d'où il vient ;
+- un simple toucher (moins de 8 px de mouvement) sélectionne au lieu de déplacer.
+
 ## 7. Particules
 
 Un seul canvas `#fx` au-dessus de toute l'interface, en pixels d'art (`U` = 2 px CSS).
@@ -173,6 +187,6 @@ Chaque geste a un son (`js/sfx.js`, ondes carrées 8 bits) et, si possible, une 
 | Dessin des pancartes en bois | `js/ui-art.js` (`signUrl`) |
 | Disposition en arc, glissé, choix, particules | `js/main.js` (`layoutSigns`, `attachSigns`, `chooseSign`, `fx`, `sparks`) |
 | Rituel d'invocation | `js/main.js` (`ritual`, `drawAltar`) |
-| Salle d'équipe (héros sur scène, plaques, montée de rang) | `js/main.js` (`renderTeam`, `layoutTeam`, `drawTeamLife`, `upgrade`) |
+| Salle d'équipe (socles, glisser-déposer, fiche, montée de rang) | `js/main.js` (`renderTeam`, `layoutTeam`, `dragSource`, `dragEnd`, `drawTeamLife`, `upgrade`) |
 | Styles des pancartes et animations | `css/style.css` (`.signs`, `.act`, `@keyframes levitate / aura / shine / mote`) |
 | Sons | `js/sfx.js` |

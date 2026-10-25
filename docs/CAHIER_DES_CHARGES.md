@@ -104,13 +104,19 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    partir au combat (zoom vers la porte par paliers, son de zoom, fondu au noir). Toucher
    le panneau mène aussi à l'Équipe. En haut : or, rejouer une
    étape, coffre du jour, options.
-2. **Équipe** (à gauche) : salle d'armes. Le héros choisi se tient debout sur un cercle
-   de pierre, sous un rai de lumière chaude. À gauche, une petite plaque de bois par héros
-   (dorée pour celui qu'on regarde, badge 1-2-3 pour l'équipe, « UP » s'il peut monter de
-   rang). Autour du héros, ses pancartes en arc : Améliorer, Dans l'équipe / Retirer. À
-   droite, sa fiche sur une plaque de bois (rang en gemmes, stats en segments, compétence,
-   aperçu des 5 rangs). Monter de rang : la magie dorée converge vers le héros, il
-   s'illumine, la salle tremble.
+2. **Équipe** (à gauche) : salle d'armes. Au milieu, **trois socles numérotés 1-2-3** :
+   l'équipe, dans l'ordre du combat, avec un socle vide en pointillés s'il reste de la place.
+   À gauche, une petite plaque de bois par héros (dorée pour celui qu'on regarde, badge 1-2-3
+   pour l'équipe, « UP » s'il peut monter de rang). On organise l'équipe **en glissant** :
+   - d'une plaque vers un socle : le héros rejoint l'équipe (ou remplace celui qui y est) ;
+   - d'un socle à un autre : les deux héros échangent leurs places ;
+   - d'un socle vers la colonne : le héros quitte l'équipe (il en faut toujours un).
+
+   Pendant le glisser, le héros suit le doigt en se balançant, les socles s'allument et celui
+   qui est visé reçoit un rai de lumière ; au dépôt, il atterrit dans un éclat. Un simple
+   toucher choisit le héros : sa fiche s'affiche à droite sur une plaque de bois (rang, place,
+   stats, compétence, aperçu des 5 rangs), avec la pancarte « Améliorer » dessous. Monter de
+   rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
 3. **Invocation** (à droite) : salle sans porte, bannières violettes. L'autel : un grand
    cristal facetté qui flotte au-dessus d'un socle de pierre gravé de runes, avec trois éclats
    en orbite, un cercle de runes au sol, des bougies, un rai de lumière et de la poussière de

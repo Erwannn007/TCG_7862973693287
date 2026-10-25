@@ -408,48 +408,52 @@ const canUpgrade = (id) => {
 
 // ---------------------------------------------------------------- équipe
 
+// La salle d'armes : trois socles numérotés au milieu (l'équipe, dans l'ordre du combat),
+// la collection de héros en colonne à gauche, la fiche du héros choisi à droite.
+// On glisse un héros de la colonne sur un socle pour l'ajouter (ou remplacer celui qui y est),
+// d'un socle à l'autre pour échanger les places, d'un socle vers la colonne pour le retirer.
 let selected = null;
-// Où se tient le héros choisi dans la salle d'armes (pixels d'art), posé par layoutTeam.
-let teamStage = null, teamFlashUntil = 0;
-const TEAM_FEET = 88; // ligne des pieds du héros sur la scène
+let teamSlots = []; // socles : { x: pixels d'art, sx, sy: écran (pieds) }
+let teamDrag = null; // glisser en cours : { id, from (socle ou -1), over (socle, 'roster' ou null), ghost }
+const slotFlash = [0, 0, 0];
+const SLOT_FEET = 96; // ligne des pieds sur les socles (pixels d'art)
 
 function renderTeam() {
   if (!selected || !HEROES[selected]) selected = state.team[0];
-  // à gauche, une petite plaque par héros (dorée pour celui qu'on regarde)
   const roster = $('#t-roster');
   roster.innerHTML = '';
   HERO_IDS.forEach((id, i) => {
-    const own = state.owned[id];
-    const b = el('button', 'r-sign' + (id === selected ? ' hot' : '') + (own ? '' : ' locked'));
+    const own = state.owned[id], pos = state.team.indexOf(id);
+    const b = el('div', 'r-sign' + (id === selected ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
     b.appendChild(own ? heroCanvas(id, own.rank, 2) : lockedCanvas(id, 1, 2));
     const nm = el('div', 'r-name', own ? HEROES[id].name : '???');
     nm.appendChild(starsRow(HEROES[id].rarity));
     b.appendChild(nm);
-    const pos = state.team.indexOf(id);
     if (pos >= 0) b.appendChild(el('div', 'badge team', String(pos + 1)));
     if (canUpgrade(id)) b.appendChild(el('div', 'badge up', 'UP'));
     b._seed = i + 11;
-    b.onclick = () => {
-      if (id === selected) return;
-      selected = id;
-      const rc = b.getBoundingClientRect();
-      sparks(rc.right - 8, rc.top + rc.height / 2, '#ffd86a', 8, 0.9);
-      sfx('hover');
-      haptic(5);
-      teamFlashUntil = performance.now() + 220;
-      renderTeam();
-    };
+    dragSource(b, id, -1);
     roster.appendChild(b);
   });
   renderDetail(selected);
   requestAnimationFrame(layoutTeam);
 }
 
-// Fiche du héros sur une plaque de bois : nom, classe, rang, stats en segments, compétence, rangs.
+function selectHero(id, from) {
+  if (id === selected) return;
+  selected = id;
+  const rc = from.getBoundingClientRect();
+  sparks(rc.left + rc.width / 2, rc.top + rc.height / 2, '#ffd86a', 8, 0.9);
+  sfx('hover');
+  haptic(5);
+  renderTeam();
+}
+
+// Fiche du héros sur une plaque de bois : nom, classe, rang, place dans l'équipe, stats, compétence, rangs.
 function renderDetail(id) {
   const box = $('#t-info');
   box.innerHTML = '';
-  const h = HEROES[id], own = state.owned[id], rank = own ? own.rank : 1, st = heroStats(id, rank);
+  const h = HEROES[id], own = state.owned[id], rank = own ? own.rank : 1, st = heroStats(id, rank), pos = state.team.indexOf(id);
   box.appendChild(el('div', 'd-name', own ? h.name : '???'));
   const l1 = el('div', 'd-line', `${h.cls} · <b>${RARITY[h.rarity].name}</b>`);
   l1.appendChild(starsRow(h.rarity));
@@ -459,6 +463,8 @@ function renderDetail(id) {
     l2.appendChild(rankGems(rank));
     box.appendChild(l2);
   }
+  box.appendChild(el('div', 'd-place' + (pos >= 0 ? ' on' : ''), !own ? 'À obtenir à l’autel d’invocation'
+    : pos >= 0 ? `Dans l’équipe · socle ${pos + 1}` : 'Glisse-le sur un socle pour l’ajouter'));
   for (const [label, val, max, cls] of [['PV', st.hp, 260, 'hp'], ['ATQ', st.atk, 75, ''], ['DÉF', st.def, 25, ''], ['VIT', st.spd, 25, '']]) {
     const s = el('div', 'stat');
     s.append(el('span', '', label), segBar(val / max, cls), el('span', '', String(val)));
@@ -475,93 +481,246 @@ function renderDetail(id) {
   box.appendChild(ranks);
 }
 
-// Place le héros sur la scène entre la colonne des héros et la fiche, puis ses pancartes en arc.
+// Place les trois socles entre la colonne et la fiche, leurs zones de dépôt, et la pancarte Améliorer.
 function layoutTeam() {
   if ($('#scr-team').classList.contains('hidden')) return;
   $$('#t-roster .r-sign').forEach(paintSign);
-  paintSign($('#t-info'));
+  const info = $('#t-info');
+  paintSign(info);
   const c = $('#team-canvas');
   if (c.width !== CAMP_W) {
     c.width = CAMP_W;
     c.height = SH;
     fitCanvas(c, CAMP_W, SH, innerWidth, innerHeight, true);
   }
-  const k = c.clientWidth / CAMP_W, left = $('#t-roster').getBoundingClientRect().right, right = $('#t-info').getBoundingClientRect().left;
-  // l'arc de pancartes (≈ 100 + 240 px) doit tenir entre le héros et la fiche
-  const hx = Math.max(left + 70, Math.min((left + right) / 2 - 90, right - 360));
-  teamStage = { x: (hx - c.offsetLeft) / k, y: TEAM_FEET };
+  const k = c.clientWidth / CAMP_W, left = $('#t-roster').getBoundingClientRect().right + 12, ir = info.getBoundingClientRect(), right = ir.left - 12;
+  const sy = c.offsetTop + SLOT_FEET * k;
+  teamSlots = [0, 1, 2].map((i) => {
+    const sx = left + ((right - left) * (i + 0.5)) / 3;
+    return { x: (sx - c.offsetLeft) / k, sx, sy };
+  });
+  const box = $('#t-slots');
+  box.innerHTML = '';
+  teamSlots.forEach((sl, i) => {
+    const id = state.team[i];
+    const z = el('div', 't-slot' + (id ? '' : ' empty') + (id && id === selected ? ' sel' : ''));
+    z.style.left = Math.round(sl.sx) + 'px';
+    z.style.top = Math.round(sl.sy) + 'px';
+    z.style.height = Math.round(32 * k) + 'px';
+    z._slot = i;
+    z.appendChild(el('div', 'num', String(i + 1)));
+    z.appendChild(el('div', 'cap', id ? HEROES[id].name : 'Vide'));
+    if (id) dragSource(z, id, i);
+    box.appendChild(z);
+  });
+  const hint = $('#t-hint');
+  hint.style.left = Math.round((left + right) / 2) + 'px';
+  hint.style.top = Math.round(sy - 40 * k) + 'px';
+  // pancarte Améliorer sous la fiche
+  const id = selected, own = state.owned[id];
+  const items = !own ? [] : own.rank < 5
+    ? [{ ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${UPGRADE[own.rank - 1].frags} · ${UPGRADE[own.rank - 1].gold} or`, showSub: true, off: !canUpgrade(id) || state.gold < UPGRADE[own.rank - 1].gold, go: () => upgrade(id) }]
+    : [{ ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true }];
+  if (items.length) layoutSigns($('#t-menu'), null, items, ir.left + 6, ir.bottom + 44, 0, 0);
+  else $('#t-menu').classList.add('hidden');
   drawRooms(false, 'team');
-  const id = selected, own = state.owned[id], hy = c.offsetTop + (TEAM_FEET - 12) * k;
-  let items;
-  if (!own) {
-    items = [{ ico: 'summon', mg: '#c08aff', label: 'À invoquer', sub: 'à l’autel d’invocation', showSub: true, off: true }];
-  } else {
-    const inTeam = state.team.includes(id), cost = UPGRADE[own.rank - 1];
-    items = [
-      own.rank < 5
-        ? { ico: 'speed', mg: '#ffd86a', label: 'Améliorer', sub: `éclats ${own.frags}/${cost.frags} · ${cost.gold} or`, showSub: true, off: own.frags < cost.frags || state.gold < cost.gold, go: () => upgrade(id) }
-        : { ico: 'speed', mg: '#ffd86a', label: 'Rang max', sub: `éclats : ${own.frags}`, showSub: true, off: true },
-      inTeam
-        ? { ico: 'cancel', mg: '#ff6a6a', label: 'Retirer', sub: state.team.length <= 1 ? 'il faut un héros' : 'de l’équipe', showSub: true, off: state.team.length <= 1, go: () => setTeam(id, false) }
-        : { ico: 'team', mg: '#5ae0ee', label: 'Dans l’équipe', sub: state.team.length >= 3 ? 'équipe complète' : `place ${state.team.length + 1} sur 3`, showSub: true, off: state.team.length >= 3, go: () => setTeam(id, true) },
-    ];
+}
+
+// ---- glisser-déposer
+
+// Un élément qu'on peut glisser (plaque de la colonne ou héros sur un socle) ; un simple toucher le sélectionne.
+function dragSource(elm, id, slot) {
+  elm.addEventListener('pointerdown', (e) => {
+    e.stopPropagation(); // ne pas changer de pièce en glissant
+    unlock();
+    if (teamDrag) return;
+    const st = { x: e.clientX, y: e.clientY, moved: false };
+    elm.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      if (!st.moved && Math.hypot(ev.clientX - st.x, ev.clientY - st.y) > 8) {
+        if (!state.owned[id]) return;
+        st.moved = true;
+        beginDrag(id, slot);
+      }
+      if (st.moved) dragMove(ev);
+    };
+    const up = (ev) => {
+      ev.stopPropagation();
+      elm.removeEventListener('pointermove', move);
+      elm.removeEventListener('pointerup', up);
+      elm.removeEventListener('pointercancel', up);
+      if (st.moved) dragEnd(ev, ev.type === 'pointercancel');
+      else selectHero(id, elm);
+    };
+    elm.addEventListener('pointermove', move);
+    elm.addEventListener('pointerup', up);
+    elm.addEventListener('pointercancel', up);
+  });
+}
+
+function beginDrag(id, from) {
+  const own = state.owned[id], g = el('div', 't-ghost');
+  g.appendChild(heroCanvas(id, own.rank, 3));
+  document.body.appendChild(g);
+  teamDrag = { id, from, over: null, ghost: g, last: null };
+  $('#t-slots').classList.add('dragging');
+  $('#t-roster').classList.toggle('drop-out', from >= 0);
+  sfx('hover');
+  haptic(8);
+}
+
+function dragMove(e) {
+  const d = teamDrag;
+  if (!d) return;
+  d.ghost.style.left = e.clientX + 'px';
+  d.ghost.style.top = e.clientY + 'px';
+  const hit = document.elementFromPoint(e.clientX, e.clientY);
+  const z = hit?.closest('.t-slot');
+  const over = z ? z._slot : hit?.closest('#t-roster') && d.from >= 0 ? 'roster' : null;
+  if (over !== d.over) {
+    d.over = over;
+    $$('#t-slots .t-slot').forEach((s) => s.classList.toggle('hot', s._slot === over));
+    $('#t-roster').classList.toggle('hot', over === 'roster');
+    if (over !== null) {
+      sfx('hover');
+      haptic(5);
+    }
   }
-  layoutSigns($('#t-menu'), null, items, hx + 10 * k, hy, 100, 0.9);
+  if (!d.last || Math.hypot(e.clientX - d.last[0], e.clientY - d.last[1]) > 7) {
+    d.last = [e.clientX, e.clientY];
+    fx([0, 1].map(() => ({ x: e.clientX + rr(-6, 6), y: e.clientY + rr(-4, 8), vx: rr(-0.5, 0.5), vy: rr(-1, -0.2), g: 0.02, life: rr(16, 28) | 0, c: Math.random() < 0.35 ? '#ffffff' : over === 'roster' ? '#ff6a6a' : '#ffd86a', s: 1 })));
+  }
 }
 
-function setTeam(id, add) {
-  if (add) state.team.push(id);
-  else state.team.splice(state.team.indexOf(id), 1);
-  save();
-  teamFlashUntil = performance.now() + 220;
-  renderTeam();
+function dragEnd(e, cancel) {
+  const d = teamDrag;
+  if (!d) return;
+  teamDrag = null;
+  $('#t-slots').classList.remove('dragging');
+  $('#t-roster').classList.remove('drop-out', 'hot');
+  const team = state.team, j = team.indexOf(d.id);
+  let landed = -1, removed = false;
+  if (!cancel && typeof d.over === 'number') {
+    const i = d.over;
+    if (i < team.length) {
+      if (j >= 0) [team[i], team[j]] = [team[j], team[i]]; // échange de places
+      else team[i] = d.id; // remplace celui qui était sur le socle
+    } else {
+      if (j >= 0) team.splice(j, 1);
+      team.push(d.id); // socle vide : il rejoint l'équipe à la suite
+    }
+    landed = team.indexOf(d.id);
+  } else if (!cancel && d.over === 'roster' && j >= 0) {
+    if (team.length > 1) {
+      team.splice(j, 1);
+      removed = true;
+    } else {
+      sfx('denied');
+      $('#t-roster').animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '0 0' : `${k % 2 ? 3 : -3}px 0` })), { duration: 200, easing: 'steps(5, end)' });
+    }
+  }
+  if (landed >= 0 || removed) {
+    save();
+    selected = d.id;
+    sfx('select');
+    sfx('wood');
+    haptic(15);
+    if (landed >= 0) {
+      slotFlash[landed] = performance.now() + 300;
+      const sl = teamSlots[landed];
+      sparks(sl.sx, sl.sy - 30, '#ffd86a', 22, 1.6);
+      const WOODS = ['#8a6a4a', '#b8a080', '#efe4c8'];
+      fx(Array.from({ length: 10 }, () => ({ x: sl.sx + rr(-20, 20), y: sl.sy, vx: rr(-1.5, 1.5), vy: rr(-1.6, -0.4), g: 0.08, life: rr(14, 22) | 0, c: WOODS[(Math.random() * 3) | 0], s: 2 })));
+    } else {
+      sparks(e.clientX, e.clientY, '#ff6a6a', 14, 1.2);
+    }
+    d.ghost.remove();
+    renderTeam();
+    return;
+  }
+  // rien de valable sous le doigt : le héros repart d'où il vient
+  const back = d.from >= 0 ? [teamSlots[d.from].sx, teamSlots[d.from].sy - 40] : (() => {
+    const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(d.id)].getBoundingClientRect();
+    return [r.left + 26, r.top + r.height / 2];
+  })();
+  const g = d.ghost, x0 = parseFloat(g.style.left), y0 = parseFloat(g.style.top);
+  g.animate([{ left: x0 + 'px', top: y0 + 'px' }, { left: back[0] + 'px', top: back[1] + 'px', opacity: 0.3 }], { duration: 200, easing: 'steps(5, end)', fill: 'forwards' });
+  setTimeout(() => g.remove(), 210);
 }
 
-// Le héros choisi debout sur un cercle de pierre, sous un rai de lumière chaude, avec de la poussière dorée.
+// Les socles et l'équipe dessinés dans la salle : socle de pierre numéroté, héros dessus, rai de lumière
+// sur le héros choisi, socles qui s'illuminent pendant un glisser.
 function drawTeamLife(g) {
-  if (!teamStage || !selected) return;
-  const id = selected, own = state.owned[id], x = Math.round(teamStage.x), fy = teamStage.y;
-  g.fillStyle = '#fff2c0';
-  g.globalAlpha = 0.09;
-  for (let y = 0; y < fy; y += 4) {
-    const w = 12 + Math.floor((y / fy) * 8) * 2;
-    g.fillRect(x - (w >> 1), y, w, 4);
-  }
-  // cercle de pierre au sol, tramé
-  for (let dy = -3; dy <= 3; dy++)
-    for (let dx = -16; dx <= 16; dx++) {
-      const d = (dx / 16) ** 2 + (dy / 3.5) ** 2;
-      if (d > 1) continue;
-      g.globalAlpha = d > 0.7 ? 0.5 : 0.22;
-      g.fillStyle = d > 0.7 ? '#8a7068' : (dx + dy) % 2 ? '#fff2c0' : '#6a5048';
-      g.fillRect(x + dx, fy + dy, 1, 1);
+  const now = performance.now();
+  teamSlots.forEach((sl, i) => {
+    const x = Math.round(sl.x), fy = SLOT_FEET, id = state.team[i];
+    const dragging = !!teamDrag, over = teamDrag?.over === i;
+    const lit = (id && id === selected) || over;
+    if (lit) {
+      g.fillStyle = over ? '#ffe9a0' : '#fff2c0';
+      g.globalAlpha = over ? 0.14 : 0.09;
+      for (let y = 0; y < fy; y += 4) {
+        const w = 12 + Math.floor((y / fy) * 8) * 2;
+        g.fillRect(x - (w >> 1), y, w, 4);
+      }
+      g.globalAlpha = 1;
     }
-  g.globalAlpha = 1;
-  const bm = own ? bitmap(`h-${id}-${own.rank}`, () => heroSprite(id, own.rank)) : bitmap(`h-${id}-1-lock`, () => heroSprite(id, 1).silhouette(LOCKED));
-  const white = performance.now() < teamFlashUntil && roomStep % 2 === 0;
-  const fl = own && white ? bitmap(`h-${id}-${own.rank}-w`, () => heroSprite(id, own.rank).silhouette('#ffffff')) : bm;
-  const bx = x - (bm.w >> 1), by = fy - bm.h - (Math.floor(roomStep / 2) % 2);
-  g.globalAlpha = 0.4;
-  g.fillStyle = OUTLINE;
-  g.fillRect(x - 6, fy - 1, 12, 2);
-  g.globalAlpha = 1;
-  g.drawImage(fl.canvas, bx, by);
-  if (own) drawFx(g, bm, bx, by, roomStep);
-  for (let i = 0; i < 6; i++) {
-    const t = (roomStep + i * 5) % 22, px = x - 12 + ((i * 11) % 25) + (t % 4 < 2 ? 0 : 1);
-    if (t < 18) {
-      g.fillStyle = t < 10 ? '#fbe08a' : '#c89a4a';
-      g.fillRect(px, fy - 2 - t * 2, 1, 1);
+    // socle : disque de pierre en perspective, liseré qui s'allume pendant un glisser
+    for (let dy = -3; dy <= 4; dy++)
+      for (let dx = -15; dx <= 15; dx++) {
+        const dd = (dx / 15) ** 2 + (dy / 3.6) ** 2;
+        if (dd > 1) continue;
+        let c = dy > 1 ? '#4a4048' : dy < -1 ? '#8a8088' : '#6a6068';
+        if (dd > 0.72) c = dragging && (roomStep + dx) % 2 ? (over ? '#ffffff' : '#ffd86a') : '#2a2228';
+        g.fillStyle = c;
+        g.fillRect(x + dx, fy + dy, 1, 1);
+      }
+    g.fillStyle = OUTLINE;
+    g.fillRect(x - 13, fy + 5, 27, 1);
+    // socle vide : contour de héros en pointillés qui attend
+    if (!id || (teamDrag && teamDrag.from === i)) {
+      if (!id && roomStep % 4 < 3) {
+        g.fillStyle = dragging ? '#ffd86a' : '#8a7068';
+        for (let y = fy - 18; y < fy - 1; y += 3) { g.fillRect(x - 6, y, 1, 1); g.fillRect(x + 6, y, 1, 1); }
+        for (let xx = x - 6; xx <= x + 6; xx += 3) g.fillRect(xx, fy - 19, 1, 1);
+        g.fillRect(x - 1, fy - 11, 3, 1);
+        g.fillRect(x, fy - 12, 1, 3);
+      }
+      return;
     }
-  }
+    const own = state.owned[id];
+    const bm = bitmap(`h-${id}-${own.rank}`, () => heroSprite(id, own.rank));
+    const white = now < slotFlash[i] && roomStep % 2 === 0;
+    const img = white ? bitmap(`h-${id}-${own.rank}-w`, () => heroSprite(id, own.rank).silhouette('#ffffff')) : bm;
+    const bx = x - (bm.w >> 1), by = fy - bm.h - ((Math.floor(roomStep / 2) + i) % 2);
+    g.globalAlpha = 0.4;
+    g.fillStyle = OUTLINE;
+    g.fillRect(x - 6, fy - 1, 12, 2);
+    g.globalAlpha = 1;
+    g.drawImage(img.canvas, bx, by);
+    drawFx(g, bm, bx, by, roomStep);
+    // chevron doré au-dessus du héros choisi
+    if (id === selected && !dragging) {
+      const cy = by - 7 + (roomStep % 2);
+      g.fillStyle = OUTLINE;
+      [[-4, 9], [-3, 7], [-2, 5], [-1, 3], [0, 1]].forEach(([o, w], j) => g.fillRect(x + o - 1, cy + j - 1, w + 2, 3));
+      g.fillStyle = '#fbe08a';
+      [[-4, 9], [-3, 7], [-2, 5], [-1, 3], [0, 1]].forEach(([o, w], j) => g.fillRect(x + o, cy + j, w, 1));
+    }
+  });
 }
 
 // Monter de rang : la magie dorée converge vers le héros, il s'illumine, la salle tremble.
 async function upgrade(id) {
   const own = state.owned[id], cost = UPGRADE[own.rank - 1];
   if (own.frags < cost.frags || state.gold < cost.gold) return;
-  const c = $('#team-canvas'), k = c.clientWidth / CAMP_W;
-  const cx = c.offsetLeft + teamStage.x * k, cy = c.offsetTop + (TEAM_FEET - 10) * k;
+  const pos = state.team.indexOf(id);
+  let cx, cy;
+  if (pos >= 0) [cx, cy] = [teamSlots[pos].sx, teamSlots[pos].sy - 36];
+  else {
+    const r = [...$$('#t-roster .r-sign')][HERO_IDS.indexOf(id)].getBoundingClientRect();
+    [cx, cy] = [r.left + 26, r.top + r.height / 2];
+  }
   sfx('charge');
   for (let wave = 0; wave < 3; wave++) {
     fx(Array.from({ length: 12 }, () => {
@@ -577,7 +736,7 @@ async function upgrade(id) {
   save();
   sfx('levelUp');
   haptic(40);
-  teamFlashUntil = performance.now() + 600;
+  if (pos >= 0) slotFlash[pos] = performance.now() + 600;
   $('#scr-team').animate(Array.from({ length: 7 }, (_, j) => ({ translate: j === 6 ? '0 0' : `${Math.round(rr(-3, 3))}px ${Math.round(rr(-2, 2))}px` })), { duration: 300, easing: 'steps(7, end)' });
   sparks(cx, cy, '#fbe08a', 30, 2);
   refresh();

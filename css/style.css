@@ -174,15 +174,16 @@ small { font-size: 12px; }
 .badge.up { animation: blink 1s steps(1) infinite; }
 .badge.team { right: auto; left: -10px; background: var(--gold); color: var(--ink); text-shadow: none; }
 
-/* équipe : même langage que le combat — le héros choisi debout dans la salle d'armes sous un rai
-   de lumière, ses actions en pancartes autour de lui, sa fiche sur une plaque de bois à droite,
-   les héros en petites plaques à gauche */
+/* équipe : même langage que le combat — trois socles numérotés au milieu de la salle d'armes
+   (l'équipe, dans l'ordre du combat), la collection en petites plaques à gauche, la fiche du héros
+   choisi sur une plaque de bois à droite avec la pancarte Améliorer. On organise l'équipe en
+   glissant les héros (voir dragSource dans js/main.js). */
 #t-roster {
   position: absolute; z-index: 2; left: var(--safe-l); top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 2px); width: 124px;
   display: flex; flex-direction: column; justify-content: center; gap: 6px;
 }
 .r-sign {
-  position: relative; display: flex; align-items: center; gap: 8px; height: 52px; flex-shrink: 1; min-height: 44px; padding: 4px 10px;
+  position: relative; touch-action: none; cursor: grab; display: flex; align-items: center; gap: 8px; height: 52px; flex-shrink: 1; min-height: 44px; padding: 4px 10px;
   font-size: 13px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2s steps(1) infinite;
@@ -190,18 +191,48 @@ small { font-size: 12px; }
 .r-sign:nth-child(2n) { animation-delay: -.7s; }
 .r-sign:nth-child(3n) { animation-delay: -1.3s; }
 .r-sign.hot { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); translate: 6px 0; filter: drop-shadow(0 0 4px #ffd86a); }
-.r-sign.locked { color: #b8a080; }
+.r-sign.locked { color: #b8a080; cursor: default; }
+.r-sign.in-team:not(.hot) { opacity: .78; }
+/* pendant qu'on glisse un héros de l'équipe : la colonne devient la zone pour le retirer */
+#t-roster.drop-out { filter: drop-shadow(0 0 4px #ff6a6a); }
+#t-roster.drop-out.hot { filter: drop-shadow(0 0 8px #ff6a6a) brightness(1.1); }
+#t-roster.drop-out::after {
+  content: 'Lâche ici pour le retirer'; position: absolute; left: 50%; bottom: -2px; translate: -50% 0; white-space: nowrap;
+  padding: 0 6px; font-size: 12px; font-weight: 700; color: #fff; background: #8a1a28; box-shadow: 0 0 0 2px var(--line);
+  animation: blink 1s steps(1) infinite;
+}
+/* zones des socles : posées en JS sur les socles dessinés dans la salle */
+#t-slots { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.t-slot { position: absolute; width: 90px; translate: -50% -100%; pointer-events: auto; touch-action: none; cursor: grab; }
+.t-slot.empty { cursor: default; }
+.t-slot .num, .t-slot .cap { position: absolute; left: 50%; translate: -50% 0; white-space: nowrap; pointer-events: none; }
+.t-slot .num {
+  bottom: -32px; padding: 0 6px; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
+  border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
+}
+.t-slot .cap { bottom: -50px; font-size: 12px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 var(--line); }
+.t-slot.empty .cap { color: #b8a080; }
+.t-slot.sel .num { border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+#t-slots.dragging .t-slot .num { animation: blink .6s steps(1) infinite; }
+#t-slots .t-slot.hot .num { animation: none; scale: 1.25; border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+#t-hint { position: absolute; z-index: 2; translate: -50% 0; white-space: nowrap; pointer-events: none; }
+/* le héros qu'on déplace, sous le doigt, qui se balance un peu */
+.t-ghost {
+  position: fixed; z-index: 12; pointer-events: none; translate: -50% -85%;
+  filter: drop-shadow(0 0 6px #ffd86a); animation: wobble .5s steps(1) infinite;
+}
+@keyframes wobble { 0% { rotate: -4deg; } 50% { rotate: 4deg; } }
 .r-sign .r-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .r-sign .badge { top: -6px; right: -6px; }
 .r-sign .badge.team { left: -6px; right: auto; }
 #t-info {
-  position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); right: var(--safe-r); width: 270px; max-height: calc(100% - var(--safe-t) - 52px);
-  display: flex; flex-direction: column; gap: 4px; padding: 12px 18px 14px; overflow: hidden;
+  position: absolute; z-index: 2; top: calc(var(--safe-t) + 46px); bottom: calc(var(--safe-b) + 90px); right: var(--safe-r); width: 270px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 2px; padding: 10px 18px 12px; overflow: hidden;
   font-size: 14px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;
   animation: levitate 2.2s steps(1) infinite;
 }
-.d-name { font: 400 27px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); }
+.d-name { font: 400 24px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); }
 .d-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .stat { display: grid; grid-template-columns: 34px 1fr 30px; align-items: center; gap: 6px; font-size: 13px; }
 .seg { display: flex; gap: 1px; height: 10px; padding: 1px; background: var(--line); }
@@ -209,7 +240,9 @@ small { font-size: 12px; }
 .seg i.on { background: var(--gold); box-shadow: inset 0 2px 0 var(--gold-hi); }
 .seg.hp i.on { background: #5cc85a; box-shadow: inset 0 2px 0 #9af098; }
 .seg.pity i.on { background: #9a5ad8; box-shadow: inset 0 2px 0 #c89af0; }
-.skill-line { margin-top: 2px; font-size: 13px; line-height: 1.2; }
+.skill-line { margin-top: 2px; font-size: 12px; line-height: 1.2; }
+.d-place { font-size: 12px; color: #e8d4a4; }
+.d-place.on { color: var(--gold-hi); }
 .skill-line b { color: var(--gold-hi); }
 .ranks { display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px; margin-top: 2px; }
 .ranks div { display: flex; flex-direction: column; align-items: center; gap: 1px; }
