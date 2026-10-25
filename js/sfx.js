@@ -153,6 +153,12 @@ const SOUNDS = {
   laser: () => tone(N.E6, 0.16, 0, 'square', 0.5, N.A4),
   ghost: () => { tone(N.A4, 0.3, 0, 'triangle', 0.7, N.E5); tone(N.E4, 0.3, 0.05, 'triangle', 0.4, N.A4); },
   roar: () => { noise(0.4, 0, 0.9); tone(98, 0.4, 0, 'square', 0.7, 65); tone(147, 0.3, 0.05, 'square', 0.4, 98); },
+  riff: () => { tone(165, 0.12, 0, 'sawtooth', 0.5, 175); tone(247, 0.12, 0, 'sawtooth', 0.35, 262); },
+  larsen: () => { tone(N.E6, 0.4, 0, 'square', 0.35, N.E6 * 1.06); tone(165, 0.4, 0, 'sawtooth', 0.5); noise(0.1, 0.3, 0.5); },
+  ice: () => { tone(N.E6, 0.05, 0, 'triangle', 0.7); tone(N.A5 * 2, 0.08, 0.04, 'triangle', 0.5); noise(0.03, 0.05, 0.4); },
+  leaf: () => whoosh(0.18, 1200, 2400, 0.8),
+  dance: () => [N.A5, N.C6, N.E6, N.C6].forEach((f, i) => tone(f, 0.05, i * 0.05, 'triangle', 0.6)),
+  chime: () => { tone(N.E6, 0.12, 0, 'triangle', 0.6); tone(N.C6 * 1.5, 0.14, 0.06, 'triangle', 0.4); },
   drip: () => { tone(N.A5, 0.04, 0, 'triangle', 0.6, N.E5); tone(N.E5, 0.05, 0.06, 'triangle', 0.4, N.C5); },
   shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)

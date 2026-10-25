@@ -926,6 +926,225 @@ Object.assign(FX, {
       }
     if (q > 0.7) for (const d of e.d) burst(g, d.tx, d.ty, (q - 0.7) / 0.3, ['#ff6a1f', '#fbe08a'], 10);
   },
+  // --- Tess : trois dents de fourche
+  fork(g, q, e) {
+    if (q < 0.5) {
+      const L = Math.round(q * 2 * 12);
+      for (const o of [-3, 0, 3]) for (let i = 0; i < L; i++) px(g, e.tx - 10 * e.dir + i * e.dir, e.ty + o, i > L - 2 ? '#ffffff' : e.cols[0]);
+    } else burst(g, e.tx, e.ty, (q - 0.5) * 2, e.cols, 7);
+  },
+  // Botte de foin : une botte de paille tombe devant chaque allié
+  hay(g, q, e) {
+    for (const d of e.d) {
+      const k = Math.min(1, q * 2.2), x = d.tx + 9, y = lerp(d.ty - 30, d.ty + 2, k) - (k === 1 ? Math.round(Math.sin(Math.min(1, (q - 0.45) * 4) * Math.PI) * 2) : 0);
+      if (q > 0.85 && Math.round(q * 16) % 2) continue;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 5, Math.round(y) - 5, 11, 11);
+      g.fillStyle = e.cols[0];
+      g.fillRect(Math.round(x) - 4, Math.round(y) - 4, 9, 9);
+      g.fillStyle = '#c8a040';
+      g.fillRect(Math.round(x) - 4, Math.round(y) - 1, 9, 1);
+      g.fillRect(Math.round(x) - 4, Math.round(y) + 2, 9, 1);
+      px(g, x - 3, y - 3, '#fff0b0');
+      if (k === 1 && q < 0.7) for (const s of [-1, 1]) px(g, x + s * (6 + (q - 0.45) * 20), y + 3, e.cols[1]);
+    }
+  },
+  // --- Doc : fiole verte en cloche, éclate en bulles
+  flask(g, q, e) {
+    if (q < 0.75) arc(e, q / 0.75, 12, (x, y) => {
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 2, Math.round(y) - 3, 5, 6);
+      px(g, x - 1, y - 1, e.cols[0], 3);
+      px(g, x, y - 2, '#e8e0cc');
+      px(g, x - 1, y - 1, '#ffffff');
+    });
+    else for (let i = 0; i < 6; i++) {
+      const k = (q - 0.75) / 0.25;
+      px(g, e.tx - 6 + i * 2.5, e.ty - k * (6 + (i % 3) * 4), i % 2 ? e.cols[0] : e.cols[1], 2);
+    }
+  },
+  // Miasmes : un nuage vert enveloppe chaque ennemi
+  miasma(g, q, e) {
+    for (const [i, d] of e.d.entries()) {
+      const k = Math.max(0, Math.min(1, q * 1.5 - i * 0.12));
+      if (k <= 0) continue;
+      for (let j = 0; j < 7; j++) {
+        const a = (j / 7) * Math.PI * 2 + q * 3, r = 3 + k * 9;
+        const x = d.tx + Math.cos(a) * r, y = d.ty + Math.sin(a) * r * 0.6 - k * 3;
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+        px(g, x - 1, y - 1, j % 2 ? e.cols[0] : e.cols[1], 3);
+      }
+      if (k > 0.5) px(g, d.tx - 1, d.ty - 12 - k * 4, '#e8e0cc', 2);
+    }
+  },
+  // --- Ozzy : ondes sonores en arcs
+  riff(g, q, e) {
+    for (let i = 0; i < 3; i++) {
+      const k = q * 1.3 - i * 0.15;
+      if (k <= 0 || k > 1) continue;
+      const x = lerp(e.x + 8 * e.dir, e.tx, k), y = lerp(e.y - 2, e.ty, k);
+      for (let a = -50; a <= 50; a += 14) {
+        const rad = (a * Math.PI) / 180, r = 3 + i;
+        px(g, x + Math.cos(rad) * r * e.dir, y + Math.sin(rad) * r * 1.6, i === 0 ? '#ffffff' : e.cols[i % 2]);
+      }
+    }
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Larsen : des anneaux sonores secouent chaque ennemi, des notes et des étoiles
+  larsen(g, q, e) {
+    for (const d of e.d) {
+      for (let i = 0; i < 3; i++) ring(g, d.tx, d.ty, Math.max(0, Math.min(1, q * 1.5 - i * 0.2)), i % 2 ? e.cols[1] : e.cols[0], 16);
+      if (q > 0.5) dizzy(g, d.tx, d.ty, q, '#fbe08a', 3);
+    }
+    if (q < 0.6) for (let i = 0; i < 3; i++) note(g, e.x + 4 + i * 6, e.y - 12 - Math.round(q * 20) - (i % 2) * 4, i % 2 ? e.cols[1] : e.cols[0]);
+  },
+  // --- Yuki : éclat de glace
+  iceShard(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 8, e.ty, q);
+    for (let i = 0; i < 6; i++) px(g, x - i * e.dir, y, i < 2 ? '#ffffff' : i < 4 ? e.cols[1] : e.cols[0]);
+    px(g, x - 2 * e.dir, y - 1, e.cols[1]); px(g, x - 2 * e.dir, y + 1, e.cols[1]);
+    for (let i = 1; i < 4; i++) px(g, lerp(e.x + 9 * e.dir, e.tx, q - i * 0.07), lerp(e.y - 8, e.ty, q - i * 0.07) + (i % 2 ? -2 : 2), '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Glaçon : une stalactite de glace tombe et se brise
+  icicle(g, q, e) {
+    if (q < 0.5) {
+      const y = lerp(e.ty - 30, e.ty - 4, q / 0.5);
+      for (let i = 0; i < 9; i++) {
+        const w = Math.max(0, 3 - Math.floor(i / 3));
+        g.fillStyle = i > 6 ? '#ffffff' : i % 2 ? e.cols[0] : e.cols[1];
+        g.fillRect(Math.round(e.tx) - w, Math.round(y) + i - 9, w * 2 + 1, 1);
+      }
+    } else {
+      const k = (q - 0.5) / 0.5;
+      for (let i = 0; i < 8; i++) {
+        const a = -Math.PI / 2 + (i - 3.5) * 0.45;
+        px(g, e.tx + Math.cos(a) * k * 14, e.ty + Math.sin(a) * k * 12 + k * k * 10, i % 2 ? '#ffffff' : e.cols[0], 2);
+      }
+      ring(g, e.tx, e.ty + 8, k, e.cols[1], 12);
+    }
+  },
+  // --- Sylva : flèche de lune, croissant d'argent
+  moonArrow(g, q, e) {
+    FX.arrow(g, Math.min(1, q * 1.4), e);
+    if (q > 0.65) {
+      const k = (q - 0.65) / 0.35, r = 4 + Math.round(k * 6);
+      for (let a = -100; a <= 100; a += 12) {
+        const rad = (a * Math.PI) / 180;
+        px(g, e.tx + Math.cos(rad) * r, e.ty + Math.sin(rad) * r, '#ffffff');
+        px(g, e.tx + Math.cos(rad) * (r - 2) + 1, e.ty + Math.sin(rad) * (r - 2), e.cols[1]);
+      }
+      burst(g, e.tx, e.ty, k, e.cols, 10);
+    }
+  },
+  // --- Thorn : feuille qui tourne
+  leaf(g, q, e) {
+    const x = lerp(e.x + 8 * e.dir, e.tx, q), y = lerp(e.y - 6, e.ty, q) - Math.sin(q * Math.PI) * 6, f = Math.round(q * 10) % 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+    g.fillStyle = e.cols[0];
+    if (f) g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3);
+    else { g.fillRect(Math.round(x) - 1, Math.round(y), 3, 1); g.fillRect(Math.round(x), Math.round(y) - 1, 1, 3); }
+    px(g, x, y, '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Sève de vie : des fleurs poussent aux pieds de chaque allié, des feuilles montent
+  bloom(g, q, e) {
+    for (const d of e.d) {
+      for (let i = 0; i < 4; i++) {
+        const x = d.tx - 9 + i * 6, h = Math.min(5, Math.round(q * 14) - i);
+        if (h <= 0) continue;
+        for (let j = 0; j < h; j++) px(g, x, d.ty + 10 - j, '#4e8a34');
+        if (h === 5) {
+          const c = i % 2 ? '#ff9ac8' : '#fbe08a';
+          px(g, x - 1, d.ty + 5, c); px(g, x + 1, d.ty + 5, c); px(g, x, d.ty + 4, c); px(g, x, d.ty + 6, c); px(g, x, d.ty + 5, '#ffffff');
+        }
+      }
+      for (let i = 0; i < 3; i++) {
+        const t = (q * 1.4 + i * 0.33) % 1;
+        if (q > 0.25) px(g, d.tx - 6 + i * 6 + Math.round(Math.sin(t * 8) * 2), d.ty + 6 - t * 22, e.cols[0], 2);
+      }
+    }
+  },
+  // --- Gorm : couperet lourd
+  cleaver(g, q, e) {
+    slash(g, e.tx, e.ty, Math.min(1, q * 1.6), e.dir, e.cols, 12, -140, 40);
+    if (q > 0.5) burst(g, e.tx, e.ty, (q - 0.5) * 2, e.cols, 8);
+  },
+  // Frénésie : entailles rouges en croix, le sang revient vers l'orc
+  frenzy(g, q, e) {
+    FX.cleaver(g, Math.min(1, q * 1.4), e);
+    if (q > 0.45) {
+      const k = (q - 0.45) / 0.55;
+      for (let i = 0; i < 4; i++) {
+        const t = Math.max(0, Math.min(1, k * 1.3 - i * 0.08));
+        px(g, lerp(e.tx, e.x, t), lerp(e.ty, e.y, t) - Math.sin(t * Math.PI) * (5 + i * 2), '#e2334a', 2);
+      }
+    }
+  },
+  // --- Zara : coup de cimeterre doré
+  scimitar(g, q, e) {
+    slash(g, e.tx, e.ty, q, e.dir, e.cols, 10, -80, 100);
+    if (q > 0.4) for (let i = 0; i < 3; i++) px(g, e.tx + (i - 1) * 5, e.ty - 6 - (q - 0.4) * 12, '#fbe08a');
+  },
+  // Danse des sabres : des foulards tournoient autour de chaque allié, flèches d'or
+  dance(g, q, e) {
+    for (const d of e.d) {
+      for (let i = 0; i < 10; i++) {
+        const a = q * 10 - i * 0.25, r = 11;
+        px(g, d.tx + Math.cos(a) * r, d.ty + 2 + Math.sin(a) * 5 - i * 0.6, i < 2 ? '#ffffff' : i % 2 ? e.cols[0] : e.cols[1], i < 5 ? 2 : 1);
+      }
+      if (q > 0.5) {
+        const y = d.ty - 12 - Math.round((q - 0.5) * 12);
+        for (const [dx, dy] of [[0, 0], [-1, 1], [1, 1], [-2, 2], [2, 2], [0, 1], [0, 2], [0, 3]]) px(g, d.tx + dx, y + dy, dy === 0 ? '#ffffff' : '#fbe08a');
+      }
+    }
+  },
+  // --- Kitsune : feu follet bleu qui ondule
+  foxfire(g, q, e) {
+    const x = lerp(e.x + 8 * e.dir, e.tx, q), y = lerp(e.y - 10, e.ty, q) + Math.sin(q * 14) * 3;
+    for (let i = 1; i < 6; i++) px(g, lerp(e.x + 8 * e.dir, e.tx, q - i * 0.05), lerp(e.y - 10, e.ty, q - i * 0.05) + Math.sin((q - i * 0.05) * 14) * 3, i < 3 ? e.cols[1] : e.cols[0]);
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 3, 5, 6);
+    px(g, x - 1, y - 1, e.cols[0], 3);
+    px(g, x, y - 2, e.cols[1]);
+    px(g, x, y, '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  foxfireRain(g, q, e) {
+    FX.foxfire(g, Math.min(1, q * 1.25), e);
+    if (q > 0.75) ring(g, e.tx, e.ty, (q - 0.75) / 0.25, e.cols[1], 10);
+  },
+  // --- Sybil : petite boule de cristal et étoiles
+  crystal(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 4, e.ty, q);
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    g.fillStyle = e.cols[0];
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+    px(g, x - 1, y - 1, '#ffffff');
+    for (let i = 0; i < 3; i++) {
+      const a = q * 12 + (i / 3) * Math.PI * 2;
+      px(g, x + Math.cos(a) * 6, y + Math.sin(a) * 4, e.cols[1]);
+    }
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 7);
+  },
+  // Prophétie : un œil d'or s'ouvre au-dessus de chaque allié, étoiles qui tournent, flèches d'or
+  prophecy(g, q, e) {
+    for (const d of e.d) {
+      const y = d.ty - 18, o = q < 0.3 ? Math.round(q / 0.3 * 2) : q > 0.85 ? 0 : 2;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(d.tx) - 6, y - o - 1, 13, o * 2 + 3);
+      g.fillStyle = e.cols[1];
+      g.fillRect(Math.round(d.tx) - 5, y - o, 11, o * 2 + 1);
+      if (o) { g.fillStyle = e.cols[0]; g.fillRect(Math.round(d.tx) - 1, y - 1, 3, 3); px(g, d.tx, y, '#ffffff'); }
+      for (let i = 0; i < 4; i++) {
+        const a = q * 9 + (i / 4) * Math.PI * 2;
+        px(g, d.tx + Math.cos(a) * 12, d.ty + Math.sin(a) * 5, i % 2 ? '#ffffff' : e.cols[1]);
+      }
+    }
+  },
   // Poison, brûlure, saignement : petite gerbe sur celui qui souffre (couleurs imposées)
   tick(g, q, e) {
     burst(g, e.tx, e.ty, q, e.cols, 6);
@@ -979,6 +1198,16 @@ export const HERO_FX = {
   nyx: { cols: ['#7af06a', '#c08aff'], attack: 'skullOrb', skill: 'raise', ranged: true, sound: 'ghost', skillSound: 'ghost' },
   ignis: { cols: ['#ff6a1f', '#fbe08a'], attack: 'fireball', skill: 'inferno', ranged: true, sound: 'burn', skillSound: 'boom' },
   drakon: { cols: ['#ff6a1f', '#fbe08a'], attack: 'dragonLance', skill: 'dragonBreath', ranged: false, sound: 'slash', skillSound: 'roar' },
+  tess: { cols: ['#e8c860', '#fff0b0'], attack: 'fork', skill: 'hay', ranged: false, sound: 'chop', skillSound: 'wood' },
+  doc: { cols: ['#7af06a', '#c8ffb8'], attack: 'flask', skill: 'miasma', ranged: true, sound: 'bubble', skillSound: 'bubble' },
+  ozzy: { cols: ['#e2338a', '#ff8ac8'], attack: 'riff', skill: 'larsen', ranged: true, sound: 'riff', skillSound: 'larsen' },
+  yuki: { cols: ['#8ae8ff', '#e8f8ff'], attack: 'iceShard', skill: 'icicle', ranged: true, sound: 'ice', skillSound: 'ice' },
+  sylva: { cols: ['#3aa89a', '#e8f0d0'], attack: 'arrow', skill: 'moonArrow', ranged: true, sound: 'arrow', skillSound: 'arrow' },
+  thorn: { cols: ['#7ac85a', '#ff9ac8'], attack: 'leaf', skill: 'bloom', ranged: true, sound: 'leaf', skillSound: 'heal' },
+  gorm: { cols: ['#b9c6d2', '#ff8a8a'], attack: 'cleaver', skill: 'frenzy', ranged: false, sound: 'chop', skillSound: 'roar' },
+  zara: { cols: ['#4fd8c8', '#fbe08a'], attack: 'scimitar', skill: 'dance', ranged: false, sound: 'slash', skillSound: 'dance' },
+  kitsune: { cols: ['#5ac8ff', '#c8f0ff'], attack: 'foxfire', skill: 'foxfireRain', ranged: true, sound: 'chime', skillSound: 'chime' },
+  sybil: { cols: ['#c8a8ff', '#fbe08a'], attack: 'crystal', skill: 'prophecy', ranged: true, sound: 'holy', skillSound: 'legend' },
 };
 export const ENEMY_FX = {
   slime: { cols: ['#5cc85a', '#d8ffd0'], attack: 'splat', sound: 'hit' },

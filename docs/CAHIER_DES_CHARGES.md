@@ -59,6 +59,16 @@ mode infini rapporte de l'or et de l'XP.
 | Nyx | Nécromancienne | Rare | réanimation | **Rappel des morts** : relève un allié (35 % PV), sinon soigne |
 | Ignis | Pyromancien | Rare | dégâts sur la durée | **Brasier** : 200 % + brûlure 3 tours |
 | Drakon | Chevalier dragon | Légendaire | zone | **Souffle du dragon** : 130 % sur tous + brûlure 2 tours |
+| Tess | Fermière | Commune | bouclier | **Botte de foin** : bouclier sur l'équipe (100 % ATQ), 2 tours |
+| Doc | Médecin de peste | Commune | poison de zone | **Miasmes** : 50 % sur tous + poison 3 tours |
+| Ozzy | Rockeur | Commune | contrôle de zone | **Larsen** : 50 % sur tous + étourdit 1 tour |
+| Yuki | Cryomancienne | Commune | affaiblissement | **Pluie de glaçons** : 3 × 70 % au hasard, ATQ −15 % 2 tours |
+| Sylva | Archère elfique | Rare | exécution | **Tir du crépuscule** : 170 %, double sous 50 % de PV |
+| Thorn | Druide | Rare | soin | **Sève de vie** : soigne l'équipe (110 % ATQ) |
+| Gorm | Orc barbare | Rare | rafale + vol de vie | **Frénésie** : 3 × 80 % au hasard, rend 25 % en PV |
+| Zara | Danseuse | Rare | soutien | **Danse des sabres** : ATQ de l'équipe +40 %, 2 tours |
+| Kitsune | Renarde à neuf queues | Légendaire | rafale + brûlure | **Feux follets** : 5 × 55 % au hasard + brûlure 2 tours |
+| Sybil | Voyante | Légendaire | soutien | **Prophétie** : ATQ de l'équipe +40 % 2 tours + soin (80 % ATQ) |
 
 Objectif : **55 héros** (5 + 50 nouveaux, 25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
 

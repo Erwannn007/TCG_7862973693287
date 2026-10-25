@@ -34,6 +34,7 @@ export const HEROES = {
   //   heal (toute l'équipe), heal1 (l'allié le plus blessé), shield (bouclier : mult × ATQ, turns),
   //   buff { atk, turns } (ATQ de l'équipe en plus), taunt (attire les coups, turns),
   //   revive (relève un allié tombé avec pct de ses PV ; sinon soigne le plus blessé de mult × ATQ)
+  //   en plus, sur une compétence de soutien : heal (soin de heal × ATQ sur les alliés touchés)
   //   ico : icône de la compétence (js/ui-art.js)
   brann: {
     name: 'Brann', cls: 'Chevalier', rarity: 'C', hp: 150, atk: 16, def: 14, spd: 8,
@@ -114,6 +115,46 @@ export const HEROES = {
   drakon: {
     name: 'Drakon', cls: 'Chevalier dragon', rarity: 'L', hp: 130, atk: 30, def: 12, spd: 12,
     skill: { name: 'Souffle du dragon', desc: '130 % sur tous les ennemis, brûlure 2 tours.', cd: 4, kind: 'all', mult: 1.3, dot: { type: 'burn', mult: 0.3, turns: 2 }, ico: 'dragon' },
+  },
+  tess: {
+    name: 'Tess', cls: 'Fermière', rarity: 'C', hp: 120, atk: 18, def: 10, spd: 10,
+    skill: { name: 'Botte de foin', desc: 'Bouclier sur l’équipe (100 % ATQ) pendant 2 tours.', cd: 3, kind: 'shield', mult: 1, turns: 2, ico: 'hay' },
+  },
+  doc: {
+    name: 'Doc', cls: 'Médecin de peste', rarity: 'C', hp: 100, atk: 20, def: 7, spd: 11,
+    skill: { name: 'Miasmes', desc: '50 % sur tous les ennemis, poison 3 tours.', cd: 3, kind: 'all', mult: 0.5, dot: { type: 'poison', mult: 0.35, turns: 3 }, ico: 'poison' },
+  },
+  ozzy: {
+    name: 'Ozzy', cls: 'Rockeur', rarity: 'C', hp: 100, atk: 21, def: 7, spd: 12,
+    skill: { name: 'Larsen', desc: '50 % sur tous les ennemis, les étourdit 1 tour.', cd: 4, kind: 'all', mult: 0.5, stun: 1, ico: 'guitar' },
+  },
+  yuki: {
+    name: 'Yuki', cls: 'Cryomancienne', rarity: 'C', hp: 90, atk: 23, def: 6, spd: 12,
+    skill: { name: 'Pluie de glaçons', desc: '3 coups de 70 % au hasard, ATQ des cibles −15 % 2 tours.', cd: 3, kind: 'multi', mult: 0.7, hits: 3, weaken: { atk: 0.15, turns: 2 }, ico: 'snow' },
+  },
+  sylva: {
+    name: 'Sylva', cls: 'Archère elfique', rarity: 'R', hp: 95, atk: 28, def: 7, spd: 15,
+    skill: { name: 'Tir du crépuscule', desc: '170 % sur une cible, double sous 50 % de PV.', cd: 3, kind: 'single', mult: 1.7, exec: 0.5, ico: 'moon' },
+  },
+  thorn: {
+    name: 'Thorn', cls: 'Druide', rarity: 'R', hp: 110, atk: 22, def: 8, spd: 10,
+    skill: { name: 'Sève de vie', desc: 'Soigne toute l’équipe (110 % ATQ).', cd: 3, kind: 'heal', mult: 1.1, ico: 'leaf' },
+  },
+  gorm: {
+    name: 'Gorm', cls: 'Orc barbare', rarity: 'R', hp: 140, atk: 24, def: 9, spd: 10,
+    skill: { name: 'Frénésie', desc: '3 coups de 80 % au hasard, rend 25 % des dégâts en PV.', cd: 3, kind: 'multi', mult: 0.8, hits: 3, drain: 0.25, ico: 'rage' },
+  },
+  zara: {
+    name: 'Zara', cls: 'Danseuse', rarity: 'R', hp: 95, atk: 22, def: 7, spd: 16,
+    skill: { name: 'Danse des sabres', desc: 'ATQ de l’équipe +40 % pendant 2 tours.', cd: 3, kind: 'buff', atk: 0.4, turns: 2, ico: 'scarf' },
+  },
+  kitsune: {
+    name: 'Kitsune', cls: 'Renarde à neuf queues', rarity: 'L', hp: 105, atk: 30, def: 8, spd: 17,
+    skill: { name: 'Feux follets', desc: '5 coups de 55 % au hasard, brûlure 2 tours.', cd: 3, kind: 'multi', mult: 0.55, hits: 5, dot: { type: 'burn', mult: 0.25, turns: 2 }, ico: 'foxfire' },
+  },
+  sybil: {
+    name: 'Sybil', cls: 'Voyante', rarity: 'L', hp: 100, atk: 26, def: 8, spd: 14,
+    skill: { name: 'Prophétie', desc: 'ATQ de l’équipe +40 % 2 tours et soin (80 % ATQ).', cd: 4, kind: 'buff', atk: 0.4, turns: 2, heal: 0.8, ico: 'eye' },
   },
 };
 export const HERO_IDS = Object.keys(HEROES);

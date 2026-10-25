@@ -215,6 +215,49 @@ const ICONS = {
     s.r(1, 3, 6, 5, '#2f7a4a'); s.r(5, 5, 4, 3, '#2f7a4a'); s.p(3, 4, '#fbe08a', true); s.sline(1, 3, 0, 0, '#efe6cf'); s.p(8, 7, '#ffffff', true);
     s.hl(9, 12, 6, '#ff6a1f', true); s.hl(10, 13, 7, '#fbe08a', true); s.hl(9, 11, 8, '#ff6a1f', true);
   },
+  hay(s) { // botte de foin
+    s.r(2, 4, 10, 8, '#e8c860'); s.hl(2, 11, 6, '#c8a040'); s.hl(2, 11, 9, '#c8a040'); s.p(2, 4, '#fff0b0', true);
+    s.p(1, 3, '#e8c860'); s.p(12, 3, '#e8c860'); s.p(6, 3, '#e8c860');
+  },
+  poison(s) { // fiole verte
+    s.r(5, 1, 4, 3, '#e8e0cc'); s.r(3, 4, 8, 8, '#7af06a'); s.hl(4, 9, 12, '#7af06a'); s.hl(3, 10, 4, '#4ab83a');
+    s.p(4, 6, '#c8ffb8', true); s.p(4, 7, '#c8ffb8', true); s.p(8, 8, '#ffffff', true); s.p(6, 10, '#ffffff', true);
+  },
+  guitar(s) { // guitare en V
+    for (const [y, a, b] of [[7, 1, 2], [8, 2, 4], [9, 3, 6], [10, 2, 7], [11, 1, 4]]) s.hl(a, b, y, '#e2338a');
+    s.sline(6, 8, 11, 2, '#3a2a22'); s.hl(11, 12, 1, '#b9c6d2'); s.p(4, 9, '#ffffff', true); s.spark(12, 7, '#fbe08a');
+  },
+  snow(s) { // flocon
+    s.v(6, 1, 11, '#8ae8ff', true); s.hl(1, 11, 6, '#8ae8ff', true); s.sline(2, 2, 10, 10, '#8ae8ff', true); s.sline(10, 2, 2, 10, '#8ae8ff', true);
+    s.p(6, 6, '#ffffff', true); s.p(6, 1, '#ffffff', true);
+  },
+  moon(s) { // croissant de lune et flèche
+    for (const [y, a, b] of [[2, 6, 8], [3, 4, 6], [4, 3, 5], [5, 3, 4], [6, 3, 4], [7, 3, 4], [8, 3, 5], [9, 4, 6], [10, 6, 8]]) s.hl(a, b, y, '#e8f0d0', true);
+    s.sline(6, 6, 12, 6, '#c8a870'); s.p(12, 5, '#e4ecf3'); s.p(12, 7, '#e4ecf3'); s.spark(10, 1, '#ffffff');
+  },
+  leaf(s) { // feuille
+    for (const [y, a, b] of [[2, 9, 11], [3, 7, 11], [4, 5, 10], [5, 4, 10], [6, 3, 9], [7, 3, 8], [8, 3, 7], [9, 4, 5]]) s.hl(a, b, y, '#7ac85a');
+    s.sline(2, 11, 10, 3, '#4e8a34'); s.p(6, 4, '#c8f0a0', true); s.p(5, 5, '#c8f0a0', true);
+  },
+  rage(s) { // couperet et goutte de sang
+    s.r(4, 1, 6, 8, '#b9c6d2'); s.v(4, 2, 8, '#e4ecf3', true); for (const y of [2, 5, 8]) s.p(10, y, '#b9c6d2');
+    s.r(6, 9, 2, 4, '#5a3f2e'); s.p(1, 9, '#e2334a', true); s.r(0, 10, 3, 2, '#e2334a', true);
+  },
+  scarf(s) { // foulard qui ondule
+    s.sline(1, 10, 4, 6, '#4fd8c8'); s.sline(4, 6, 8, 8, '#4fd8c8'); s.sline(8, 8, 12, 3, '#4fd8c8');
+    s.sline(1, 11, 4, 7, '#a8fff0', true); s.sline(4, 7, 8, 9, '#4fd8c8'); s.sline(8, 9, 12, 4, '#a8fff0', true);
+    s.p(12, 2, '#fbe08a', true); s.spark(6, 1, '#fbe08a');
+  },
+  foxfire(s) { // feu follet bleu
+    for (const [y, a, b] of [[1, 7, 7], [2, 6, 8], [3, 5, 8], [4, 4, 9], [5, 3, 10], [6, 3, 10], [7, 3, 10], [8, 3, 10], [9, 4, 9], [10, 5, 8]]) s.hl(a, b, y, '#5ac8ff', true);
+    for (const [y, a, b] of [[5, 6, 7], [6, 5, 8], [7, 5, 8], [8, 6, 7]]) s.hl(a, b, y, '#c8f0ff', true);
+    s.p(6, 7, '#ffffff', true); s.sline(10, 11, 12, 12, '#2f78d0', true);
+  },
+  eye(s) { // œil d'or
+    s.hl(4, 9, 3, C.gold); s.hl(2, 11, 4, C.gold); s.hl(1, 12, 5, C.gold); s.hl(1, 12, 6, C.gold); s.hl(2, 11, 7, C.gold); s.hl(4, 9, 8, C.gold);
+    s.hl(3, 10, 5, '#f2eef4', true); s.hl(3, 10, 6, '#f2eef4', true); s.r(5, 4, 4, 4, '#5a3aa8', true); s.p(5, 5, '#ffffff', true);
+    s.spark(1, 1, '#ffffff'); s.spark(12, 11, C.goldHi);
+  },
   auto(s) { // engrenage
     s.r(4, 3, 6, 8, '#8e99a4'); s.r(3, 4, 8, 6, '#8e99a4'); s.r(6, 1, 2, 2, '#8e99a4'); s.r(6, 11, 2, 2, '#8e99a4');
     s.r(1, 6, 2, 2, '#8e99a4'); s.r(11, 6, 2, 2, '#8e99a4'); s.r(6, 6, 2, 2, OUTLINE, true); s.p(4, 4, '#e4ecf3', true);

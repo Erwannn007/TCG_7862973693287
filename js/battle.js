@@ -755,6 +755,7 @@ export class Battle {
         u.taunt = s.turns;
         this.log(`${u.name} attire tous les coups !`);
       }
+      if (s.heal) for (const h of to) this.heal(u, h, atkOf(u) * s.heal); // soin en plus (ex. buff + soin)
       if (s.taunt && s.kind !== 'taunt') u.taunt = s.taunt;
       await fxp;
       u.pose = s.kind === 'taunt' ? 'guard' : null;

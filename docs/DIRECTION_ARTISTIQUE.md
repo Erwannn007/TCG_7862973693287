@@ -148,6 +148,16 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Nyx**, nécromancienne | capuche pointue vers l'arrière | cheveux blancs, peau pâle, robe violette | bâton à crâne et flamme verte, à gauche |
 | **Ignis**, pyromancien | cheveux en flammes | robe orange à ourlet de feu | boule de feu au-dessus de la main droite |
 | **Drakon**, chevalier dragon | casque en tête de dragon (museau, cornes) | armure verte à écailles, cape rouge | lance à fanion rouge, à droite |
+| **Tess**, fermière | chapeau de paille à ruban rouge | nattes, brin de paille, salopette verte sur chemise blanche | fourche à droite |
+| **Doc**, médecin de peste | chapeau noir à large bord, long bec | lunettes rondes cerclées, manteau noir, fioles | encensoir fumant au bout d'une canne, à gauche |
+| **Ozzy**, rockeur | grande crête rose | côtés rasés, blouson clouté, anneau à l'oreille | guitare électrique en V à gauche |
+| **Yuki**, cryomancienne | longs cheveux blancs, diadème de glace | col de fourrure, robe bleu glacier | bâton à flocon, à droite |
+| **Sylva**, archère elfique | oreilles pointues, couronne de feuilles | longs cheveux platine, carquois | grand arc blanc à droite |
+| **Thorn**, druide | bois de cerf | mantelet de feuilles, barbiche, fleur | bâton noueux fleuri, à gauche |
+| **Gorm**, orc barbare | peau verte, chignon noir | défenses, oreilles pointues, sangle, pagne de fourrure | couperet géant crénelé, à droite |
+| **Zara**, danseuse | bandeau de pièces, queue de cheval au vent | voile, ventre nu, ceinture de pièces | cimeterre à droite, foulard à gauche |
+| **Kitsune**, renarde à neuf queues | oreilles de renard | queues en éventail (plus nombreuses au rang 3), kimono blanc et rouge | feux follets bleus qui flottent |
+| **Sybil**, voyante | turban à joyau | cheveux noirs, anneaux d'or, châle étoilé | boule de cristal qui flotte, à droite |
 
 Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `js/chibi.js`).
 
@@ -229,6 +239,16 @@ arrivant) et ses sons.
 | Nyx | orbe à tête de mort | **Rappel des morts** : flammes vertes, crânes qui tournent | vert et violet |
 | Ignis | boule de feu | **Brasier** : colonne de feu sous la cible | feu |
 | Drakon | coup de lance, flammèche | **Souffle du dragon** : flot de flammes sur chaque ennemi | feu |
+| Tess | trois dents de fourche | **Botte de foin** : une botte tombe devant chaque allié | paille |
+| Doc | fiole en cloche, bulles | **Miasmes** : nuage vert autour de chaque ennemi | vert |
+| Ozzy | ondes sonores | **Larsen** : anneaux sonores, notes, étoiles | rose |
+| Yuki | éclat de glace | **Pluie de glaçons** : une stalactite tombe et se brise | glace |
+| Sylva | flèche | **Tir du crépuscule** : croissant de lune d'argent | turquoise |
+| Thorn | feuille qui tourne | **Sève de vie** : des fleurs poussent aux pieds des alliés | vert et rose |
+| Gorm | couperet lourd | **Frénésie** : entailles, le sang revient vers lui | acier et rouge |
+| Zara | cimeterre doré | **Danse des sabres** : foulards qui tournoient, flèches d'or | turquoise et or |
+| Kitsune | feu follet qui ondule | **Feux follets** : feux follets et anneaux | bleu |
+| Sybil | boule de cristal, étoiles | **Prophétie** : un œil d'or s'ouvre sur chaque allié | violet et or |
 | (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 
