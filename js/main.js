@@ -695,7 +695,7 @@ function updateQueue() {
   });
 }
 
-// Menu d'actions : un rectangle à côté du héros. On glisse le doigt dessus,
+// Menu d'actions : des pancartes en arc autour du héros. On glisse le doigt dessus,
 // l'action visée grossit, et on la choisit en relâchant (un simple toucher marche aussi).
 function showMenu(u) {
   const single = u.skill.kind === 'single';
@@ -715,35 +715,48 @@ function hideMenu() {
   m.innerHTML = '';
 }
 
+// Les pancartes sont posées en arc de cercle autour du héros, un peu inclinées selon leur place.
+const ARC_R = 112, ARC_STEP = 0.72; // rayon (px CSS) et écart entre deux pancartes (radians)
+
 function buildMenu(u, title, items) {
   const m = $('#b-menu');
   m.innerHTML = '';
-  m.appendChild(el('div', 'm-title', title));
+  m.className = '';
+  // centre de l'arc : le héros, là où il s'arrête une fois avancé
+  const [hx, hy] = battle.screenAt(u.cx0 + u.fxT, u.by - u.bm.h / 2);
+  const n = items.length, span = ARC_R * Math.sin((ARC_STEP * (n - 1)) / 2);
+  const cy = Math.max(96 + span, Math.min(innerHeight - 40 - span, hy));
+  let first = null;
   items.forEach((it, i) => {
-    const row = el('div', 'act' + (it.cd ? ' off' : ''), '<span class="motes"><i></i><i></i><i></i><i></i></span>');
+    const a = (i - (n - 1) / 2) * ARC_STEP, x = Math.round(hx + ARC_R * Math.cos(a)), y = Math.round(cy + ARC_R * Math.sin(a));
+    const row = el('div', 'act' + (it.cd ? ' off' : ''), '<span class="motes"><i></i><i></i></span>');
     if (it.mg) row.style.setProperty('--mg', it.mg);
+    row.style.setProperty('--tilt', (a * 7).toFixed(1) + 'deg');
+    row.style.left = x + 'px';
+    row.style.top = y + 'px';
     row.appendChild(icon(it.ico));
     row.appendChild(el('span', '', `${it.label}${it.sub ? `<small>${it.sub}</small>` : ''}`));
     if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
     row._it = it;
     row._seed = i + 1;
     m.appendChild(row);
-    // les actions sortent du héros une à une, par paliers
+    first ??= [x, y];
+    // les pancartes jaillissent du héros une à une et se déploient en éventail, par paliers
     row.animate(
-      [{ translate: '-36px 0', opacity: 0, filter: 'brightness(3)' }, { translate: '0 0', opacity: 1, filter: 'brightness(1)' }],
-      { duration: 240, delay: 60 + i * 70, easing: 'steps(4, end)', fill: 'backwards' },
+      [
+        { translate: `${hx - x}px calc(-50% + ${hy - y}px)`, scale: 0.2, rotate: '0deg', opacity: 0 },
+        { translate: '0 -50%', scale: 1, opacity: 1 },
+      ],
+      { duration: 260, delay: 40 + i * 70, easing: 'steps(5, end)', fill: 'backwards' },
     );
   });
+  const t = el('div', 'm-title', title);
+  t.style.left = first[0] + 8 + 'px';
+  t.style.top = first[1] - 32 + 'px';
+  m.prepend(t);
   m.classList.remove('hidden');
   m.querySelectorAll('.act').forEach(paintSign);
   sfx('menu');
-  // à droite du héros (là où il s'arrête une fois avancé), centré sur lui, sans sortir de l'écran
-  const [hx, hy, k] = battle.screenAt(u.cx0 + u.fxT + u.bm.w / 2, u.by - u.bm.h / 2);
-  const h = m.offsetHeight + 24;
-  const top = Math.max(64, Math.min(innerHeight - h - 8, hy - h / 2));
-  m.style.left = Math.round(hx + 6 * k + 12) + 'px';
-  m.style.top = Math.round(top) + 'px';
-  m.style.setProperty('--tip', Math.round(hy - top) + 'px');
 }
 
 // Pancarte en bois dessinée à la taille exacte du bouton (dorée quand il est visé).
@@ -754,44 +767,142 @@ function paintSign(row) {
   row.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
 }
 
-// Glisser sur le menu : la ligne sous le doigt grossit ; relâcher = choisir.
+// Particules en pixels par-dessus l'interface : traînée du doigt, étincelles, éclats de bois.
+// Chaque particule : position et vitesse en px CSS, gravité g, durée de vie en images, couleur, taille en pixels d'art.
+const fx = (() => {
+  const c = document.createElement('canvas');
+  c.id = 'fx';
+  c.className = 'px';
+  document.body.appendChild(c);
+  const g = c.getContext('2d');
+  let parts = [], raf = 0;
+  const loop = () => {
+    g.clearRect(0, 0, c.width, c.height);
+    parts = parts.filter((p) => --p.life > 0);
+    for (const p of parts) {
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      g.globalAlpha = Math.min(1, p.life / 6);
+      g.fillStyle = p.c;
+      g.fillRect(Math.round(p.x / U), Math.round(p.y / U), p.s, p.s);
+    }
+    g.globalAlpha = 1;
+    raf = parts.length ? requestAnimationFrame(loop) : 0;
+  };
+  return (list) => {
+    const w = Math.ceil(innerWidth / U), h = Math.ceil(innerHeight / U);
+    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+    parts.push(...list);
+    if (!raf) raf = requestAnimationFrame(loop);
+  };
+})();
+const rr = (a, b) => a + Math.random() * (b - a);
+const mgOf = (r) => getComputedStyle(r).getPropertyValue('--mg').trim() || '#fbe08a';
+
+// Petites étincelles de couleur c autour du point (x, y).
+const sparks = (x, y, c, n, speed = 1) => fx(Array.from({ length: n }, () => {
+  const a = rr(0, Math.PI * 2), v = rr(0.6, 2.4) * speed;
+  return { x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.6, g: 0.06, life: rr(16, 30) | 0, c: Math.random() < 0.3 ? '#ffffff' : c, s: Math.random() < 0.5 ? 2 : 1 };
+}));
+
+// Choisir une pancarte : elle s'illumine, gonfle puis éclate en copeaux et étincelles ;
+// les autres tombent. L'action part juste après.
+function chooseSign(r) {
+  const m = $('#b-menu'), rc = r.getBoundingClientRect(), col = mgOf(r);
+  m.classList.add('chosen');
+  const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e', '#fbe08a'];
+  fx(Array.from({ length: 24 }, () => ({
+    x: rr(rc.left + 8, rc.right - 8), y: rr(rc.top + 6, rc.bottom - 6), vx: rr(-3, 3), vy: rr(-4.5, -1), g: 0.28, life: rr(24, 40) | 0,
+    c: WOODS[(Math.random() * WOODS.length) | 0], s: Math.random() < 0.5 ? 3 : 2,
+  })));
+  sparks(rc.left + rc.width / 2, rc.top + rc.height / 2, col, 28, 1.8);
+  r.animate(
+    [
+      { scale: 1, filter: 'brightness(1)' },
+      { scale: 1.16, filter: 'brightness(2.2)', offset: 0.25 },
+      { scale: 1.08, filter: 'brightness(1.3)', offset: 0.5 },
+      { scale: 0.3, opacity: 0, filter: 'brightness(3)' },
+    ],
+    { duration: 320, easing: 'steps(6, end)', fill: 'forwards' },
+  );
+  [...m.querySelectorAll('.act')].filter((o) => o !== r).forEach((o, i) => o.animate(
+    [{ opacity: 1 }, { translate: '0 calc(-50% + 36px)', rotate: i % 2 ? '8deg' : '-8deg', opacity: 0 }],
+    { duration: 240, delay: i * 50, easing: 'steps(4, end)', fill: 'forwards' },
+  ));
+  sfx('select');
+  sfx('wood');
+  haptic(15);
+  setTimeout(() => {
+    m.classList.remove('chosen');
+    if (battle && !battle.over) r._it.go();
+  }, 300);
+}
+
+// Glisser sur le menu : la pancarte sous le doigt se redresse, grossit et suit un peu le doigt,
+// une traînée d'étincelles suit le doigt ; relâcher = choisir.
 (() => {
   const m = $('#b-menu');
-  let hot = null, dragging = false;
+  let hot = null, dragging = false, last = null;
   const rowAt = (e) => document.elementFromPoint(e.clientX, e.clientY)?.closest('#b-menu .act') || null;
   const setHot = (r) => {
     if (r === hot) return;
     if (hot) {
       hot.classList.remove('hot');
+      hot.style.setProperty('--px', '0px');
+      hot.style.setProperty('--py', '0px');
       paintSign(hot);
     }
     hot = r;
+    m.classList.toggle('picking', !!r);
     if (r) {
       r.classList.add('hot');
       paintSign(r);
+      const rc = r.getBoundingClientRect();
+      sparks(rc.left + 6, rc.top + rc.height / 2, mgOf(r), 8, 0.9);
       sfx('hover');
       haptic(5);
     }
   };
+  // la pancarte visée est attirée vers le doigt (6 px au plus)
+  const pull = (e) => {
+    if (!hot) return;
+    const rc = hot.getBoundingClientRect();
+    const cl = (v) => Math.max(-6, Math.min(6, Math.round(v * 0.12)));
+    hot.style.setProperty('--px', cl(e.clientX - (rc.left + rc.width / 2)) + 'px');
+    hot.style.setProperty('--py', cl(e.clientY - (rc.top + rc.height / 2)) + 'px');
+  };
+  const trail = (e) => {
+    if (last && Math.hypot(e.clientX - last[0], e.clientY - last[1]) < 7) return;
+    last = [e.clientX, e.clientY];
+    const c = hot ? mgOf(hot) : '#fbe08a';
+    fx([0, 1, 2].map((i) => ({ x: e.clientX + rr(-4, 4), y: e.clientY + rr(-4, 4), vx: rr(-0.5, 0.5), vy: rr(-1, -0.2), g: 0.02, life: rr(18, 32) | 0, c: Math.random() < 0.35 ? '#ffffff' : c, s: i ? 1 : 2 })));
+  };
   m.addEventListener('pointerdown', (e) => {
     dragging = true;
+    last = null;
     m.setPointerCapture(e.pointerId);
     unlock();
     setHot(rowAt(e));
+    pull(e);
+    trail(e);
   });
-  m.addEventListener('pointermove', (e) => dragging && setHot(rowAt(e)));
+  m.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    setHot(rowAt(e));
+    pull(e);
+    trail(e);
+  });
   m.addEventListener('pointerup', (e) => {
     dragging = false;
     const r = rowAt(e);
-    setHot(null);
-    if (!r) return;
-    if (r.classList.contains('off')) {
-      sfx('denied');
+    if (!r || r.classList.contains('off')) {
+      if (r) sfx('denied');
+      setHot(null);
       return;
     }
-    sfx('select');
-    haptic(15);
-    r._it.go();
+    hot = null; // la pancarte reste dorée pendant son effet ; le menu est reconstruit ou caché ensuite
+    chooseSign(r);
   });
   m.addEventListener('pointercancel', () => { dragging = false; setHot(null); });
 })();

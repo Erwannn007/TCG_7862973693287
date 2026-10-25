@@ -44,19 +44,14 @@ small { font-size: 12px; }
   0% { transform: translateY(0); } 16% { transform: translateY(-1px); } 33% { transform: translateY(-2px); }
   50% { transform: translateY(-3px); } 66% { transform: translateY(-2px); } 83% { transform: translateY(-1px); }
 }
-@keyframes levitate-shadow {
-  0% { left: 14%; right: 14%; } 33% { left: 18%; right: 18%; } 50% { left: 22%; right: 22%; } 66% { left: 18%; right: 18%; }
-}
 /* halo qui respire (suit le contour du cadre grâce à drop-shadow) */
 @keyframes aura {
-  0% { filter: drop-shadow(0 0 3px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
-  33% { filter: drop-shadow(0 0 6px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
-  50% { filter: drop-shadow(0 0 8px var(--mg)) drop-shadow(0 0 1px #fff); }
-  66% { filter: drop-shadow(0 0 6px var(--mg)) drop-shadow(0 0 1px var(--mg)); }
+  0% { filter: drop-shadow(0 0 2px var(--mg)); }
+  50% { filter: drop-shadow(0 0 4px var(--mg)); }
 }
 @keyframes aura-hot {
-  0% { filter: drop-shadow(0 0 7px var(--mg)) drop-shadow(0 0 2px #fff); }
-  50% { filter: drop-shadow(0 0 12px var(--mg)) drop-shadow(0 0 2px #fff) brightness(1.08); }
+  0% { filter: drop-shadow(0 0 4px var(--mg)); }
+  50% { filter: drop-shadow(0 0 7px var(--mg)) brightness(1.05); }
 }
 @keyframes shine {
   0% { background-position: 160% 0; } 4% { background-position: 120% 0; } 8% { background-position: 80% 0; }
@@ -249,73 +244,56 @@ small { font-size: 12px; }
   min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 0 6px;
 }
 
-/* menu d'actions : des boutons rectangulaires bien séparés, à côté du héros.
-   On glisse le doigt dessus : celui qui est visé grossit ; on relâche pour le choisir. */
-#b-menu { position: absolute; z-index: 4; display: flex; flex-direction: column; gap: 8px; touch-action: none; }
-/* flèche en pixels qui pointe vers le héros à qui appartient le menu */
-#b-menu::before {
-  content: ''; position: absolute; left: -20px; top: calc(var(--tip) - 1px); width: 3px; height: 3px; background: var(--gold-hi);
-  box-shadow: 3px -3px var(--gold-hi), 3px 0px var(--gold-hi), 3px 3px var(--gold-hi), 6px -6px var(--gold-hi), 6px -3px var(--gold-hi), 6px 0px var(--gold-hi), 6px 3px var(--gold-hi), 6px 6px var(--gold-hi), 9px -9px var(--gold-hi), 9px -6px var(--gold-hi), 9px -3px var(--gold-hi), 9px 0px var(--gold-hi), 9px 3px var(--gold-hi), 9px 6px var(--gold-hi), 9px 9px var(--gold-hi);
-  filter: drop-shadow(1px 0 0 var(--line)) drop-shadow(-1px 0 0 var(--line)) drop-shadow(0 1px 0 var(--line)) drop-shadow(0 -1px 0 var(--line));
-  animation: nudge .6s steps(1) infinite;
-}
-@keyframes nudge { 50% { translate: -2px 0; } }
-#b-menu .m-title { animation: pop .2s steps(3) backwards; }
-@keyframes pop { 0% { scale: .4; opacity: 0; } 50% { scale: 1.15; } }
+/* menu d'actions : des pancartes en bois disposées en arc autour du héros (positions posées en JS).
+   On glisse le doigt dessus : celle qui est visée se redresse, grossit et suit un peu le doigt ;
+   on relâche pour la choisir. */
+#b-menu { position: absolute; left: 0; top: 0; z-index: 4; touch-action: none; }
+#b-menu.chosen { pointer-events: none; }
 #b-menu .m-title {
-  align-self: flex-start; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
+  position: absolute; translate: 0 -100%; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
   border: 6px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 6px stretch;
+  animation: pop .2s steps(3) backwards;
 }
-/* pancartes en bois : l'image est dessinée par js/ui-art.js à la taille du bouton (voir paintSign) */
+@keyframes pop { 0% { scale: .4; opacity: 0; } 50% { scale: 1.15; } }
+/* pancartes : l'image est dessinée par js/ui-art.js à la taille du bouton (voir paintSign) */
 #b-menu .act {
-  position: relative; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 8px 18px;
+  --mg: #f2e2b8; --px: 0px; --py: 0px;
+  position: absolute; display: flex; align-items: center; gap: 10px; width: 178px; min-height: 52px; padding: 8px 18px;
   font-size: 16px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
   background: no-repeat center; image-rendering: pixelated;
-}
-/* magie : halo coloré par action (--mg), reflet qui balaie le bouton, étincelles qui montent.
-   Tout reste en paliers (steps) pour garder le rendu pixel. */
-#b-menu .act {
-  --mg: #f2e2b8;
+  translate: var(--px) calc(-50% + var(--py)); rotate: var(--tilt, 0deg);
   animation: levitate 1.6s steps(1) infinite, aura 1.6s steps(1) infinite;
 }
 #b-menu .act:nth-of-type(2) { animation-delay: -.53s; }
 #b-menu .act:nth-of-type(3) { animation-delay: -1.06s; }
 #b-menu .act:nth-of-type(4) { animation-delay: -.8s; }
-/* la lueur au sol remplace l'ombre : le bouton flotte au-dessus d'un éclat de magie */
-#b-menu .act::after {
-  content: ''; position: absolute; left: 14%; right: 14%; bottom: -14px; height: 3px; pointer-events: none;
-  background: var(--mg); opacity: .55; box-shadow: 0 0 6px 1px var(--mg), 0 0 14px 2px color-mix(in srgb, var(--mg) 45%, transparent);
-  animation: levitate-shadow 1.6s steps(1) infinite; animation-delay: inherit;
-}
-/* reflet : une bande claire à bords nets traverse le bouton, puis longue pause */
+/* quand une pancarte est visée, les autres s'effacent un peu */
+#b-menu.picking .act:not(.hot) { opacity: .82; scale: .94; }
+/* reflet discret : une bande claire à bords nets traverse la pancarte, puis longue pause */
 #b-menu .act::before {
   content: ''; position: absolute; inset: 6px; z-index: 1; pointer-events: none;
-  background: linear-gradient(110deg, transparent 42%, rgba(255, 250, 220, .28) 42%, rgba(255, 250, 220, .28) 47%,
-    transparent 47%, transparent 50%, rgba(255, 250, 220, .18) 50%, rgba(255, 250, 220, .18) 52%, transparent 52%) 160% 0 / 300% 100% no-repeat;
-  box-shadow: inset 0 0 10px color-mix(in srgb, var(--mg) 30%, transparent);
-  animation: shine 3.6s steps(1) infinite; animation-delay: inherit;
+  background: linear-gradient(110deg, transparent 42%, rgba(255, 250, 220, .16) 42%, rgba(255, 250, 220, .16) 47%, transparent 47%) 160% 0 / 300% 100% no-repeat;
+  animation: shine 5s steps(1) infinite; animation-delay: inherit;
 }
 #b-menu .act > canvas, #b-menu .act > span:not(.motes) { position: relative; z-index: 2; }
-#b-menu .act > canvas { filter: drop-shadow(0 0 3px var(--mg)); }
-/* étincelles : petits carrés de 2 px qui montent et clignotent autour du bouton */
+#b-menu .act > canvas { filter: drop-shadow(0 0 2px var(--mg)); }
+/* étincelles : deux petits carrés de 2 px qui montent et clignotent */
 #b-menu .motes { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
 #b-menu .motes i {
   position: absolute; bottom: 4px; width: 2px; height: 2px; background: #fff;
-  box-shadow: 0 0 3px 2px var(--mg); opacity: 0; animation: mote 2.4s steps(1) infinite;
+  box-shadow: 0 0 2px 1px var(--mg); opacity: 0; animation: mote 2.8s steps(1) infinite;
 }
-#b-menu .motes i:nth-child(1) { left: 12%; animation-delay: -.2s; }
-#b-menu .motes i:nth-child(2) { left: 46%; animation-delay: -1.4s; }
-#b-menu .motes i:nth-child(3) { left: 78%; animation-delay: -.8s; }
-#b-menu .motes i:nth-child(4) { left: 92%; animation-delay: -2s; width: 1px; height: 1px; }
+#b-menu .motes i:nth-child(1) { left: 18%; animation-delay: -.2s; }
+#b-menu .motes i:nth-child(2) { left: 74%; animation-delay: -1.5s; }
+#b-menu .motes i:nth-child(n + 3) { display: none; }
 #b-menu .act.hot {
   width: 232px; min-height: 72px; font-size: 18px; color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi);
-  translate: 6px 0;
+  translate: calc(6px + var(--px)) calc(-50% + var(--py)); rotate: 0deg; z-index: 2;
   --mg: #ffd86a;
   animation: levitate 1.6s steps(1) infinite, aura-hot .8s steps(1) infinite;
 }
-#b-menu .act.hot::before { animation-duration: 1.2s; }
-#b-menu .act.hot .motes i { animation-duration: 1.2s; background: #fff8d0; }
-#b-menu .act.hot::after { opacity: .9; }
+#b-menu .act.hot::before { animation-duration: 1.6s; }
+#b-menu .act.hot .motes i { animation-duration: 1.4s; background: #fff8d0; }
 #b-menu .act.hot canvas { width: 42px !important; height: 42px !important; }
 #b-menu .act.off { filter: grayscale(1) brightness(.6); animation: levitate 1.6s steps(1) infinite; }
 #b-menu .act.off .motes, #b-menu .act.off::before { display: none; }
@@ -325,6 +303,8 @@ small { font-size: 12px; }
   position: absolute; right: 2px; top: -4px; z-index: 3; padding: 0 4px; font-size: 12px; color: #fff;
   background: var(--line); box-shadow: 0 0 0 2px #8a8088;
 }
+/* particules en pixels (traînée du doigt, éclats de bois) au-dessus de l'interface de combat */
+#fx { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 9; pointer-events: none; }
 
 /* ================================================================ surcouches */
 .overlay {
