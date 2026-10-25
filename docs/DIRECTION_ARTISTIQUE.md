@@ -12,8 +12,9 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
 
 - Chaque sprite est une grille, dessinée pixel par pixel avec la classe `Spr`
   (`js/spr.js`) :
-  - **20×20** pour les personnages (héros jouables rangs 1 à 4, ennemis de base) ;
-  - **24×24** pour les héros (forme Céleste rang 5) et les boss moyens ;
+  - **24×24** pour les héros jouables (rangs 1 à 4) et les boss moyens ;
+  - **28×28** pour la forme Céleste des héros (rang 5) ;
+  - **20×20** pour les ennemis de base ;
   - jusqu'à **~28×27** pour les gros boss.
 - Méthodes de dessin :
   | Méthode | Rôle |
@@ -34,10 +35,17 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
 
 ## 2. Proportions des personnages
 
-- Grosse tête (environ 6×6 px sur 20), corps trapu, jambes très courtes (**2 px**),
-  pieds de **3 px**.
-- Visage : peau claire **`#f0bf98`**, ombre de peau **`#cf8f6a`**, yeux = **2 pixels
-  isolés `#21182a`**, bouche ou barbe d'**1 ligne**. **Pas de nez.**
+- Héros (24×24, fonction `body` de `js/sprites.js`) : grosse tête (**8×7 px**), torse de
+  8×6, bras de 2 px détachés du torse par une ombre, jambes très courtes (**2 px**), bottes
+  de **3 px** à semelle sombre. Les pieds touchent le bas de la grille ; les rangées 0 à 4
+  servent aux casques, chapeaux et armes.
+- Visage : peau claire **`#f0bf98`**, ombre de peau **`#cf8f6a`** sous le menton, yeux =
+  **2 traits verticaux de 2 px `#21182a`**, joues roses **`#f0907a`**, bouche d'**1 pixel**
+  (ou barbe, masque). **Pas de nez.**
+- Détails de texture (voir la recette de la [charte](CHARTE_DESIGN.md)) : mèches claires dans
+  les cheveux, col et poignets brodés de la couleur `trim` de la classe, ceinture à boucle
+  d'or, ourlet brodé, lame avec gouttière et reflet, poignée gainée, veines du bois des
+  bâtons, orbe avec reflet blanc.
 - L'arme ou l'accessoire **dépasse de la silhouette sur le côté** (épée, arc, bâton
   avec un orbe…) pour qu'on reconnaisse la classe au premier coup d'œil.
 
@@ -75,7 +83,7 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
   | 2 | casque / coiffe en fer |
   | 3 | épaulettes en acier, arme plus grande |
   | 4 | tout passe en or, cape, couronne, gemmes |
-  | 5 | **Céleste** : recolor du rang 4 (blanc ivoire et or), ailes, auréole, étincelles, grille 24×24 |
+  | 5 | **Céleste** : recolor du rang 4 (blanc ivoire et or), ailes, auréole, étincelles, grille 28×28 |
 
 - Les rangs supérieurs **recolorent le dernier dessin** avec une table de couleurs
   (`js/sprites.js`) : **mythril** cyan, **obsidienne** noir et lave, **céleste** blanc

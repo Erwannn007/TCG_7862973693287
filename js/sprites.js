@@ -16,12 +16,13 @@ export const METALS = [
   { c: '#f2ead6', hi: '#ffffff' },
 ];
 
+// main : couleur signature ; dark : ombre et ourlet ; trim : col, broderies ; pants : jambes.
 export const CLASS = {
-  kael: { main: '#c8323c', dark: '#8c1f2e', pants: '#4a3a52' },
-  lyra: { main: '#4f9e3c', dark: '#2f6a2a', pants: '#5a4a3a' },
-  elio: { main: '#3a64c8', dark: '#26408a', pants: '#26408a', beard: '#d8d4cc' },
-  sera: { main: '#d9548c', dark: '#9a3264', pants: '#6a3a5a' },
-  volt: { main: '#7a3cc8', dark: '#4a2386', pants: '#2e2440', hair: '#2a2234', mask: '#3a2a4a' },
+  kael: { main: '#c8323c', dark: '#8c1f2e', trim: '#f08a7a', pants: '#4a3a52' },
+  lyra: { main: '#4f9e3c', dark: '#2f6a2a', trim: '#c8e08a', pants: '#5a4a3a' },
+  elio: { main: '#3a64c8', dark: '#26408a', trim: '#e0a93a', pants: '#26408a', beard: '#e8e4dc' },
+  sera: { main: '#d9548c', dark: '#9a3264', trim: '#ffd0e0', pants: '#6a3a5a' },
+  volt: { main: '#7a3cc8', dark: '#4a2386', trim: '#a878e8', pants: '#2e2440', hair: '#2a2234', mask: '#3a2a4a' },
 };
 
 // Tables de recoloration des rangs supérieurs.
@@ -39,245 +40,293 @@ const CELESTE = {
 
 // ---------------------------------------------------------------- base chibi
 
-// Corps commun 20×20 : jambes 2 px, pieds 3 px, tête ~6×6, pas de nez.
-function chibi(s, o) {
+// Héros 24×24 : grosse tête (8×7), yeux de 2 px, joues roses, pas de nez ; corps de 8×6 avec col,
+// plis, ceinture et ourlet brodé ; jambes de 2 px, bottes de 3 px à semelle sombre.
+// Les pieds touchent le bas de la grille (y = 23) ; tout ce qui dépasse en haut (casque, chapeau,
+// arme) a les rangées 0 à 4.
+const BLUSH = '#f0907a';
+
+function body(s, o) {
+  const T = o.tunic, D = o.dark;
+  // cape derrière le corps
   if (o.cape) {
-    s.r(6, 11, 8, 7, o.cape);
-    s.v(5, 16, 17, o.cape);
-    s.v(14, 16, 17, o.cape);
+    s.r(7, 14, 10, 8, o.cape);
+    s.hl(6, 17, 22, o.cape);
+    s.p(9, 20, shadeOf(o.cape)); s.p(14, 21, shadeOf(o.cape));
   }
-  // jambes et pieds
-  s.r(7, 16, 2, 2, o.pants);
-  s.r(11, 16, 2, 2, o.pants);
-  s.hl(6, 8, 18, o.boots);
-  s.hl(11, 13, 18, o.boots);
-  // corps
-  s.r(7, 11, 6, 5, o.tunic);
-  s.hl(7, 12, 15, o.dark);
-  if (o.robe) s.hl(6, 13, 15, o.dark);
-  s.hl(7, 12, 14, C.grip);
-  s.p(9, 14, o.buckle || C.gold);
-  arm(s, 6, -1, o.left || 'down', o.tunic);
-  arm(s, 13, 1, o.right || 'down', o.tunic);
+  // jambes et bottes
+  if (!o.robe) {
+    s.r(9, 20, 2, 2, o.pants);
+    s.r(13, 20, 2, 2, o.pants);
+  }
+  for (const x0 of [8, 13]) {
+    s.hl(x0, x0 + 2, 22, o.boots);
+    s.hl(x0, x0 + 2, 23, o.sole);
+    s.p(x0, 22, o.bootsHi, true);
+  }
+  // torse (et robe longue)
+  s.r(8, 14, 8, 6, T);
+  if (o.robe) {
+    s.r(8, 20, 8, 2, T);
+    s.hl(7, 16, 21, D);
+    for (let x = 8; x <= 15; x += 2) s.p(x, 21, o.trim);
+    s.p(10, 20, D); s.p(13, 20, D);
+  }
+  s.hl(10, 13, 14, o.trim); // col
+  s.p(11, 15, o.trim);
+  s.hl(8, 15, 19, D); // ourlet brodé
+  for (let x = 9; x <= 15; x += 3) s.p(x, 19, o.trim);
+  s.hl(8, 15, 18, o.belt || C.grip); // ceinture
+  s.r(11, 18, 2, 1, o.buckle || C.gold);
+  s.p(11, 18, C.goldHi, true);
+  // bras (2 px) détachés du torse par une ombre, poignets brodés, mains sous la ceinture
+  s.v(8, 15, 17, D); s.v(15, 15, 17, D);
+  for (const x of [6, 16]) {
+    s.r(x, 14, 2, 4, T);
+    s.hl(x, x + 1, 17, o.trim);
+    s.r(x, 18, 2, 1, C.skin);
+    s.p(x, 19, C.skinSh);
+  }
+  if (o.bracers) { s.hl(6, 7, 16, o.bracers); s.hl(16, 17, 16, o.bracers); }
   // tête
-  s.r(7, 5, 6, 5, C.skin);
-  s.hl(8, 11, 10, C.skinSh);
-  s.p(8, 7, C.eye, true);
-  s.p(11, 7, C.eye, true);
-  if (o.mouth !== false) s.hl(9, 10, 9, C.mouth);
+  s.r(8, 7, 8, 7, C.skin);
+  s.hl(9, 14, 13, C.skinSh);
+  s.v(10, 10, 11, C.eye, true);
+  s.v(13, 10, 11, C.eye, true);
+  s.p(9, 12, BLUSH, true);
+  s.p(14, 12, BLUSH, true);
+  if (o.mouth !== false) s.p(11, 12, C.mouth, true);
 }
 
-// Bras : 'down' main le long du corps, 'out' main tendue, 'far' bras écarté.
-function arm(s, x, dir, pose, tunic) {
-  s.v(x, 11, 13, tunic);
-  if (pose === 'down') s.p(x, 14, C.skin);
-  else if (pose === 'out') s.p(x + dir, 13, C.skin);
-  else { s.p(x + dir, 13, tunic); s.p(x + 2 * dir, 13, C.skin); }
-}
+const shadeOf = (c) => ({ '#8c1f2e': '#6a1420', '#2f6a2a': '#1e4a1c', '#26408a': '#1a2c66', '#9a3264': '#6e2046', '#4a2386': '#341862' })[c] || c;
 
+// Épaulières de métal (rang 3 et plus).
 function pauldrons(s, m) {
-  s.r(5, 11, 2, 2, m.c);
-  s.r(13, 11, 2, 2, m.c);
-  s.p(5, 11, m.hi, true);
-  s.p(13, 11, m.hi, true);
+  for (const x of [5, 16]) {
+    s.r(x, 13, 3, 2, m.c);
+    s.p(x + 1, 13, m.hi, true);
+  }
 }
 
-// Diadème du rang 4 : couronne d'or + gemme.
-function tiara(s, y) {
-  s.hl(7, 12, y, C.gold);
-  s.p(7, y - 1, C.gold);
-  s.p(12, y - 1, C.gold);
-  s.r(9, y - 1, 2, 1, C.gold);
-  s.p(8, y, C.goldHi, true);
-  s.r(9, y, 2, 1, C.gem, true);
+// Diadème d'or avec une gemme, à la hauteur y.
+function tiara(s, y, x0 = 8, x1 = 15) {
+  s.hl(x0, x1, y, C.gold);
+  s.p(x0, y - 1, C.gold); s.p(x1, y - 1, C.gold);
+  s.r(11, y - 2, 2, 2, C.gold);
+  s.p(x0 + 1, y, C.goldHi, true);
+  s.r(11, y - 1, 2, 1, C.gem, true);
+  s.p(11, y - 2, C.goldHi, true);
 }
+
+// Bottes selon le rang : cuir puis métal.
+const boots = (m) => ({ boots: m.c, bootsHi: m.hi, sole: '#3a2a22' });
 
 // ---------------------------------------------------------------- héros
 
 function kael(rank) {
-  const s = new Spr(20, 20), m = METALS[rank - 1], K = CLASS.kael;
-  chibi(s, { tunic: K.main, dark: K.dark, pants: K.pants, boots: m.c, right: 'out', cape: rank >= 4 && K.dark });
-  // cheveux en pointes
-  s.r(6, 3, 8, 3, C.hair);
-  s.v(6, 6, 7, C.hair);
-  s.v(13, 6, 7, C.hair);
-  s.p(7, 6, C.hair);
-  if (rank === 1) { s.p(7, 2, C.hair); s.p(10, 2, C.hair); s.p(12, 2, C.hair); }
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = CLASS.kael, H = C.hair, HH = '#8a5a34';
+  body(s, { tunic: K.main, dark: K.dark, trim: rank >= 4 ? C.gold : K.trim, pants: K.pants, ...boots(m), cape: rank >= 4 && K.dark, bracers: rank >= 2 && m.c });
+  // cheveux en pointes, mèches claires
+  s.r(8, 5, 8, 3, H);
+  for (const [x, y] of [[8, 4], [10, 3], [11, 4], [13, 3], [15, 4], [16, 5]]) s.p(x, y, H);
+  s.v(7, 6, 10, H); s.v(16, 6, 10, H);
+  s.p(9, 8, H); s.p(12, 8, H); s.p(14, 8, H); s.p(15, 8, H);
+  s.p(10, 5, HH, true); s.p(13, 6, HH, true); s.p(11, 4, HH, true);
   if (rank >= 2) {
-    // casque
-    s.hl(7, 12, 2, m.c);
-    s.r(6, 3, 8, 2, m.c);
-    s.hl(6, 13, 5, m.c);
-    s.p(8, 3, m.hi, true);
+    // casque à rivets, nasal absent (pas de nez)
+    s.r(8, 3, 8, 4, m.c);
+    s.hl(9, 14, 2, m.c);
+    s.hl(7, 16, 7, m.c);
+    s.p(9, 3, m.hi, true); s.p(10, 2, m.hi, true);
+    s.p(8, 7, m.hi, true); s.p(15, 7, m.hi, true);
+    s.v(12, 3, 6, rank >= 4 ? C.gold : '#6a7480');
   }
-  if (rank === 3) { s.hl(9, 10, 1, K.main); s.p(11, 1, K.main); s.p(11, 0, K.main); }
+  if (rank === 3) { s.v(12, 0, 1, K.main); s.p(13, 0, K.main); s.p(13, 1, K.dark); s.p(11, 1, K.main); }
   if (rank >= 4) {
-    s.p(7, 1, C.gold); s.p(12, 1, C.gold); s.r(9, 1, 2, 1, C.gold);
-    s.r(9, 4, 2, 1, C.gem, true);
-    s.hl(7, 12, 15, C.gold);
+    for (const x of [8, 10, 13, 15]) s.p(x, 2, C.gold);
+    s.p(10, 1, C.goldHi, true); s.p(13, 1, C.goldHi, true);
+    s.r(11, 4, 2, 2, C.gem, true);
+    s.p(11, 4, '#ff8a9a', true);
   }
   if (rank >= 3) pauldrons(s, m);
-  // épée tenue à droite, pointe en haut
-  const top = [8, 6, 4, 2][rank - 1];
-  const wide = rank >= 3;
-  s.v(15, top, 11, m.c);
-  if (wide) s.v(16, top + 1, 11, m.c);
-  s.p(15, top + 1, m.hi, true);
-  s.hl(14, wide ? 17 : 16, 12, rank === 1 ? C.grip : rank >= 4 ? C.gold : m.c);
-  if (rank >= 4) s.p(15, 12, C.gem, true);
-  s.v(15, 13, 14, C.grip);
-  s.p(15, 15, rank >= 3 ? C.gold : m.c);
+  // épée à droite : lame avec gouttière, garde, poignée gainée, pommeau
+  const top = [10, 7, 4, 1][rank - 1], wide = rank >= 3;
+  s.v(18, top, 17, m.c);
+  if (wide) s.v(19, top + 1, 17, m.c);
+  s.v(18, top + 2, 15, m.hi, true);
+  if (wide) s.v(19, top + 3, 15, shade2(m.c), true);
+  s.hl(17, wide ? 20 : 19, 18, rank === 1 ? C.grip : rank >= 4 ? C.gold : m.c);
+  if (rank >= 4) s.p(18, 18, C.gem, true);
+  s.v(18, 19, 20, C.grip);
+  s.p(18, 20, '#7a5a3a', true);
+  s.p(18, 21, rank >= 3 ? C.gold : m.c);
   return s;
 }
 
 function lyra(rank) {
-  const s = new Spr(20, 20), m = METALS[rank - 1], L = CLASS.lyra;
-  // carquois dans le dos
-  s.v(14, 9, 12, C.grip);
-  s.p(14, 8, C.white);
-  s.p(15, 8, C.gem);
-  chibi(s, { tunic: L.main, dark: L.dark, pants: L.pants, boots: m.c, left: 'out', cape: rank >= 4 && L.dark });
+  const s = new Spr(24, 24), m = METALS[rank - 1], L = CLASS.lyra;
+  // carquois dans le dos, empennages qui dépassent
+  s.r(16, 10, 2, 6, C.grip);
+  s.p(16, 9, C.white); s.p(17, 8, C.white); s.p(17, 9, C.gem); s.p(16, 8, C.gem);
+  body(s, { tunic: L.main, dark: L.dark, trim: rank >= 4 ? C.gold : L.trim, pants: L.pants, ...boots(m), cape: rank >= 4 && L.dark, bracers: rank >= 3 && m.c });
   // capuche
-  s.hl(7, 12, 2, L.main);
-  s.r(6, 3, 8, 2, L.main);
-  s.v(6, 5, 9, L.main);
-  s.v(13, 5, 9, L.main);
-  s.hl(7, 12, 5, C.hair);
-  s.p(7, 6, C.hair);
-  if (rank >= 2 && rank < 4) { s.hl(7, 12, 4, m.c); s.p(8, 4, m.hi, true); }
-  if (rank >= 3) { s.p(13, 2, C.gem); s.p(14, 1, C.gem); }
-  if (rank >= 4) { tiara(s, 4); s.hl(7, 12, 15, C.gold); }
+  s.hl(9, 14, 4, L.main);
+  s.r(8, 5, 8, 3, L.main);
+  s.v(7, 6, 13, L.main); s.v(16, 6, 13, L.main);
+  s.p(15, 3, L.main); s.p(16, 4, L.main);
+  s.p(9, 5, '#7ac85a', true); s.p(10, 4, '#7ac85a', true);
+  // frange sous la capuche
+  s.hl(8, 15, 8, C.hair);
+  s.p(9, 9, C.hair); s.p(14, 9, C.hair);
+  s.p(11, 8, '#8a5a34', true);
+  if (rank >= 2 && rank < 4) { s.hl(8, 15, 7, m.c); s.p(9, 7, m.hi, true); }
+  if (rank >= 3) { s.p(17, 3, C.gem); s.p(18, 2, C.gem); s.p(18, 3, '#ff8a9a', true); }
+  if (rank >= 4) tiara(s, 7);
   if (rank >= 3) pauldrons(s, m);
-  // arc à gauche
-  const y0 = rank >= 3 ? 6 : 8, y1 = rank >= 3 ? 18 : 16;
-  s.p(4, y0, m.c);
-  s.p(3, y0 + 1, m.c);
-  s.v(2, y0 + 2, y1 - 2, m.c);
-  s.p(3, y1 - 1, m.c);
-  s.p(4, y1, m.c);
-  s.v(4, y0 + 1, y1 - 1, C.string, true);
-  s.p(2, y0 + 3, m.hi, true);
-  if (rank >= 4) s.p(2, 12, C.gem, true);
+  // arc à gauche, poignée gainée, corde
+  const y0 = rank >= 3 ? 7 : 9, y1 = 23, mid = (y0 + y1) >> 1;
+  s.p(5, y0, m.c); s.p(4, y0 + 1, m.c);
+  s.v(3, y0 + 2, y1 - 2, m.c);
+  s.p(4, y1 - 1, m.c); s.p(5, y1, m.c);
+  s.v(5, y0 + 1, y1 - 1, C.string, true);
+  s.v(3, y0 + 3, y0 + 5, m.hi, true);
+  s.v(3, mid - 1, mid + 1, C.grip);
+  if (rank >= 4) s.p(3, mid, C.gem, true);
   return s;
 }
 
 function elio(rank) {
-  const s = new Spr(20, 20), m = METALS[rank - 1], E = CLASS.elio;
-  chibi(s, { tunic: E.main, dark: E.dark, pants: E.pants, boots: m.c, right: 'out', mouth: false, cape: rank >= 4 && E.dark });
-  // barbe d'une ligne, cheveux gris
-  s.hl(8, 11, 10, E.beard);
-  s.v(6, 6, 8, E.beard);
-  s.v(13, 6, 8, E.beard);
-  // chapeau pointu
-  s.hl(6, 13, 5, E.dark);
-  s.hl(7, 12, 4, E.main);
-  s.hl(8, 11, 3, E.main);
-  s.hl(9, 11, 2, E.main);
-  s.hl(11, 12, 1, E.main);
-  if (rank >= 2 && rank < 4) { s.hl(7, 12, 4, m.c); s.p(8, 4, m.hi, true); }
-  if (rank >= 4) { tiara(s, 4); s.p(10, 2, C.goldHi, true); s.hl(7, 12, 15, C.gold); }
+  const s = new Spr(24, 24), m = METALS[rank - 1], E = CLASS.elio, B = E.beard, BS = '#b0aaa0';
+  body(s, { tunic: E.main, dark: E.dark, trim: rank >= 4 ? C.gold : E.trim, pants: E.pants, ...boots(m), robe: true, mouth: false, cape: rank >= 4 && E.dark });
+  // longue barbe et moustache, sourcils blancs
+  s.hl(10, 13, 12, B);
+  s.r(9, 13, 6, 3, B);
+  s.hl(10, 13, 16, B);
+  s.p(11, 17, B);
+  s.p(10, 14, BS); s.p(12, 15, BS); s.p(13, 13, BS); s.p(11, 16, BS);
+  s.p(10, 9, B); s.p(13, 9, B);
+  s.v(7, 8, 11, B); s.v(16, 8, 11, B);
+  // chapeau pointu à bord large, pointe qui retombe, étoile
+  s.hl(6, 17, 7, E.dark);
+  s.hl(8, 15, 6, rank >= 2 && rank < 4 ? m.c : E.trim);
+  s.hl(9, 14, 5, E.main);
+  s.hl(9, 13, 4, E.main);
+  s.hl(10, 13, 3, E.main);
+  s.hl(11, 13, 2, E.main);
+  s.hl(12, 14, 1, E.main);
+  s.hl(14, 15, 0, E.main);
+  s.p(10, 4, '#5a84e0', true); s.p(11, 3, '#5a84e0', true);
+  s.p(12, 4, C.goldHi, true);
+  if (rank >= 2 && rank < 4) s.p(9, 6, m.hi, true);
+  if (rank >= 4) { tiara(s, 6); s.p(12, 2, C.goldHi, true); }
   if (rank >= 3) pauldrons(s, m);
-  // bâton avec orbe
-  const big = rank >= 3;
-  const top = big ? 1 : 3;
-  s.v(15, big ? 4 : 5, 18, rank >= 4 ? C.gold : C.wood);
+  // bâton à droite, veines du bois, orbe lumineux
+  const big = rank >= 3, top = big ? 1 : 3, wood = rank >= 4 ? C.gold : C.wood;
+  s.v(19, big ? 5 : 5, 23, wood);
+  for (let y = 7; y < 23; y += 3) s.p(19, y, rank >= 4 ? C.goldHi : '#5a3f2e', true);
   if (big) {
-    s.r(14, top, 3, 3, '#5ab4ff', true);
-    s.p(14, top, '#d8f4ff', true);
-    s.p(16, top + 2, '#2f78d0', true);
-    s.p(14, 4, m.c);
-    s.p(16, 4, m.c);
+    s.r(18, top, 3, 3, '#5ab4ff', true);
+    s.p(18, top, '#d8f4ff', true);
+    s.p(19, top + 1, '#ffffff', true);
+    s.p(20, top + 2, '#2f78d0', true);
+    s.p(18, 4, m.c); s.p(20, 4, m.c); s.p(19, 4, m.c);
   } else {
-    s.r(15, top, 2, 2, '#5ab4ff', true);
-    s.p(15, top, '#d8f4ff', true);
-    s.p(16, top + 1, '#2f78d0', true);
-    if (rank === 2) s.p(16, 5, m.c);
+    s.r(19, top, 2, 2, '#5ab4ff', true);
+    s.p(19, top, '#d8f4ff', true);
+    s.p(20, top + 1, '#2f78d0', true);
+    if (rank === 2) s.p(20, 4, m.c);
   }
   return s;
 }
 
 function sera(rank) {
-  const s = new Spr(20, 20), m = METALS[rank - 1], S = CLASS.sera;
-  chibi(s, { tunic: S.main, dark: S.dark, pants: S.pants, boots: m.c, left: 'far', robe: true, cape: rank >= 4 && S.dark });
-  // étole blanche
-  s.v(9, 11, 13, C.white);
-  s.v(10, 11, 13, C.white);
-  // voile
-  s.hl(7, 12, 2, C.white);
-  s.r(6, 3, 8, 2, C.white);
-  s.v(6, 5, 10, C.white);
-  s.v(13, 5, 10, C.white);
-  s.hl(7, 12, 5, C.hair);
-  if (rank >= 2 && rank < 4) { s.hl(7, 12, 4, m.c); s.p(8, 4, m.hi, true); }
-  if (rank >= 4) { tiara(s, 4); s.hl(6, 13, 15, C.gold); }
+  const s = new Spr(24, 24), m = METALS[rank - 1], S = CLASS.sera, W = C.white, HR = '#e8c070';
+  body(s, { tunic: S.main, dark: S.dark, trim: rank >= 4 ? C.gold : S.trim, pants: S.pants, ...boots(m), robe: true, cape: rank >= 4 && S.dark });
+  // étole blanche et petite croix d'or
+  s.v(11, 14, 21, W); s.v(12, 14, 21, W);
+  s.p(11, 16, C.gold, true); s.p(12, 16, C.gold, true); s.p(11, 15, C.gold, true);
+  s.p(12, 19, '#d8d0c8');
+  // voile blanc liseré de rose, mèches dorées
+  s.hl(9, 14, 4, W);
+  s.r(8, 5, 8, 3, W);
+  s.v(7, 6, 15, W); s.v(16, 6, 15, W);
+  s.v(7, 13, 15, S.main); s.v(16, 13, 15, S.main);
+  s.hl(8, 15, 8, HR);
+  s.p(9, 9, HR); s.p(14, 9, HR); s.p(8, 9, HR); s.p(15, 9, HR);
+  s.p(10, 8, '#fff0b0', true); s.p(13, 8, '#fff0b0', true);
+  s.p(9, 5, '#ffffff', true);
+  if (rank >= 2 && rank < 4) { s.hl(8, 15, 7, m.c); s.p(9, 7, m.hi, true); }
+  if (rank >= 4) tiara(s, 7);
   if (rank >= 3) pauldrons(s, m);
-  // bâton à anneau
-  const top = rank >= 3 ? 3 : 5;
-  s.p(3, top, m.c);
-  s.v(2, top + 1, top + 2, m.c);
-  s.v(4, top + 1, top + 2, m.c);
-  s.p(3, top + 3, m.c);
-  s.p(3, top, m.hi, true);
-  if (rank >= 4) s.v(3, top + 1, top + 2, C.gem, true);
-  s.v(3, top + 4, 18, rank >= 4 ? C.gold : C.wood);
+  // bâton à anneau à gauche
+  const top = rank >= 3 ? 3 : 6;
+  s.p(4, top, m.c);
+  s.v(3, top + 1, top + 3, m.c); s.v(5, top + 1, top + 3, m.c);
+  s.p(4, top + 4, m.c);
+  s.p(3, top + 1, m.hi, true);
+  if (rank >= 4) s.v(4, top + 1, top + 3, C.gem, true);
+  else if (rank >= 3) s.p(4, top + 2, '#ff9ac8', true);
+  s.v(4, top + 5, 23, rank >= 4 ? C.gold : C.wood);
+  for (let y = top + 7; y < 23; y += 3) s.p(4, y, rank >= 4 ? C.goldHi : '#5a3f2e', true);
   return s;
 }
 
 function volt(rank) {
-  const s = new Spr(20, 20), m = METALS[rank - 1], V = CLASS.volt;
-  chibi(s, { tunic: V.main, dark: V.dark, pants: V.pants, boots: m.c, right: 'out', mouth: false, buckle: C.neon, cape: rank >= 4 && V.dark });
-  s.hl(7, 12, 14, C.neon, true);
-  s.p(8, 12, C.neon, true);
+  const s = new Spr(24, 24), m = METALS[rank - 1], V = CLASS.volt;
+  body(s, { tunic: V.main, dark: V.dark, trim: V.trim, pants: V.pants, ...boots(m), mouth: false, buckle: C.neon, cape: rank >= 4 && V.dark, belt: V.mask });
+  s.p(10, 16, C.neon, true); // un seul éclat néon sur la poitrine, plus la boucle
   // cheveux noirs en pointes
-  s.r(6, 3, 8, 2, V.hair);
-  s.p(6, 2, V.hair); s.p(9, 2, V.hair); s.p(12, 2, V.hair);
-  s.v(6, 6, 7, V.hair);
-  s.v(13, 6, 7, V.hair);
+  s.r(8, 4, 8, 3, V.hair);
+  for (const [x, y] of [[8, 3], [10, 2], [12, 3], [14, 2], [16, 4]]) s.p(x, y, V.hair);
+  s.v(7, 6, 10, V.hair); s.v(16, 6, 10, V.hair);
+  s.p(10, 4, '#4a3e5a', true); s.p(13, 5, '#4a3e5a', true);
   // bandeau avec pans qui flottent
-  s.hl(6, 13, 5, V.main);
-  s.p(5, 5, V.main); s.p(4, 6, V.main); s.p(3, 6, V.main);
-  // masque
-  s.hl(7, 12, 9, V.mask);
-  s.hl(8, 11, 10, V.mask);
-  if (rank >= 2) { s.hl(8, 11, 5, m.c); s.p(9, 5, m.hi, true); }
+  s.hl(7, 16, 7, V.main);
+  s.p(6, 7, V.main); s.p(5, 8, V.main); s.p(4, 8, V.main); s.p(5, 9, V.dark); s.p(3, 9, V.dark);
+  s.p(12, 7, C.neon, true);
+  // masque sous les yeux, ligne néon
+  s.r(8, 12, 8, 2, V.mask);
+  s.hl(9, 14, 12, V.mask);
+  s.p(13, 13, C.neon, true);
+  if (rank >= 2) { s.hl(9, 14, 7, m.c); s.p(10, 7, m.hi, true); }
   if (rank >= 4) {
-    // cimier en V doré
-    s.p(7, 1, C.gold); s.p(8, 2, C.gold); s.p(11, 2, C.gold); s.p(12, 1, C.gold);
-    s.r(9, 3, 2, 1, C.gem, true);
+    s.p(8, 1, C.gold); s.p(9, 2, C.gold); s.p(14, 2, C.gold); s.p(15, 1, C.gold);
+    s.r(11, 5, 2, 1, C.gem, true);
   }
   if (rank >= 3) pauldrons(s, m);
-  // lame : fer, acier puis plasma néon
-  const top = [9, 7, 4, 2][rank - 1];
+  // lame : métal puis plasma néon
+  const top = [10, 8, 4, 1][rank - 1];
   if (rank <= 2) {
-    const b = METALS[rank].c;
-    s.v(15, top, 11, b);
-    s.p(15, top + 1, METALS[rank].hi, true);
+    s.v(18, top, 17, METALS[rank].c);
+    s.v(18, top + 1, top + 3, METALS[rank].hi, true);
   } else {
-    s.v(15, top, 11, C.neon, true);
-    s.v(16, top + 1, 10, '#2fb8c8', true);
-    s.p(15, top + 1, '#ffffff', true);
+    s.v(18, top, 17, C.neon, true);
+    s.v(19, top + 1, 16, '#2fb8c8', true);
+    s.v(18, top + 1, top + 4, '#ffffff', true);
   }
-  s.hl(14, 16, 12, m.c);
-  s.v(15, 13, 14, V.hair);
-  s.p(15, 14, V.main);
+  s.hl(17, 19, 18, m.c);
+  s.v(18, 19, 20, V.hair);
+  s.p(18, 21, V.main);
   return s;
 }
 
-// Rang 5 « Céleste » : recolor du rang 4, 24×24, ailes, auréole, étincelles.
+const shade2 = (c) => ({ '#8a6a4a': '#6a5038', '#8e99a4': '#6a7480', '#b9c6d2': '#8e99a4', '#e0a93a': '#b07a20', '#f2ead6': '#d8c8a8' })[c] || c;
+
+// Rang 5 « Céleste » : recolor du rang 4, grille 28×28, ailes, auréole, étincelles.
 function celestial(base, cls) {
-  const t = { ...CELESTE, [cls.main]: '#f2ead6', [cls.dark]: '#d8c49a', [cls.pants]: '#c8b48a', [C.gem]: cls.main };
-  const s = base.recolor(t).grow(24, 24, 2, 3);
-  const wing = [[7, 6, 8], [8, 4, 8], [9, 3, 8], [10, 2, 8], [11, 3, 8], [12, 4, 8], [13, 6, 8]];
+  const t = { ...CELESTE, [cls.main]: '#f2ead6', [cls.dark]: '#d8c49a', [cls.pants]: '#c8b48a', [cls.trim]: '#fbe08a', [C.gem]: cls.main };
+  const s = base.recolor(t).grow(28, 28, 2, 4);
+  const wing = [[9, 7, 9], [10, 5, 9], [11, 3, 9], [12, 2, 9], [13, 2, 9], [14, 3, 9], [15, 5, 9], [16, 7, 9]];
   for (const [y, x0, x1] of wing)
     for (let x = x0; x <= x1; x++) {
-      const c = x === x0 ? '#e4dcc8' : '#fff8ec';
+      const c = x === x0 ? '#e4dcc8' : (x + y) % 3 === 0 ? '#f2e8d4' : '#fff8ec';
       s.under(x, y, c);
-      s.under(23 - x, y, c);
+      s.under(27 - x, y, c);
     }
-  s.hl(10, 13, 1, C.goldHi, true);
-  s.p(9, 1, C.gold, true);
-  s.p(14, 1, C.gold, true);
-  for (const [x, y] of [[1, 4], [22, 3], [0, 13], [23, 10], [2, 21], [21, 22]]) s.spark(x, y, (x + y) % 2 ? '#ffffff' : C.goldHi);
+  s.hl(11, 16, 1, C.goldHi, true);
+  s.p(10, 2, C.gold, true);
+  s.p(17, 2, C.gold, true);
+  for (const [x, y] of [[1, 5], [26, 4], [0, 16], [27, 12], [2, 25], [25, 26]]) s.spark(x, y, (x + y) % 2 ? '#ffffff' : C.goldHi);
   return s;
 }
 
