@@ -131,6 +131,10 @@ de bas en haut** (de haut en bas pour revenir) : l'intérieur de la porte change
 explosent en copeaux et celles du nouveau mode tombent du ciel. Sous le ruban, trois points
 grisâtres montrent le mode affiché ; ils grossissent et blanchissent sous le doigt.
 
+Le ruban du mode est en haut de l'écran, pour laisser la porte dégagée ; la porte rayonne de la
+lumière de son mode (halo sur le mur, flaque au sol, rais bleus pour la tour, particules aspirées
+pour l'infini, braises pour l'histoire).
+
 | Mode | Porte | Principe |
 |---|---|---|
 | **Histoire** | obscurité | les étapes à la suite (toucher la porte, ou « Combattre ») ; « Rejouer » une étape gagnée |

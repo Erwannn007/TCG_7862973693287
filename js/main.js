@@ -379,17 +379,17 @@ function campItems() {
 function layoutCamp(enter = 'fan') {
   if ($('#scr-camp').classList.contains('hidden')) return;
   const c = $('#camp-canvas'), k = c.clientWidth / CAMP_W;
-  const [dx, dy] = toScreen(c, CAMP_W, 150, 40), s = $('#door-sign');
+  // le ruban du mode est en haut, entre le titre et les boutons, pour laisser la porte dégagée
+  const [dx] = toScreen(c, CAMP_W, 150, 40), s = $('#door-sign');
   s.style.left = dx + 'px';
-  s.style.top = dy + 'px';
-  const [mx, my] = toScreen(c, CAMP_W, 150, 44), md = $('#c-modes');
+  const [mx, my] = toScreen(c, CAMP_W, 150, 30), md = $('#c-modes');
   md.style.left = mx + 'px';
   md.style.top = my + 'px';
   const items = campItems(), n = items.length;
   // grand rayon, centre à gauche : un arc doux à droite de la porte ; écart vertical d'environ
   // 70 px entre deux pancartes, resserré s'il y en a beaucoup pour rester à l'écran
   const R = 170, gap = n > 1 ? Math.min(70, (innerHeight - 140) / (n - 1)) : 0, step = 2 * Math.asin(gap / 2 / R);
-  layoutSigns($('#c-menu'), null, items, dx + 18 * k + 24 - R, (60 + innerHeight) / 2, R, step, '', enter);
+  layoutSigns($('#c-menu'), null, items, dx + 18 * k + 70 - R, (60 + innerHeight) / 2, R, step, 'messy', enter);
 }
 
 // Les pancartes du camp explosent en copeaux, puis les nouvelles tombent du ciel.
@@ -414,7 +414,7 @@ function switchCampMode(dir) {
   if (i < 0 || i >= CAMP_MODES.length) {
     // rien de ce côté : la porte résiste
     sfx('denied');
-    $('#door-sign').animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '-50% -100%' : `-50% calc(-100% + ${k % 2 ? 4 : -4}px)` })), { duration: 200, easing: 'steps(5, end)' });
+    $('#door-sign').animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '-50% 0' : `calc(-50% + ${k % 2 ? 4 : -4}px) 0` })), { duration: 200, easing: 'steps(5, end)' });
     return;
   }
   campMode = CAMP_MODES[i];
@@ -430,7 +430,75 @@ function switchCampMode(dir) {
 // L'intérieur de la porte selon le mode : obscurité (histoire), escalier de lumière bleue qui monte
 // (tour), tourbillon violet (infini). Flash blanc juste après un changement.
 let doorFlash = 0;
+// Lumière qui sort de la porte : halo tramé sur le mur, flaque au sol qui s'élargit vers nous,
+// rais de lumière (tour), particules aspirées (infini), braises (histoire). Respire par paliers.
+const DOOR_LIGHT = { story: ['#ff9a3a', '#ffd08a'], tower: ['#5a8aff', '#c8e0ff'], endless: ['#a050ff', '#e8c8ff'] };
+function doorLight(g) {
+  const [col, hi] = DOOR_LIGHT[campMode], pulse = [0.75, 0.9, 1, 0.9][Math.floor(roomStep / 3) % 4];
+  const strong = campMode === 'story' ? 0.7 : 1.4;
+  // halo autour de l'arche
+  g.fillStyle = col;
+  for (let y = 4; y < 74; y++)
+    for (let x = 108; x < 192; x++) {
+      if (x > 134 && x < 166 && y > 20) continue;
+      const d = ((x - 150) / 40) ** 2 + ((y - 46) / 42) ** 2;
+      if (d > 1) continue;
+      const a = Math.min(0.8, (1 - d) * 0.5 * pulse * strong);
+      if (BAYER4[y % 4][x % 4] < (1 - d) * 1.3) {
+        g.globalAlpha = a;
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+  // flaque de lumière au sol, devant la porte
+  for (let y = 74; y < 104; y++) {
+    const t = (y - 74) / 30, half = Math.round(15 + t * 34);
+    for (let x = 150 - half; x <= 150 + half; x++) {
+      const e = Math.abs(x - 150) / half;
+      if (BAYER4[y % 4][x % 4] > (1 - t) * (1 - e * 0.8) * 1.1) continue;
+      g.globalAlpha = Math.min(0.8, 0.45 * pulse * strong * (1 - t * 0.7));
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  g.globalAlpha = 1;
+  if (campMode === 'tower') {
+    // rais de lumière bleue qui s'étirent sur le sol
+    g.fillStyle = hi;
+    for (const [dx, sl] of [[-8, -1.4], [0, 0], [8, 1.4]]) {
+      g.globalAlpha = (roomStep + dx) % 6 < 3 ? 0.35 : 0.2;
+      for (let y = 74; y < 100; y++) g.fillRect(Math.round(150 + dx + (y - 74) * sl), y, 1, 1);
+    }
+    g.globalAlpha = 1;
+  } else if (campMode === 'endless') {
+    // particules aspirées vers la porte en spirale
+    for (let i = 0; i < 10; i++) {
+      const t = ((roomStep + i * 5) % 30) / 30, a = i * 0.63 + t * 4, r = (1 - t) * 46;
+      g.fillStyle = t > 0.7 ? '#ffffff' : hi;
+      g.fillRect(Math.round(150 + Math.cos(a) * r * 1.2), Math.round(50 + Math.sin(a) * r * 0.8), 1, 1);
+    }
+  } else {
+    // quelques braises qui s'échappent de l'obscurité
+    for (let i = 0; i < 4; i++) {
+      const t = (roomStep + i * 7) % 26;
+      if (t < 18) {
+        g.fillStyle = t < 9 ? hi : col;
+        g.fillRect(140 + ((i * 7) % 20) + (t % 4 < 2 ? 0 : 1), 70 - t * 2, 1, 1);
+      }
+    }
+  }
+}
+const BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]].map((r) => r.map((v) => v / 16));
+
 function drawDoor(g) {
+  doorLight(g);
+  // bord de l'arche éclairé par la lumière du mode
+  if (campMode !== 'story') {
+    g.fillStyle = DOOR_LIGHT[campMode][1];
+    g.globalAlpha = roomStep % 4 < 2 ? 0.8 : 0.55;
+    g.fillRect(134, 26, 1, 48);
+    g.fillRect(165, 26, 1, 48);
+    g.fillRect(137, 22, 26, 1);
+    g.globalAlpha = 1;
+  }
   const now = performance.now(), x0 = 136, x1 = 164, y0 = 30, y1 = 73, cx = 150, cy = 50;
   if (campMode === 'tower') {
     g.fillStyle = '#16203a';
@@ -1805,10 +1873,12 @@ function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '', ente
   const cy = Math.max(96 + span, Math.min(innerHeight - 40 - span, hy));
   let first = null;
   items.forEach((it, i) => {
-    const a = (i - (n - 1) / 2) * step, x = Math.round(hx + R * Math.cos(a)), y = Math.round(cy + R * Math.sin(a));
+    // messy : pancartes clouées en désordre (décalées et penchées un peu au hasard, toujours pareil)
+    const messy = cls.includes('messy'), jx = messy ? [14, -10, 22, -4, 16, -12][i % 6] : 0, jt = messy ? [-5, 6, -3, 7, -6, 4][i % 6] : 0;
+    const a = (i - (n - 1) / 2) * step, x = Math.round(hx + R * Math.cos(a)) + jx, y = Math.round(cy + R * Math.sin(a));
     const row = el('div', 'act' + (it.cd || it.off ? ' off' : '') + (it.showSub ? ' sub' : ''), '<span class="motes"><i></i><i></i></span>');
     if (it.mg) row.style.setProperty('--mg', it.mg);
-    row.style.setProperty('--tilt', (a * 7).toFixed(1) + 'deg');
+    row.style.setProperty('--tilt', (a * 7 + jt).toFixed(1) + 'deg');
     row.style.left = x + 'px';
     row.style.top = y + 'px';
     row.appendChild(icon(it.ico));
@@ -2132,16 +2202,24 @@ function endBattle(st, res) {
   showEnd({ win, title, gold, xp, ups, notes, signs });
 }
 
+// La plaque de fin : le même bois que les pancartes, avec deux autres plaques empilées derrière.
+// On la fait glisser (ou on la touche) pour passer d'une page à l'autre : résumé, statistiques
+// du combat, XP des soldats.
+let endPage = 0;
 function showEnd({ win, title, gold, xp, ups, notes, signs }) {
   sfx(win ? 'win' : 'lose');
   haptic(win ? 40 : 20);
   const end = $('#b-end'), veil = $('#b-veil'), pl = $('#b-plaque');
   pl.innerHTML = '';
   pl.className = win ? 'win' : 'lose';
-  pl.appendChild(el('div', 'end-title' + (title.length > 12 ? ' long' : ''), title));
+  const heroes = battle ? battle.heroes : [];
+
+  // page 1 : résumé
+  const p1 = el('div', 'end-page');
+  p1.appendChild(el('div', 'end-title' + (title.length > 12 ? ' long' : ''), title));
   const team = el('div', 'end-team');
   state.team.forEach((id) => team.appendChild(lookCanvas(id, 3)));
-  pl.appendChild(team);
+  p1.appendChild(team);
   const row = el('div', 'end-gold');
   if (gold) {
     row.appendChild(spriteCanvas('coin', coinSprite, 2));
@@ -2151,19 +2229,85 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
     for (let i = 1; i <= 12; i++) setTimeout(() => { n.textContent = '+' + Math.round((gold * i) / 12); if (i % 3 === 0) sfx('coin'); }, 520 + i * 50);
   }
   row.appendChild(el('span', 'end-xp', `+${xp} XP`));
-  pl.appendChild(row);
-  if (ups.length) pl.appendChild(el('div', 'end-up', ups.map((u) => `${HEROES[u.id].name} niv ${u.lvl} !`).join(' · ')));
-  for (const t of notes) pl.appendChild(el('div', 'end-note', t));
+  p1.appendChild(row);
+  if (ups.length) p1.appendChild(el('div', 'end-up', ups.map((u) => `${HEROES[u.id].name} niv ${u.lvl} !`).join(' · ')));
+  for (const t of notes) p1.appendChild(el('div', 'end-note', t));
+
+  // page 2 : statistiques du combat, par soldat
+  const p2 = el('div', 'end-page');
+  p2.appendChild(el('div', 'end-head', 'Statistiques'));
+  const tb = el('div', 'end-table');
+  tb.appendChild(el('div', 'end-row head', '<span></span><span>Dégâts</span><span>Reçus</span><span>Soins</span><span>KO</span>'));
+  const best = Math.max(1, ...heroes.map((u) => u.dealt || 0));
+  heroes.forEach((u) => {
+    const r = el('div', 'end-row' + ((u.dealt || 0) === best && best > 1 ? ' mvp' : ''));
+    const who = el('span', 'who');
+    who.appendChild(lookCanvas(u.id, 1));
+    r.appendChild(who);
+    r.append(el('span', '', String(u.dealt || 0) + (u.crits ? `<small> ${u.crits}×!</small>` : '')), el('span', '', String(u.taken || 0)), el('span', '', String(u.healed || 0)), el('span', '', String(u.kills || 0)));
+    tb.appendChild(r);
+  });
+  p2.appendChild(tb);
+  p2.appendChild(el('div', 'end-note', `${battle ? battle.turns : 0} tours · le plus de dégâts est en doré`));
+
+  // page 3 : XP de chaque soldat
+  const p3 = el('div', 'end-page');
+  p3.appendChild(el('div', 'end-head', 'Expérience'));
+  state.team.forEach((id) => {
+    const o = state.owned[id], cap = LEVEL.cap(o.rank), up = ups.find((u) => u.id === id);
+    const r = el('div', 'end-lvl');
+    r.appendChild(lookCanvas(id, 2));
+    const info = el('div', 'end-lvl-info');
+    info.appendChild(el('div', '', `<b>${HEROES[id].name}</b> · niv ${o.lvl}/${cap}${up ? ' <span class="end-up">+niveau !</span>' : ''}`));
+    info.appendChild(segBar(o.lvl >= cap ? 1 : o.xp / LEVEL.need(o.lvl), 'xp', 12));
+    info.appendChild(el('div', 'end-small', o.lvl >= cap ? 'niveau max du rang : monte de rang pour aller plus loin' : `+${xp} XP · encore ${LEVEL.need(o.lvl) - o.xp} XP`));
+    r.appendChild(info);
+    p3.appendChild(r);
+  });
+
+  const pages = [p1, p2, p3];
+  pages.forEach((p) => pl.appendChild(p));
+  const dots = el('div', 'end-dots');
+  pages.forEach(() => dots.appendChild(el('i')));
+  pl.appendChild(dots);
+  pl.appendChild(el('div', 'end-swipe', '◂ glisse pour les statistiques ▸'));
+  endPage = 0;
+  const show = (i) => {
+    endPage = i;
+    pages.forEach((p, k) => p.classList.toggle('on', k === i));
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+  };
+  show(0);
+  // glisser ou toucher : la plaque part sur le côté et passe derrière, la suivante arrive devant
+  const turn = (dir) => {
+    const next = (endPage + dir + pages.length) % pages.length;
+    sfx('wood');
+    haptic(8);
+    pl.animate([{ translate: '-50% -50%', rotate: '0deg' }, { translate: `calc(-50% + ${dir * -70}px) -50%`, rotate: `${dir * -6}deg`, opacity: 0.4, offset: 0.5 }, { translate: '-50% -50%', rotate: '0deg' }], { duration: 300, easing: 'steps(6, end)' });
+    setTimeout(() => show(next), 150);
+  };
+  let sx = null;
+  pl.onpointerdown = (e) => { e.stopPropagation(); sx = e.clientX; };
+  pl.onpointerup = (e) => {
+    e.stopPropagation();
+    if (sx === null) return;
+    const dx = e.clientX - sx;
+    sx = null;
+    turn(Math.abs(dx) > 30 ? (dx < 0 ? 1 : -1) : 1);
+  };
+
   end.classList.remove('hidden');
   $('#b-end-menu').classList.add('hidden');
   for (const [o, ms] of [[0.2, 0], [0.4, 60], [0.6, 120]]) setTimeout(() => (veil.style.opacity = o), ms);
-  // la plaque tombe du haut et rebondit, puis lâche une gerbe d'étincelles (ou un nuage de poussière)
-  pl.style.backgroundImage = signUrl(pl.offsetWidth, pl.offsetHeight, win ? 'hot' : 'normal', 7);
-  pl.style.backgroundSize = '100% 100%';
-  pl.animate(
-    [{ translate: '-50% -150vh' }, { translate: '-50% calc(-50% + 12px)', offset: 0.75 }, { translate: '-50% calc(-50% - 4px)', offset: 0.88 }, { translate: '-50% -50%' }],
-    { duration: 480, easing: 'steps(8, end)', fill: 'backwards' },
-  );
+  // la plaque (et celles de derrière) tombe du haut et rebondit, puis lâche une gerbe d'étincelles (ou de poussière)
+  const paint = (e, seed) => {
+    e.style.backgroundImage = signUrl(e.offsetWidth, e.offsetHeight, 'normal', seed);
+    e.style.backgroundSize = '100% 100%';
+  };
+  paint(pl, 7);
+  $$('#b-end .end-back').forEach((b, i) => paint(b, 11 + i));
+  const drop = [{ translate: '-50% -150vh' }, { translate: '-50% calc(-50% + 12px)', offset: 0.75 }, { translate: '-50% calc(-50% - 4px)', offset: 0.88 }, { translate: '-50% -50%' }];
+  [pl, ...$$('#b-end .end-back')].forEach((e, i) => e.animate(drop, { duration: 480, delay: i * 60, easing: 'steps(8, end)', fill: 'backwards' }));
   setTimeout(() => {
     const r = pl.getBoundingClientRect();
     if (win) {
@@ -2175,8 +2319,8 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
     if (ups.length) setTimeout(() => sfx('levelUp'), 300);
     sfx('wood');
     $('#scr-battle').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -3 : 3}px` })), { duration: 160, easing: 'steps(5, end)' });
-    layoutSigns($('#b-end-menu'), null, signs, r.right - 64, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
-  }, 480);
+    layoutSigns($('#b-end-menu'), null, signs, r.right - 60, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
+  }, 540);
 }
 
 function hideEnd() {

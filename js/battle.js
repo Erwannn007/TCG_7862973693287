@@ -605,6 +605,7 @@ export class Battle {
       for (const h of this.alive('h')) {
         const v = Math.min(h.max - h.hp, Math.round(u.atk * s.mult));
         h.hp += v;
+        u.healed = (u.healed || 0) + v;
         h.healAt = performance.now();
         this.float(h, '+' + v, '#5cc85a');
       }
@@ -683,7 +684,12 @@ export class Battle {
     if (crit) v *= 1.5;
     if (d.guard) v *= 0.5;
     v = Math.max(1, Math.round(v));
+    // statistiques du combat (affichées sur la plaque de fin)
+    a.dealt = (a.dealt || 0) + Math.min(v, d.hp);
+    d.taken = (d.taken || 0) + Math.min(v, d.hp);
+    if (crit) a.crits = (a.crits || 0) + 1;
     d.hp = Math.max(0, d.hp - v);
+    if (d.hp === 0) a.kills = (a.kills || 0) + 1;
     d.hitAt = performance.now();
     d.flashUntil = performance.now() + 320 / this.speed;
     this.float(d, crit ? v + '!' : String(v), crit ? '#fbe08a' : WHITE);

@@ -128,8 +128,8 @@ small { font-size: 12px; }
 
 /* ================================================================ camp et navigation */
 #door-sign {
-  position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 4px;
-  transform: translate(-50%, -100%); pointer-events: none; text-align: center;
+  position: absolute; z-index: 4; top: calc(var(--safe-t) + 8px); display: flex; flex-direction: column; align-items: center; gap: 2px;
+  translate: -50% 0; pointer-events: none; text-align: center;
 }
 #door-sign .ribbon { font-size: 14px; }
 /* sous la porte : on peut la faire glisser de bas en haut pour changer de mode (histoire, tour, infini) */
@@ -416,16 +416,28 @@ small { font-size: 12px; }
 #b-end { position: absolute; inset: 0; z-index: 6; }
 #b-veil { position: absolute; inset: 0; background: #0e080b; opacity: 0; }
 #b-plaque {
-  position: absolute; left: calc(50% - 130px); top: 50%; translate: -50% -50%; width: 300px;
-  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 22px 20px;
+  position: absolute; left: calc(50% - 130px); top: 50%; translate: -50% -50%; width: 320px; height: 286px; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; padding: 18px 22px 14px;
   color: var(--cream); text-shadow: var(--txt-out); text-align: center;
-  background: no-repeat center; image-rendering: pixelated;
+  background: no-repeat center; image-rendering: pixelated; cursor: pointer; touch-action: none;
 }
-#b-plaque.win { color: var(--ink); text-shadow: var(--txt-gold); }
+/* deux plaques derrière, un peu décalées et penchées : on voit qu'il y a d'autres pages */
+.end-back {
+  position: absolute; left: calc(50% - 130px); top: 50%; translate: -50% -50%; width: 320px; height: 286px; z-index: 1;
+  background: no-repeat center; image-rendering: pixelated; filter: brightness(.55);
+}
+.end-back:nth-of-type(1) { rotate: 4deg; margin-left: 14px; margin-top: 8px; }
+.end-back:nth-of-type(2) { rotate: -3deg; margin-left: 7px; margin-top: -6px; filter: brightness(.7); }
+.end-page { display: none; flex: 1; width: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+.end-page.on { display: flex; }
+.end-dots { display: flex; gap: 6px; margin-top: 4px; }
+.end-dots i { width: 6px; height: 6px; background: #6a6068; box-shadow: 0 0 0 2px var(--line); }
+.end-dots i.on { background: #fbe08a; }
+.end-swipe { font-size: 12px; font-weight: 700; color: #e8d4a4; }
 .end-title.long { font-size: 30px; }
 .end-title { font: 400 40px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
-#b-plaque.win .end-title { color: #8a1a28; text-shadow: 2px 2px 0 #fbe08a, 3px 3px 0 var(--line); }
 #b-plaque.lose .end-title { color: #c8a870; }
+.end-head { font: 400 26px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); margin-bottom: 4px; }
 .end-team { display: flex; gap: 12px; align-items: flex-end; min-height: 76px; }
 #b-plaque.win .end-team canvas { animation: hop .5s steps(1) infinite; }
 #b-plaque.win .end-team canvas:nth-child(2) { animation-delay: -.17s; }
@@ -433,12 +445,21 @@ small { font-size: 12px; }
 #b-plaque.lose .end-team canvas { filter: grayscale(.7) brightness(.7); translate: 0 3px; }
 @keyframes hop { 0% { translate: 0 0; } 50% { translate: 0 -6px; } }
 .end-gold { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 700; }
-.end-gold b { color: #8a1a28; }
+.end-gold b { color: #fbe08a; }
+/* statistiques : un tableau simple, une ligne par soldat */
+.end-table { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+.end-row { display: grid; grid-template-columns: 40px repeat(4, 1fr); align-items: center; gap: 4px; padding: 2px 4px; font-size: 14px; font-weight: 700; background: rgba(30, 20, 24, .5); }
+.end-row.head { background: none; font-size: 12px; color: #e8d4a4; }
+.end-row.mvp { background: rgba(120, 90, 20, .6); box-shadow: inset 0 0 0 2px #e0a93a; color: #fbe08a; }
+.end-row small { font-size: 11px; color: #ff8a8a; }
+.end-row .who { display: flex; justify-content: center; }
+/* expérience : portrait, niveau, barre d'XP */
+.end-lvl { width: 100%; display: flex; align-items: center; gap: 10px; padding: 3px 6px; background: rgba(30, 20, 24, .5); text-align: left; }
+.end-lvl-info { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
+.end-small { font-size: 12px; color: #e8d4a4; }
 .end-note { font-size: 14px; font-weight: 700; }
-.end-xp { margin-left: 10px; font-size: 18px; color: #2e7a34; }
-#b-plaque.lose .end-xp { color: #9af098; }
-.end-up { font-size: 14px; font-weight: 700; color: #8a1a28; animation: blink .5s steps(1) 6; }
-#b-plaque.lose .end-up { color: #fbe08a; }
+.end-xp { margin-left: 10px; font-size: 18px; color: #9af098; }
+.end-up { font-size: 14px; font-weight: 700; color: #fbe08a; animation: blink .5s steps(1) 6; }
 .seg.xp i.on { background: #5ab4ff; box-shadow: inset 0 2px 0 #b8e0ff, inset 0 -2px 0 #2f78d0; }
 
 /* ================================================================ surcouches */

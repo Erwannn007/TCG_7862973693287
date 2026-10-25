@@ -109,7 +109,7 @@ doivent garder la même taille dans une même scène).
 | Coup critique / attaque de boss | tremblement de 2 à 3 px, éclair blanc plein écran (70 ms) |
 | Rituel (invocation) | voile sombre, magie qui converge vers le cristal par vagues, anneaux de lumière, tremblement, éclair blanc |
 | Choisir un héros (équipe) | les socles tournent en carrousel (8° par image) : il vient devant au milieu, sous un rai de lumière, les autres reculent dans la pénombre ; ses pancartes jaillissent ensuite. **Jamais d'agrandissement d'un sprite** : la profondeur se rend par la position et la pénombre |
-| Fin de combat | voile sombre par paliers, une plaque de bois tombe du ciel et rebondit (bois doré + gerbe d'étincelles et pièces pour une victoire, bois brun + poussière pour une défaite) : titre gothique, l'équipe qui sautille (ou grise), l'or qui se compte ; les choix sortent ensuite en pancartes |
+| Fin de combat | voile sombre par paliers ; une pile de plaques dans le bois des pancartes tombe du ciel et rebondit (étincelles et pièces pour une victoire, poussière pour une défaite). On la fait glisser (ou on la touche) pour passer d'une page à l'autre : résumé (titre, équipe qui sautille, or et XP qui se comptent), statistiques (dégâts, reçus, soins, KO, le meilleur en doré), expérience de chaque soldat. Les choix sortent ensuite en pancartes |
 | Vestiaire (skins) | les héros du fond sautillent puis filent vers la gauche, celui de devant glisse au centre de la salle libre ; chaque socle vole en éclats de pierre quand son héros le quitte ; la fiche tombe en copeaux et une plaque de même taille tombe du ciel avec la liste des skins (défilement vertical, toucher un skin l'essaie sur le héros) ; « Retour » : les socles retombent du ciel, puis les héros reviennent |
 
 Ceux qui n'agissent pas restent **dans la pénombre** (silhouette sombre à 9 % par palier) ;
@@ -131,7 +131,7 @@ Chaque pancarte a sa graine (`_seed`) : jamais deux bois identiques.
 | les autres pendant la visée | `scale .94`, `opacity .82` |
 | indisponible | grise, sans halo ni étincelles |
 
-**Disposition** : en **arc de cercle** autour du sujet (le héros, le cristal), jamais empilées
+**Disposition** (variante `messy` au camp : pancartes clouées un peu en désordre, décalées et penchées) : en **arc de cercle** autour du sujet (le héros, le cristal), jamais empilées
 en colonne. `layoutSigns(m, titre, items, x, y, rayon, écart)` ; rayon de 112 px et écart de
 0,72 rad en combat. Quand le sujet doit se centrer dans l'espace libre (l'autel d'invocation),
 on range d'abord les pancartes contre la plaque d'informations, puis on place le sujet au milieu
