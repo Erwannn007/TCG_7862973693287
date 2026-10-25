@@ -13,7 +13,7 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
 - Chaque sprite est une grille, dessinée pixel par pixel avec la classe `Spr`
   (`js/spr.js`) :
   - **24×24** pour les héros jouables (rangs 1 à 4) et les boss moyens ;
-  - **28×28** pour la forme Céleste des héros (rang 5) ;
+  - **28×28** pour le rang 5 des héros (le héros et son grand décor personnel derrière lui) ;
   - **20×20** pour les ennemis de base ;
   - jusqu'à **~28×27** pour les gros boss.
 - Méthodes de dessin :
@@ -69,7 +69,7 @@ y 18  ......PPGGGooGGGPGGG....   G ceinture et garde   o boucle d'or
 y 19  ......p.OBOOBOOBp.G.....
 y 20  .........JJ..JJ...G.....   J jambes
 y 21  .........JJ..JJ...M.....
-y 22  ........MMM..MMM........   bottes (métal du rang)
+y 22  ........MMM..MMM........   bottes (cuir au rang 1)
 y 23  ........SSS..SSS........   S semelle
 ```
 
@@ -80,7 +80,7 @@ y 23  ........SSS..SSS........   S semelle
 | torse | x 8–15, y 14–19 (8×6) | col brodé, ombre sous les bras (x 8 et 15), ceinture y 18, ourlet brodé y 19 |
 | bras | x 6–7 et 16–17, y 14–17 | 2 px de large, poignets brodés, mains de peau y 18 |
 | jambes | x 9–10 et 13–14, y 20–21 | 2 px ; cachées par la robe pour un mage ou une prêtresse |
-| bottes | x 8–10 et 13–15, y 22–23 | 3 px, métal du rang, semelle sombre, reflet sur la pointe |
+| bottes | x 8–10 et 13–15, y 22–23 | 3 px, aux couleurs du héros, semelle sombre, reflet sur la pointe |
 | arme | à droite x 18–19, ou à gauche x 3–5 | dépasse toujours de la silhouette ; monte jusqu'en haut aux rangs élevés |
 
 Les pieds touchent toujours le bas de la grille : le jeu pose les personnages par le bas.
@@ -123,25 +123,25 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 
 | Héros | Silhouette | Signes distinctifs | Arme |
 |---|---|---|---|
-| **Kael**, épéiste | cheveux en pointes | casque à rivets (rang 2), plumet rouge (rang 3), couronne dorée à gemme (rang 4) | épée, à droite |
-| **Lyra**, archère | capuche pointue | frange sous la capuche, carquois aux empennages blanc et rouge, plume rouge (rang 3) | arc, à gauche |
+| **Kael**, épéiste | cheveux en pointes | mèches claires, tunique rouge | épée, à droite |
+| **Lyra**, archère | capuche pointue | frange sous la capuche, carquois aux empennages blanc et rouge | arc, à gauche |
 | **Elio**, mage | grand chapeau pointu dont la pointe retombe | étoile sur le chapeau, longue barbe blanche texturée, sourcils blancs, robe longue | bâton à orbe, à droite |
 | **Séra**, prêtresse | voile blanc | liseré rose du voile, mèches dorées, étole blanche à croix d'or, robe longue | bâton à anneau, à gauche |
-| **Volt**, cyber-ninja | cheveux noirs en pointes | bandeau aux pans qui flottent, masque à ligne néon, cimier doré en V (rang 4) | lame plasma, à droite |
-| **Brann**, chevalier | heaume rond à couvre-joues | grand bouclier au pal brodé, crête (rang 3) | masse d'armes à droite, bouclier à gauche |
-| **Mira**, barde | béret penché à longue plume | longs cheveux blonds, broche (rang 2) | luth à gauche |
+| **Volt**, cyber-ninja | cheveux noirs en pointes | bandeau aux pans qui flottent, masque à ligne néon | lame plasma, à droite |
+| **Brann**, chevalier | heaume rond à couvre-joues | grand bouclier au pal brodé | masse d'armes à droite, bouclier à gauche |
+| **Mira**, barde | béret penché à longue plume | longs cheveux blonds | luth à gauche |
 | **Nina**, infirmière | coiffe blanche à croix rouge | cheveux au carré, robe blanche, poche de tablier | seringue géante à droite |
 | **Pip**, voleur | capuche ronde | foulard rouge sur le bas du visage, bourse d'or | dagues, une à droite, une inversée à gauche |
 | **Gus**, mineur | casque de chantier jaune | lampe frontale, barbe touffue, salopette sur chemise rouge | pioche à gauche |
 | **Lenny**, pompier | casque rouge à long bord arrière | insigne de métal, veste marine à poignets jaunes | lance à incendie et tuyau enroulé, à droite |
-| **Vex**, vampire | haut col dressé noir et rouge | peau pâle, cheveux plaqués, croc, cape rouge à tous les rangs | rapière à pommeau de rubis, à droite |
+| **Vex**, vampire | haut col dressé noir et rouge | peau pâle, cheveux plaqués, croc, cape rouge | rapière à pommeau de rubis, à droite |
 | **Gideon**, paladin | grande crête de crin bleue | soleil d'or sur la poitrine, couvre-joues | marteau de guerre à droite |
 | **Aurélia**, valkyrie | casque ailé | tresses blondes, cape bleue, étincelles | lance à droite |
 | **Nova**, super-héroïne | poing levé, cheveux au vent | éclair d'or, cape rouge qui claque à gauche, gant blanc | son poing (bras droit levé) |
-| **Rok**, bûcheron | bonnet de laine à pompon | grosse barbe rousse, flanelle, bretelles | hache à droite (double dès le rang 3) |
+| **Rok**, bûcheron | bonnet de laine à pompon | grosse barbe rousse, flanelle, bretelles | hache à droite |
 | **Tobo**, chef cuisinier | grande toque | moustache en guidon, foulard rouge, veste croisée | poêle à droite (avec un œuf) |
 | **Hugo**, boxeur | cheveux en épis, bandeau | débardeur bleu, short rouge, bras nus | gros gants : garde haute à gauche, direct à droite |
-| **Kiki**, cow-girl | chapeau de cow-boy à bord large | longs cheveux roux, gilet, foulard, étoile de shérif (rang 2) | revolver à droite, lasso à la hanche gauche |
+| **Kiki**, cow-girl | chapeau de cow-boy à bord large | longs cheveux roux, gilet, foulard | revolver à droite, lasso à la hanche gauche |
 | **Bjorn**, viking | casque rond à cornes | grande barbe blonde tressée, col de fourrure | hache à deux mains à gauche |
 | **Sven**, pêcheur | chapeau de pluie à long bord | ciré jaune, barbe grise, pipe | canne à pêche avec un poisson au bout, à droite |
 | **Astra**, astronaute | casque-bulle à antenne | combinaison blanche à bandes orange, sac de survie | pistolet laser à droite |
@@ -156,7 +156,7 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Thorn**, druide | bois de cerf | mantelet de feuilles, barbiche, fleur | bâton noueux fleuri, à gauche |
 | **Gorm**, orc barbare | peau verte, chignon noir | défenses, oreilles pointues, sangle, pagne de fourrure | couperet géant crénelé, à droite |
 | **Zara**, danseuse | bandeau de pièces, queue de cheval au vent | voile, ventre nu, ceinture de pièces | cimeterre à droite, foulard à gauche |
-| **Kitsune**, renarde à neuf queues | oreilles de renard | queues en éventail (plus nombreuses au rang 3), kimono blanc et rouge | feux follets bleus qui flottent |
+| **Kitsune**, renarde à neuf queues | oreilles de renard | queues en éventail (une de plus à chaque rang), kimono blanc et rouge | feux follets bleus qui flottent |
 | **Sybil**, voyante | turban à joyau | cheveux noirs, anneaux d'or, châle étoilé | boule de cristal qui flotte, à droite |
 | **Grumli**, nain | casque rond à plaques d'oreilles | immense barbe à deux tresses et anneaux d'or, gros sourcils | marteau à tête d'enclume, à gauche |
 | **Spike**, homme cactus | sombrero à fleur rose | peau de cactus à épines, poncho rayé, bras de cactus | maraca à droite |
@@ -183,11 +183,14 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Red Riot** (clin d'œil MHA) | cheveux rouges en trois lames | sourire à dents pointues, cicatrice, torse nu | épaulières crantées, poings de pierre |
 | **Deku** (clin d'œil MHA) | cheveux verts en bataille, capuche à oreilles | taches de rousseur, combinaison verte, baskets rouges | gant blanc et éclairs verts |
 | **All Might** (clin d'œil MHA) | les deux grandes mèches blondes en V | ombre sur les yeux, grand sourire, carrure énorme | gros poing rouge en avant |
-| **Gon** (clin d'œil HxH) | cheveux noirs dressés en grandes pointes | veste verte, badge de l'examen ; mâchoire serrée (rang 4) ; Gon adulte aux cheveux jusqu'au sol (rang 5) | canne à pêche (rangs 1–2), poing de nen jaune (rang 3+) |
-| **Kirua** (clin d'œil HxH) | cheveux blancs en bataille (bleutés au rang 5) | yeux bleus, sourire de chat, t-shirt blanc sur manches violettes | skate (rangs 1–3), yo-yo (rang 2), main de tueur (rang 3+), foudre bleue (rang 4+) |
-| **Hisoka** (clin d'œil HxH) | cheveux rouges plaqués en flammes | larme et étoile maquillées, yeux dorés, pique et cœur sur le haut | cartes en éventail à droite, Bungee Gum rose (rang 3+) |
-| **Netero** (clin d'œil HxH) | crâne chauve, petit chignon | longs sourcils et barbe blancs, mains jointes, chapelet (rang 2) | mains dorées du Bodhisattva derrière lui (1 au rang 3, 4 au rang 4) |
-| **Meruem** (clin d'œil HxH) | tête casquée à crête, deux antennes | peau pâle, traits violets sur les joues, carapace, cape (rang 3), couronne (rang 4) | longue queue à dard, à gauche |
+| **Gon** (clin d'œil HxH) | cheveux noirs dressés en grandes pointes | veste verte, badge de l'examen | canne à pêche, puis poing de nen jaune |
+| **Kirua** (clin d'œil HxH) | cheveux blancs en bataille | yeux bleus, sourire de chat, t-shirt blanc sur manches violettes | skate, yo-yo, puis main de tueur et foudre bleue |
+| **Hisoka** (clin d'œil HxH) | cheveux rouges plaqués en flammes | larme et étoile maquillées, yeux dorés, pique et cœur sur le haut | cartes en éventail à droite |
+| **Netero** (clin d'œil HxH) | crâne chauve, petit chignon | longs sourcils et barbe blancs, mains jointes | mains dorées du Bodhisattva derrière lui |
+| **Meruem** (clin d'œil HxH) | tête casquée à crête, deux antennes | peau pâle, traits violets sur les joues, carapace | longue queue à dard, à gauche |
+
+Ce tableau donne l'allure de base de chaque héros ; ce que chaque rang lui ajoute est dans
+[la progression des rangs](#4-progression-des-rangs).
 
 Les héros clins d'œil (pop culture) suivent les règles de [`SKINS.md`](SKINS.md#2-pop-culture-et-clins-dœil--oui-à-fond) :
 un trait culte reconnaissable, redessiné en chibi, sans logo.
@@ -202,9 +205,9 @@ Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `j
    de jambes (`pants`) dans `CLASS`.
 3. **Une arme qui dépasse** d'un côté, différente de celles des autres.
 4. Partir de `body(s, {…})`, puis dessiner la coiffe, l'arme et 2 ou 3 détails propres au héros.
-5. Prévoir les **4 rangs** (cuir, fer, acier, or) ; le rang 5 Céleste est automatique (ailes et
-   auréole sur le rang 4). Un héros peut aussi dessiner son propre rang 5 sous les ailes (forme
-   culte d'un clin d'œil, ex. Gon adulte) : l'ajouter à `HAS_R5` dans `js/heroes.js`.
+5. Dessiner ses **5 rangs à lui** (voir la [progression des rangs](#4-progression-des-rangs)) :
+   une histoire en 5 étapes, avec un nom par rang dans `RANK_TITLES` (`js/data.js`), et au rang 5
+   un grand décor personnel avec `grand()`.
 6. Vérifier sur la planche (`node tools/sheet.mjs`) : lisible en petit, sans taches, sans trop de
    pixels vifs, et la silhouette tient seule.
 
@@ -323,8 +326,8 @@ boss : **Séisme** (le sol se fend sous les héros), **Souffle de feu** (flot de
 **Tenues** : chaque tenue a ses propres effets et sons (`SKIN_FX`, voir [`SKINS.md`](SKINS.md)),
 avec les mêmes cibles que le héros ; ses couleurs ne changent pas avec le rang.
 
-**Selon le rang** : les effets grandissent un peu à chaque rang ; au **rang 4** l'éclat devient
-doré, au **rang 5** l'effet est blanc et or.
+**Selon le rang** : les effets grandissent un peu à chaque rang, et gardent toujours les
+couleurs du héros (pas d'or ni de blanc commun aux hauts rangs).
 
 **Règles** : pixels entiers, animations par paliers (8 à 12 images), moins d'une demi-seconde
 pour une attaque, moins d'une seconde pour une compétence ; peu de pixels, beaucoup de lisibilité ;
@@ -335,15 +338,9 @@ toujours un peu de blanc à la tête de l'effet. **Nouveau héros** : une ligne 
 
 - Couleurs chaudes, saturées mais pas fluo, contour violet-noir `#1a1320`.
 - Palette commune : or **`#e0a93a` / `#fbe08a`**, gemme rouge **`#e2334a`**, cheveux **`#6b4428`**.
-- Métal selon le rang, chacun avec un pixel de reflet plus clair :
-
-  | Rang | Métal | Couleur | Reflet |
-  |---|---|---|---|
-  | 1 | cuir | `#8a6a4a` | `#a8865f` |
-  | 2 | fer | `#8e99a4` | `#b8c2cc` |
-  | 3 | acier | `#b9c6d2` | `#e4ecf3` |
-  | 4 | or | `#e0a93a` | `#fbe08a` |
-  | 5 | ivoire | `#f2ead6` | `#ffffff` |
+- Métaux courants (armes, armures), chacun avec un pixel de reflet plus clair : cuir `#8a6a4a`
+  / `#a8865f`, fer `#8e99a4` / `#b8c2cc`, acier `#b9c6d2` / `#e4ecf3`, or `#e0a93a` / `#fbe08a`.
+  Ils ne suivent **pas** le rang : chaque héros choisit les siens.
 
 - Les couleurs de chaque classe (`CLASS` dans `js/sprites.js`) :
 
@@ -357,26 +354,91 @@ toujours un peu de blanc à la tête de l'effet. **Nouveau héros** : une ligne 
 
   Les couleurs des nouveaux héros sont dans `NEW_CLASS` (`js/heroes.js`).
 
-  Au rang 4, toutes les broderies passent à l'or.
-
 ## 4. Progression des rangs
 
-- Chaque rang ajoute des éléments **visibles** :
+**Chaque héros évolue à sa façon.** Il n'y a aucun ajout commun à tous les héros : pas de métal
+du rang, pas d'épaulières, de diadème ni de cape dorée pour tout le monde, pas d'ailes et
+d'auréole communes au rang 5. Un rang est une **amélioration personnelle du dessin** : sa
+tenue, sa coiffe, son arme et ses accessoires évoluent selon son histoire à lui (le bûcheron
+finit sous une peau d'ours, la renarde gagne des queues, All Might passe de Toshinori au Golden
+Age), et chaque rang a son nom (`RANK_TITLES`, `js/data.js`), affiché sur sa fiche.
 
-  | Rang | Ajouts |
-  |---|---|
-  | 1 | tenue de base, équipement en cuir |
-  | 2 | casque / coiffe en fer |
-  | 3 | épaulettes en acier, arme plus grande |
-  | 4 | tout passe en or, cape, couronne, gemmes |
-  | 5 | **Céleste** : recolor du rang 4 (blanc ivoire et or), ailes, auréole, étincelles, grille 28×28 |
-
-- Les rangs supérieurs **recolorent le dernier dessin** avec une table de couleurs
-  (`js/sprites.js`) : **mythril** cyan, **obsidienne** noir et lave, **céleste** blanc
-  et or avec des ailes et une auréole, plus quelques pixels d'étincelles.
-  Mythril et obsidienne sont prêts pour de futurs rangs 6 et 7 et servent déjà aux
-  variantes de boss.
+- **Rangs 1 à 4** (24×24) : le héros reste reconnaissable du premier coup d'œil (même silhouette,
+  même couleur signature), et chaque rang ajoute 1 à 3 changements bien visibles, à lui.
+- **Rang 5** (28×28) : sa forme ultime, et derrière lui un **grand décor personnel** dessiné avec
+  `grand(s, (b) => …)` (`js/chibi.js`) : le dessin est décalé de 2 à droite et 4 vers le bas, et le
+  décor se dessine derrière lui avec `b.under(…)`, sans jamais recouvrir le héros.
+- Les effets de combat gardent les couleurs du héros à tous les rangs.
+- Les palettes **mythril** et **obsidienne** (`js/sprites.js`) servent aux variantes de boss.
 - Les variantes d'ennemis sont **le même dessin avec une autre palette**.
+
+| Héros | Rangs 1 → 5 | Décor du rang 5 |
+|---|---|---|
+| Kael | Recrue → Écuyer → Chevalier → Champion → Lame de feu | cape de flammes |
+| Lyra | Chasseuse → Éclaireuse → Rôdeuse → Gardienne des bois → Esprit de la forêt | bois de cerf de lumière |
+| Elio | Apprenti → Mage → Sorcier → Archimage → Maître des astres | lune et constellation |
+| Séra | Novice → Prêtresse → Sainte → Grande prêtresse → Ange gardien | ses ailes roses, cœur de lumière |
+| Volt | Initié → Ninja → Ombre néon → Maître cyber → Fantôme de données | deux doubles holographiques |
+| Brann | Écuyer → Garde → Chevalier → Bastion → Rempart éternel | mur crénelé, bannière |
+| Mira | Chanteuse des rues → Ménestrelle → Troubadour → Virtuose → Muse | grande lyre de lumière, notes |
+| Nina | Stagiaire → Infirmière → Urgentiste → Cheffe de service → Ange blanc | grande croix de lumière |
+| Pip | Pickpocket → Voleur → Monte-en-l'air → Maître voleur → Prince des voleurs | tas d'or, couronne volée |
+| Gus | Apprenti → Mineur → Foreur → Chef de mine → Roi des profondeurs | wagonnet de gemmes |
+| Lenny | Volontaire → Pompier → Sergent → Capitaine → Héros du feu | grande échelle, gerbe d'eau |
+| Vex | Rejeton → Vampire → Comte → Seigneur de la nuit → Roi vampire | ailes de chauve-souris, lune de sang |
+| Gideon | Novice → Croisé → Paladin → Templier → Saint guerrier | soleil rayonnant |
+| Aurélia | Bouclière → Valkyrie → Chevaucheuse → Reine valkyrie → Élue d'Asgard | grandes ailes blanches, aurore |
+| Nova | Justicière → Héroïne → Super-héroïne → Icône → Légende cosmique | ciel d'étoiles, étoile filante |
+| Rok | Apprenti → Bûcheron → Forestier → Géant des bois → Roi des forêts | grand sapin |
+| Tobo | Commis → Cuisinier → Chef → Grand chef → Chef étoilé | pièce montée |
+| Hugo | Amateur → Boxeur → Poids lourd → Champion → Légende du ring | cordes du ring, projecteur |
+| Kiki | Gamine du ranch → Cow-girl → Adjointe → Shérif → Légende de l'Ouest | soleil couchant, cactus |
+| Bjorn | Pillard → Viking → Berserker → Jarl → Héros du Valhalla | proue de drakkar |
+| Sven | Moussaillon → Pêcheur → Marin → Capitaine → Vieux loup de mer | baleine qui sort de la vague |
+| Astra | Cadette → Astronaute → Pilote → Commandante → Exploratrice des étoiles | planète à anneaux |
+| Nyx | Initiée → Nécromancienne → Invocatrice → Liche → Reine des morts | âmes qui flottent |
+| Ignis | Étincelle → Pyromancien → Mage de feu → Seigneur des flammes → Avatar du feu | cercle de flammes |
+| Drakon | Écuyer draconique → Chevalier dragon → Dompteur → Seigneur dragon → Dragon incarné | grand dragon vert |
+| Tess | Fille de ferme → Fermière → Éleveuse → Maîtresse du domaine → Déesse des moissons | champ de blé, tournesols |
+| Doc | Apothicaire → Médecin de peste → Alchimiste → Docteur noir → Fléau | corbeaux, miasme vert |
+| Ozzy | Garage band → Rockeur → Star du punk → Idole → Dieu du rock | mur d'amplis, éclairs |
+| Yuki | Flocon → Cryomancienne → Mage du givre → Impératrice glaciale → Reine des neiges | palais de glace |
+| Sylva | Novice sylvestre → Archère elfique → Sentinelle → Gardienne de la lune → Étoile des elfes | arbre blanc aux feuilles d'argent |
+| Thorn | Graine → Druide → Gardien des bois → Archidruide → Esprit de la nature | cercle de menhirs |
+| Gorm | Brute → Orc barbare → Chef de guerre → Seigneur orc → Fléau des terres | bannière de guerre, crânes |
+| Zara | Danseuse de rue → Danseuse → Étoile du bazar → Danseuse royale → Déesse de la danse | rubans de soie en tourbillon |
+| Kitsune | Renardeau → Kitsune → Renarde mystique → Renarde céleste → Kyūbi | torii, neuf queues |
+| Sybil | Diseuse → Voyante → Oracle → Prophétesse → Œil du destin | cercle de cartes de tarot |
+| Grumli | Apprenti forgeron → Nain → Gardien de la forge → Thane → Roi sous la montagne | forge qui rougeoie |
+| Spike | Bouture → Cactus → Mariachi épineux → Cactus en fleur → Roi du désert | immense fleur de cactus |
+| Bip | Prototype → Bip → Bip 2.0 → Méga Bip → Bip Ultime | le grand robot qu'il pilote |
+| Lulu | Mitronne → Boulangère → Pâtissière → Maîtresse boulangère → Fée des gâteaux | four à pain |
+| DJ Max | Ambianceur → DJ → DJ résident → Star des platines → Légende de la nuit | boule à facettes, lasers |
+| Pablo | Coursier → Facteur → Postier en chef → Messager royal → Messager des vents | boîte aux lettres, lettres qui volent |
+| Bob | Mort-vivant → Bob → Zombie costaud → Zombie chic → Roi des zombies | tombes, mains qui sortent de terre |
+| Zip | Débutant → Skateur → Pro du skate → Champion du park → Roi de la rampe | rampe à graffitis |
+| Rexy | Bébé dino → Rexy → Petit T-rex → Dino-tyran → Roi des dinos | volcan |
+| Léo | Lionceau → Homme-lion → Guerrier lion → Roi lion → Lion solaire | tête de lion dorée |
+| Tonnerre | Acolyte → Capitaine Tonnerre → Super-héros → Héros de la ville → Dieu de la foudre | nuage d'orage |
+| Ramsès | Momie → Pharaon → Pharaon d'or → Dieu-roi → Fils du soleil | pyramide, disque solaire |
+| Elixa | Préparatrice → Alchimiste → Maîtresse des potions → Grande alchimiste → Pierre philosophale | cercle de transmutation |
+| Mako | Bébé requin → Homme-requin → Requin-tigre → Grand requin blanc → Mégalodon | gueule de mégalodon |
+| Pixel | Codeuse → Hackeuse → Pirate du net → Cyber-reine → Fantôme du réseau | pluie de code |
+| Lumi | Padawan → Chevalière → Gardienne → Maîtresse → Légende de la Force | aura de la Force, rochers qui flottent |
+| Kero | Têtard → Kero → Ninja des marais → Maître ninja → Grenouille légendaire | crapaud géant invoqué |
+| Atlas | Drone → Méca-gardien → Sentinelle → Colosse → Titan | dôme de boucliers hexagonaux |
+| Pyra | Étincelle → Phénix → Oiseau de feu → Phénix royal → Phénix éternel | immense oiseau de feu |
+| Mortis | Squelette → Liche → Roi-liche → Seigneur de l'hiver → Roi de l'hiver éternel | trône de glace |
+| Shoto | Élève de Yuei → Costume de héros → Glace et feu → Flamme ardente → Héros Shoto | mur de glace et flammes |
+| Bakugo | Élève de Yuei → Costume de héros → Grenadier → AP Shot → Howitzer Impact | énorme explosion |
+| Red Riot | Élève de Yuei → Costume de héros → Durcissement → Unbreakable → Roc indestructible | mur de roches |
+| Deku | Élève de Yuei → Costume de héros → Full Cowl → Costume bêta → One For All 100 % | orage d'éclairs verts |
+| All Might | Toshinori → Young Age → Bronze Age → Silver Age → Golden Age | onde de choc du smash |
+| Gon | Examen Hunter → Tour céleste → Greed Island → Fourmis-chimères → Gon adulte | aura de nen en flammes |
+| Kirua | Examen Hunter → Yo-yo → Assassin → Kanmuru → Godspeed | orage d'éclairs bleus |
+| Hisoka | Joueur → Magicien → Bungee Gum → Joker → Magicien suprême | toile de Bungee Gum, cartes |
+| Netero | Moine → Maître → Président → Cent mains → Hyakushiki Kannon | auréole et cent mains dorées |
+| Meruem | Nouveau-né → Roi qui grandit → Roi des fourmis → Roi couronné → Roi éveillé | ailes sombres, aura violette |
 
 ## 5. Animation
 

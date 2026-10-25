@@ -1856,10 +1856,8 @@ export const ENEMY_FX = {
   dragon: { cols: ['#ff6a1f', '#fbe08a'], attack: 'claw', skill: 'fire', sound: 'hit' },
 };
 
-// Au rang 4 les effets se dorent, au rang 5 (Céleste) ils deviennent blanc et or.
+// Chaque héros garde ses couleurs à tous les rangs (seule la taille des effets grandit).
 export function fxColors(prof, rank) {
-  if (rank >= 5) return ['#fbe08a', '#ffffff'];
-  if (rank === 4) return [prof.cols[0], '#fbe08a'];
   return prof.cols;
 }
 

@@ -1,7 +1,7 @@
 // Interface du jeu (écran horizontal).
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
-import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
+import { HEROES, HERO_IDS, RARITY, rankTitle, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, MAX_RANK, LEVEL, xpFor, heroStats, stage, TOWER_KEYS, TOWER_ROOMS, TOWER_DIFF, towerReward, towerStage, endlessWave } from './data.js';
 import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave, hasBackup, backupSave, restoreBackup } from './state.js';
@@ -700,7 +700,7 @@ function openAdmin() {
       state.keys = TOWER_KEYS;
     }) },
     { ico: 'team', mg: '#5ae0ee', label: 'Rang des héros', sub: 'tous au même rang', showSub: true, go: () => openBoard('Rang de tous', [
-      ...[1, 2, 3, 4, 5].map((r) => ({ ico: 'speed', mg: '#c08aff', label: `Rang ${r}`, sub: RANK_NAMES[r - 1] || '', showSub: true, go: cheat(() => allRank(r)) })),
+      ...[1, 2, 3, 4, 5].map((r) => ({ ico: 'speed', mg: '#c08aff', label: `Rang ${r}`, sub: 'pour tous les héros', showSub: true, go: cheat(() => allRank(r)) })),
       { ico: 'back', mg: '#d8c8b0', label: 'Retour', go: openAdmin },
     ], 3) },
     { ico: 'chest', mg: '#ffd86a', label: '+100 000 or', sub: `${state.gold} or`, showSub: true, go: cheat(() => { state.gold += 100000; }) },
@@ -942,7 +942,7 @@ function renderDetail(id) {
   l1.appendChild(starsRow(h.rarity));
   box.appendChild(l1);
   if (own) {
-    const l2 = el('div', 'd-line', `Rang ${rank} · ${RANK_NAMES[rank - 1]}`);
+    const l2 = el('div', 'd-line', `Rang ${rank} · ${rankTitle(id, rank)}`);
     l2.appendChild(rankGems(rank));
     box.appendChild(l2);
     // niveau et XP (le rang fixe le niveau maximum)

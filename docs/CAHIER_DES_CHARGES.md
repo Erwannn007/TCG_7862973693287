@@ -113,14 +113,18 @@ en tête des nouveaux héros dans `js/data.js`.
 - Statistiques : PV, ATQ, DÉF, VIT.
 - Chaque compétence a un temps de recharge (en tours).
 - **Rangs 1 → 5** : chaque rang multiplie les stats (×1 / ×1,2 / ×1,45 / ×1,75 / ×2,2)
-  et change visiblement le sprite.
+  et **fait évoluer le héros à sa façon** : chaque héros a ses 5 rangs à lui, avec un nom propre
+  (Recrue → Lame de feu pour Kael, Renardeau → Kyūbi pour Kitsune, Toshinori → Golden Age pour
+  All Might…) et un dessin qui raconte son histoire. Aucun ajout commun à tous (plus de métal du
+  rang, d'épaulières, de couronne ni d'ailes pour tout le monde) ; au rang 5, chacun a un grand
+  décor à lui derrière lui. Détail : [direction artistique](DIRECTION_ARTISTIQUE.md#4-progression-des-rangs).
 - **Niveaux (XP)** : chaque combat donne de l'XP à tous les héros de l'équipe (30 + 6 × niveau
   du combat ; 40 % en cas de défaite). Chaque niveau ajoute **+2,5 %** aux stats. Le rang fixe le
   **niveau maximum : 10 × rang** (10, 20, 30, 40, 50). Passer du niveau L au suivant coûte
   20 + 10 × L XP.
 - **Rang max actuel : 5. Trois rangs de plus sont prévus (jusqu'au rang 8)** : niveau max 80,
-  rangs 6 et 7 en mythril et obsidienne (palettes déjà prêtes), rang 8 à définir. Tout est
-  paramétré par `MAX_RANK`, `RANK_MULT`, `RANK_NAMES`, `UPGRADE` (`js/data.js`).
+  à dessiner pour chaque héros, toujours à sa façon. Tout est paramétré par `MAX_RANK`,
+  `RANK_MULT`, `RANK_TITLES` (noms des rangs de chaque héros), `UPGRADE` (`js/data.js`).
 - Monter de rang demande d'être au **niveau maximum du rang**, plus des **éclats** (doublons à
   l'invocation, ou salle des éclats de la tour) et de l'or :
 

@@ -93,6 +93,14 @@ export function tiara(s, y, x0 = 8, x1 = 15) {
   s.p(11, y - 2, C.goldHi, true);
 }
 
+// Rang 5 : la grille passe à 28×28 (le héros est décalé de 2 à droite et 4 vers le bas) ; back
+// dessine derrière lui (s.under) et autour de lui son grand décor personnel, en coordonnées 28×28.
+export function grand(s, back) {
+  const b = s.grow(28, 28, 2, 4);
+  back(b);
+  return b;
+}
+
 // Bottes selon le rang : cuir puis métal.
 export const boots = (m) => ({ boots: m.c, bootsHi: m.hi, sole: '#3a2a22' });
 

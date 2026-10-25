@@ -285,7 +285,75 @@ export const HEROES = {
 export const HERO_IDS = Object.keys(HEROES);
 
 export const RANK_MULT = [1, 1.2, 1.45, 1.75, 2.2];
-export const RANK_NAMES = ['Cuir', 'Fer', 'Acier', 'Or', 'Céleste'];
+// Le nom de chaque rang, propre à chaque héros (ses 5 étapes ; voir js/heroes.js et js/sprites.js).
+export const RANK_TITLES = {
+  kael: ['Recrue', 'Écuyer', 'Chevalier', 'Champion', 'Lame de feu'],
+  lyra: ['Chasseuse', 'Éclaireuse', 'Rôdeuse', 'Gardienne des bois', 'Esprit de la forêt'],
+  elio: ['Apprenti', 'Mage', 'Sorcier', 'Archimage', 'Maître des astres'],
+  sera: ['Novice', 'Prêtresse', 'Sainte', 'Grande prêtresse', 'Ange gardien'],
+  volt: ['Initié', 'Ninja', 'Ombre néon', 'Maître cyber', 'Fantôme de données'],
+  brann: ['Écuyer', 'Garde', 'Chevalier', 'Bastion', 'Rempart éternel'],
+  mira: ['Chanteuse des rues', 'Ménestrelle', 'Troubadour', 'Virtuose', 'Muse'],
+  nina: ['Stagiaire', 'Infirmière', 'Urgentiste', 'Cheffe de service', 'Ange blanc'],
+  pip: ['Pickpocket', 'Voleur', "Monte-en-l'air", 'Maître voleur', 'Prince des voleurs'],
+  gus: ['Apprenti', 'Mineur', 'Foreur', 'Chef de mine', 'Roi des profondeurs'],
+  lenny: ['Volontaire', 'Pompier', 'Sergent', 'Capitaine', 'Héros du feu'],
+  vex: ['Rejeton', 'Vampire', 'Comte', 'Seigneur de la nuit', 'Roi vampire'],
+  gideon: ['Novice', 'Croisé', 'Paladin', 'Templier', 'Saint guerrier'],
+  aurelia: ['Bouclière', 'Valkyrie', 'Chevaucheuse', 'Reine valkyrie', "Élue d'Asgard"],
+  nova: ['Justicière', 'Héroïne', 'Super-héroïne', 'Icône', 'Légende cosmique'],
+  rok: ['Apprenti', 'Bûcheron', 'Forestier', 'Géant des bois', 'Roi des forêts'],
+  tobo: ['Commis', 'Cuisinier', 'Chef', 'Grand chef', 'Chef étoilé'],
+  hugo: ['Amateur', 'Boxeur', 'Poids lourd', 'Champion', 'Légende du ring'],
+  kiki: ['Gamine du ranch', 'Cow-girl', 'Adjointe', 'Shérif', "Légende de l'Ouest"],
+  bjorn: ['Pillard', 'Viking', 'Berserker', 'Jarl', 'Héros du Valhalla'],
+  sven: ['Moussaillon', 'Pêcheur', 'Marin', 'Capitaine', 'Vieux loup de mer'],
+  astra: ['Cadette', 'Astronaute', 'Pilote', 'Commandante', 'Exploratrice des étoiles'],
+  nyx: ['Initiée', 'Nécromancienne', 'Invocatrice', 'Liche', 'Reine des morts'],
+  ignis: ['Étincelle', 'Pyromancien', 'Mage de feu', 'Seigneur des flammes', 'Avatar du feu'],
+  drakon: ['Écuyer draconique', 'Chevalier dragon', 'Dompteur', 'Seigneur dragon', 'Dragon incarné'],
+  tess: ['Fille de ferme', 'Fermière', 'Éleveuse', 'Maîtresse du domaine', 'Déesse des moissons'],
+  doc: ['Apothicaire', 'Médecin de peste', 'Alchimiste', 'Docteur noir', 'Fléau'],
+  ozzy: ['Garage band', 'Rockeur', 'Star du punk', 'Idole', 'Dieu du rock'],
+  yuki: ['Flocon', 'Cryomancienne', 'Mage du givre', 'Impératrice glaciale', 'Reine des neiges'],
+  sylva: ['Novice sylvestre', 'Archère elfique', 'Sentinelle', 'Gardienne de la lune', 'Étoile des elfes'],
+  thorn: ['Graine', 'Druide', 'Gardien des bois', 'Archidruide', 'Esprit de la nature'],
+  gorm: ['Brute', 'Orc barbare', 'Chef de guerre', 'Seigneur orc', 'Fléau des terres'],
+  zara: ['Danseuse de rue', 'Danseuse', 'Étoile du bazar', 'Danseuse royale', 'Déesse de la danse'],
+  kitsune: ['Renardeau', 'Kitsune', 'Renarde mystique', 'Renarde céleste', 'Kyūbi'],
+  sybil: ['Diseuse', 'Voyante', 'Oracle', 'Prophétesse', 'Œil du destin'],
+  grumli: ['Apprenti forgeron', 'Nain', 'Gardien de la forge', 'Thane', 'Roi sous la montagne'],
+  spike: ['Bouture', 'Cactus', 'Mariachi épineux', 'Cactus en fleur', 'Roi du désert'],
+  bip: ['Prototype', 'Bip', 'Bip 2.0', 'Méga Bip', 'Bip Ultime'],
+  lulu: ['Mitronne', 'Boulangère', 'Pâtissière', 'Maîtresse boulangère', 'Fée des gâteaux'],
+  djmax: ['Ambianceur', 'DJ', 'DJ résident', 'Star des platines', 'Légende de la nuit'],
+  pablo: ['Coursier', 'Facteur', 'Postier en chef', 'Messager royal', 'Messager des vents'],
+  bob: ['Mort-vivant', 'Bob', 'Zombie costaud', 'Zombie chic', 'Roi des zombies'],
+  zip: ['Débutant', 'Skateur', 'Pro du skate', 'Champion du park', 'Roi de la rampe'],
+  rexy: ['Bébé dino', 'Rexy', 'Petit T-rex', 'Dino-tyran', 'Roi des dinos'],
+  leo: ['Lionceau', 'Homme-lion', 'Guerrier lion', 'Roi lion', 'Lion solaire'],
+  tonnerre: ['Acolyte', 'Capitaine Tonnerre', 'Super-héros', 'Héros de la ville', 'Dieu de la foudre'],
+  ramses: ['Momie', 'Pharaon', "Pharaon d'or", 'Dieu-roi', 'Fils du soleil'],
+  elixa: ['Préparatrice', 'Alchimiste', 'Maîtresse des potions', 'Grande alchimiste', 'Pierre philosophale'],
+  mako: ['Bébé requin', 'Homme-requin', 'Requin-tigre', 'Grand requin blanc', 'Mégalodon'],
+  pixel: ['Codeuse', 'Hackeuse', 'Pirate du net', 'Cyber-reine', 'Fantôme du réseau'],
+  lumi: ['Padawan', 'Chevalière', 'Gardienne', 'Maîtresse', 'Légende de la Force'],
+  kero: ['Têtard', 'Kero', 'Ninja des marais', 'Maître ninja', 'Grenouille légendaire'],
+  atlas: ['Drone', 'Méca-gardien', 'Sentinelle', 'Colosse', 'Titan'],
+  pyra: ['Étincelle', 'Phénix', 'Oiseau de feu', 'Phénix royal', 'Phénix éternel'],
+  mortis: ['Squelette', 'Liche', 'Roi-liche', "Seigneur de l'hiver", "Roi de l'hiver éternel"],
+  shoto: ['Élève de Yuei', 'Costume de héros', 'Glace et feu', 'Flamme ardente', 'Héros Shoto'],
+  bakugo: ['Élève de Yuei', 'Costume de héros', 'Grenadier', 'AP Shot', 'Howitzer Impact'],
+  redriot: ['Élève de Yuei', 'Costume de héros', 'Durcissement', 'Unbreakable', 'Roc indestructible'],
+  deku: ['Élève de Yuei', 'Costume de héros', 'Full Cowl', 'Costume bêta', 'One For All 100 %'],
+  allmight: ['Toshinori', 'Young Age', 'Bronze Age', 'Silver Age', 'Golden Age'],
+  gon: ['Examen Hunter', 'Tour céleste', 'Greed Island', 'Fourmis-chimères', 'Gon adulte'],
+  kirua: ['Examen Hunter', 'Yo-yo', 'Assassin', 'Kanmuru', 'Godspeed'],
+  hisoka: ['Joueur', 'Magicien', 'Bungee Gum', 'Joker', 'Magicien suprême'],
+  netero: ['Moine', 'Maître', 'Président', 'Cent mains', 'Hyakushiki Kannon'],
+  meruem: ['Nouveau-né', 'Roi qui grandit', 'Roi des fourmis', 'Roi couronné', 'Roi éveillé'],
+};
+export const rankTitle = (id, rank) => RANK_TITLES[id]?.[rank - 1] || `Rang ${rank}`;
 // Coût pour passer du rang r au rang r+1 (index r-1).
 export const UPGRADE = [
   { frags: 1, gold: 100 },
@@ -295,7 +363,7 @@ export const UPGRADE = [
 ];
 
 // Rang maximal actuel ; trois rangs de plus sont prévus (jusqu'à 8 : mythril, obsidienne…).
-// Pour les ajouter : RANK_MULT, RANK_NAMES, UPGRADE et les dessins des rangs (js/sprites.js).
+// Pour les ajouter : RANK_MULT, RANK_TITLES, UPGRADE et les dessins des rangs (js/heroes.js).
 export const MAX_RANK = 5;
 
 // Niveaux (XP) : on progresse en jouant. Le rang fixe le niveau maximum (10 par rang) ;
