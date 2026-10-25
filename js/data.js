@@ -259,6 +259,28 @@ export const HEROES = {
     name: 'All Might', cls: 'Symbole de la paix', rarity: 'L', hp: 150, atk: 33, def: 12, spd: 12,
     skill: { name: 'United States of Smash', desc: '140 % sur tous les ennemis, les étourdit 1 tour.', cd: 4, kind: 'all', mult: 1.4, stun: 1, ico: 'plusultra' },
   },
+
+  // ---- clins d'œil : Hunter × Hunter
+  gon: {
+    name: 'Gon', cls: 'Renforcement', rarity: 'R', hp: 120, atk: 28, def: 9, spd: 14,
+    skill: { name: 'Jajanken : Pierre !', desc: '230 % sur une cible, l’étourdit 1 tour.', cd: 3, kind: 'single', mult: 2.3, stun: 1, ico: 'jajanken' },
+  },
+  kirua: {
+    name: 'Kirua', cls: 'Assassin', rarity: 'R', hp: 95, atk: 27, def: 6, spd: 19,
+    skill: { name: 'Godspeed', desc: '3 éclairs de 70 % sur des ennemis au hasard, chacun étourdit 1 tour.', cd: 4, kind: 'multi', mult: 0.7, hits: 3, stun: 1, ico: 'godspeed' },
+  },
+  hisoka: {
+    name: 'Hisoka', cls: 'Magicien', rarity: 'R', hp: 105, atk: 28, def: 7, spd: 15,
+    skill: { name: 'Bungee Gum', desc: '200 % sur une cible, son ATQ −30 % 2 tours.', cd: 3, kind: 'single', mult: 2, weaken: { atk: 0.3, turns: 2 }, ico: 'bungee' },
+  },
+  netero: {
+    name: 'Netero', cls: 'Président', rarity: 'L', hp: 125, atk: 31, def: 10, spd: 15,
+    skill: { name: 'Hyakushiki Kannon', desc: '6 coups de 55 % sur des ennemis au hasard.', cd: 3, kind: 'multi', mult: 0.55, hits: 6, ico: 'kannon' },
+  },
+  meruem: {
+    name: 'Meruem', cls: 'Roi des fourmis', rarity: 'L', hp: 145, atk: 34, def: 11, spd: 15,
+    skill: { name: 'Colère du roi', desc: '130 % sur tous, ignore la DÉF, rend 25 % des dégâts en PV.', cd: 4, kind: 'all', mult: 1.3, pierce: true, drain: 0.25, ico: 'antking' },
+  },
 };
 export const HERO_IDS = Object.keys(HEROES);
 

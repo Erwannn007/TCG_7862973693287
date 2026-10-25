@@ -94,9 +94,14 @@ mode infini rapporte de l'or et de l'XP.
 | Red Riot | Durcissement (MHA) | Rare | tank | **Roc indestructible** : provocation 2 tours + bouclier sur lui (150 % ATQ) |
 | Deku | One For All (MHA) | Légendaire | burst | **Detroit Smash** : 250 %, double sous 50 % de PV |
 | All Might | Symbole de la paix (MHA) | Légendaire | zone + contrôle | **United States of Smash** : 140 % sur tous + étourdit 1 tour |
+| Gon | Renforcement (HxH) | Rare | burst + contrôle | **Jajanken : Pierre !** : 230 % + étourdit 1 tour |
+| Kirua | Assassin (HxH) | Rare | multi + contrôle | **Godspeed** : 3 éclairs de 70 % au hasard, chacun étourdit 1 tour |
+| Hisoka | Magicien (HxH) | Rare | burst + affaiblissement | **Bungee Gum** : 200 %, ATQ de la cible −30 % 2 tours |
+| Netero | Président (HxH) | Légendaire | multi | **Hyakushiki Kannon** : 6 coups de 55 % au hasard |
+| Meruem | Roi des fourmis (HxH) | Légendaire | zone + vol de vie | **Colère du roi** : 130 % sur tous, ignore la DÉF, rend 25 % en PV |
 
 **55 héros** : les 5 premiers + 50 nouveaux (25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
-Plus 5 clins d'œil à My Hero Academia (3 Rares, 2 Légendaires) : **60 héros** en tout.
+Plus 5 clins d'œil à My Hero Academia et 5 à Hunter × Hunter (3 Rares, 2 Légendaires chacun) : **65 héros** en tout.
 
 **Statuts de combat** (comptés en tours de celui qui les porte, ils s'usent à la fin de son tour) :
 poison, brûlure, saignement (dégâts au début de son tour, sans tenir compte de la DÉF ; un même

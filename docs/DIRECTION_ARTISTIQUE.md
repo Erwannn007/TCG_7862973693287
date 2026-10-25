@@ -183,6 +183,11 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Red Riot** (clin d'œil MHA) | cheveux rouges en trois lames | sourire à dents pointues, cicatrice, torse nu | épaulières crantées, poings de pierre |
 | **Deku** (clin d'œil MHA) | cheveux verts en bataille, capuche à oreilles | taches de rousseur, combinaison verte, baskets rouges | gant blanc et éclairs verts |
 | **All Might** (clin d'œil MHA) | les deux grandes mèches blondes en V | ombre sur les yeux, grand sourire, carrure énorme | gros poing rouge en avant |
+| **Gon** (clin d'œil HxH) | cheveux noirs dressés en grandes pointes | veste verte, badge de l'examen ; mâchoire serrée (rang 4) ; Gon adulte aux cheveux jusqu'au sol (rang 5) | canne à pêche (rangs 1–2), poing de nen jaune (rang 3+) |
+| **Kirua** (clin d'œil HxH) | cheveux blancs en bataille (bleutés au rang 5) | yeux bleus, sourire de chat, t-shirt blanc sur manches violettes | skate (rangs 1–3), yo-yo (rang 2), main de tueur (rang 3+), foudre bleue (rang 4+) |
+| **Hisoka** (clin d'œil HxH) | cheveux rouges plaqués en flammes | larme et étoile maquillées, yeux dorés, pique et cœur sur le haut | cartes en éventail à droite, Bungee Gum rose (rang 3+) |
+| **Netero** (clin d'œil HxH) | crâne chauve, petit chignon | longs sourcils et barbe blancs, mains jointes, chapelet (rang 2) | mains dorées du Bodhisattva derrière lui (1 au rang 3, 4 au rang 4) |
+| **Meruem** (clin d'œil HxH) | tête casquée à crête, deux antennes | peau pâle, traits violets sur les joues, carapace, cape (rang 3), couronne (rang 4) | longue queue à dard, à gauche |
 
 Les héros clins d'œil (pop culture) suivent les règles de [`SKINS.md`](SKINS.md#2-pop-culture-et-clins-dœil--oui-à-fond) :
 un trait culte reconnaissable, redessiné en chibi, sans logo.
@@ -197,7 +202,9 @@ Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `j
    de jambes (`pants`) dans `CLASS`.
 3. **Une arme qui dépasse** d'un côté, différente de celles des autres.
 4. Partir de `body(s, {…})`, puis dessiner la coiffe, l'arme et 2 ou 3 détails propres au héros.
-5. Prévoir les **4 rangs** (cuir, fer, acier, or) ; le rang 5 Céleste est automatique.
+5. Prévoir les **4 rangs** (cuir, fer, acier, or) ; le rang 5 Céleste est automatique (ailes et
+   auréole sur le rang 4). Un héros peut aussi dessiner son propre rang 5 sous les ailes (forme
+   culte d'un clin d'œil, ex. Gon adulte) : l'ajouter à `HAS_R5` dans `js/heroes.js`.
 6. Vérifier sur la planche (`node tools/sheet.mjs`) : lisible en petit, sans taches, sans trop de
    pixels vifs, et la silhouette tient seule.
 
@@ -302,6 +309,11 @@ arrivant) et ses sons.
 | Red Riot | poing durci, éclats de roche | **Roc indestructible** : sa peau devient de pierre, anneaux rouges | rouge et pierre |
 | Deku | coup de poing, éclairs verts | **Detroit Smash** : éclairs, puis un souffle qui traverse l'écran | vert |
 | All Might | coup de poing, l'air vibre | **United States of Smash** : poing géant, souffle sur tous les ennemis | or et bleu |
+| Gon | coup de poing, nen jaune | **Jajanken** : l'aura gonfle autour du poing, puis énorme impact et cailloux | jaune |
+| Kirua | yo-yo au bout de son fil | **Godspeed** : un éclair bleu tombe sur chaque cible | bleu électrique |
+| Hisoka | carte qui tourne en volant | **Bungee Gum** : fil rose qui colle, s'étire et claque, petits cœurs | rose |
+| Netero | une main dorée part, paume en avant | **Hyakushiki Kannon** : une main géante dorée s'abat sur chaque cible | or |
+| Meruem | coup de queue à dard | **Colère du roi** : l'aura violette monte autour de lui, puis balaie tous les ennemis | violet |
 | (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 

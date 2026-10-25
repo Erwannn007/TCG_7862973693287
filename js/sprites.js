@@ -1,7 +1,7 @@
 // Tous les dessins du jeu. Règles : docs/DIRECTION_ARTISTIQUE.md
 import { Spr } from './spr.js';
 import { C, METALS, BLUSH, body, pauldrons, tiara, boots, shade2 } from './chibi.js';
-import { NEW_CLASS, NEW_DRAW } from './heroes.js';
+import { NEW_CLASS, NEW_DRAW, HAS_R5 } from './heroes.js';
 
 export { C, METALS };
 
@@ -239,7 +239,7 @@ const DRAW = { kael, lyra, elio, sera, volt, ...NEW_DRAW };
 const ALL_CLASS = { ...CLASS, ...NEW_CLASS };
 
 export function heroSprite(id, rank) {
-  if (rank >= 5) return celestial(DRAW[id](4), ALL_CLASS[id]);
+  if (rank >= 5) return celestial(DRAW[id](HAS_R5.has(id) ? 5 : 4), ALL_CLASS[id]);
   return DRAW[id](rank);
 }
 

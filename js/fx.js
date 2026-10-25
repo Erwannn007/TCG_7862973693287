@@ -477,6 +477,19 @@ function star(g, x, y, q, cols, r = 8) {
   }
   px(g, x - 1, y - 1, '#ffffff', 3);
 }
+// Main dorée ouverte (Netero) : paume, trois doigts vers le haut, taille k (1 ou 2).
+function goldHand(g, x, y, dir, k) {
+  x = Math.round(x); y = Math.round(y);
+  g.fillStyle = OUTLINE;
+  g.fillRect(x - 3 * k - 1, y - 2 * k - 1, 6 * k + 2, 6 * k + 2);
+  g.fillRect(x - 3 * k - 1, y - 6 * k - 1, 6 * k + 2, 4 * k + 1);
+  g.fillStyle = '#e8b84a';
+  g.fillRect(x - 3 * k, y - 2 * k, 6 * k, 6 * k);
+  for (const f of [0, 2, 4]) g.fillRect(x - 3 * k + f * k, y - (f === 2 ? 6 : 5) * k, k, (f === 2 ? 4 : 3) * k);
+  g.fillStyle = '#fbe08a';
+  g.fillRect(x - 3 * k, y - 2 * k, k, 2 * k);
+  g.fillRect(x - k, y - 6 * k, k, k);
+}
 // Gouttes qui tombent d'un point (sang, eau, poison).
 function drops(g, x, y, q, col, n = 5) {
   for (let i = 0; i < n; i++) {
@@ -1626,6 +1639,121 @@ Object.assign(FX, {
       for (let j = -4; j <= 4; j++) for (let i = 0; i < k * 150; i += 4) px(g, e.x + 30 * e.dir + i * e.dir, e.y + j * 5, j % 2 ? e.cols[1] : '#ffffff');
     }
   },
+  // --- Gon : coup de poing, le nen jaune jaillit
+  nenPunch(g, q, e) {
+    star(g, e.tx, e.ty, q, ['#f8d850', '#ffffff'], 7 + e.rank);
+    if (q > 0.3) burst(g, e.tx, e.ty, (q - 0.3) / 0.7, ['#f8d850', e.cols[0]], 8);
+  },
+  // Jajanken : le poing gonfle de nen (aura jaune), puis « Pierre ! » : énorme impact, cailloux
+  jajanken(g, q, e) {
+    if (q < 0.4) {
+      const r = 4 + q * 20;
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - q * 6;
+        px(g, e.tx - 10 * e.dir + Math.cos(a) * r * 0.5, e.ty + Math.sin(a) * r * 0.5, i % 2 ? '#f8d850' : '#ffffff', 2);
+      }
+    } else {
+      const k = (q - 0.4) / 0.6;
+      star(g, e.tx, e.ty, k, ['#f8d850', '#ffffff'], 18);
+      ring(g, e.tx, e.ty, k, '#f8d850', 22);
+      ring(g, e.tx, e.ty, Math.max(0, k - 0.2), '#ffffff', 14);
+      cubes(g, e.tx, e.ty, k, ['#a8a0a8', '#d8d0d8'], 6);
+    }
+  },
+  // --- Kirua : le yo-yo part au bout de son fil et revient
+  yoyo(g, q, e) {
+    const k = q < 0.5 ? q * 2 : 2 - q * 2, x0 = e.x + 8 * e.dir, y0 = e.y + 2;
+    const x = lerp(x0, e.tx, k), y = lerp(y0, e.ty, k);
+    for (let i = 0; i <= 8; i++) px(g, lerp(x0, x, i / 8), lerp(y0, y, i / 8), '#e8e0d0');
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    px(g, x - 2, y - 2, '#b9c6d2', 5);
+    px(g, x - 1 + (q * 8 % 2 | 0), y - 1, '#ffffff', 2);
+    if (q > 0.4 && q < 0.7) burst(g, e.tx, e.ty, (q - 0.4) / 0.3, e.cols, 6);
+  },
+  // Godspeed : un éclair bleu tombe sur la cible, en zigzag, puis crépite
+  godspeed(g, q, e) {
+    if (q < 0.5) {
+      let x = e.tx - 4, y = -4;
+      while (y < e.ty) {
+        const nx = e.tx + ((Math.round(y / 6 + q * 12) % 3) - 1) * 5, ny = y + 6;
+        for (let k = 0; k <= 4; k++) px(g, lerp(x, nx, k / 4), lerp(y, ny, k / 4), k % 2 ? '#6ac8ff' : '#ffffff', 2);
+        x = nx; y = ny;
+      }
+    } else {
+      const k = (q - 0.5) / 0.5;
+      ring(g, e.tx, e.ty, k, '#6ac8ff', 16);
+      for (let i = 0; i < 6; i++) {
+        const a = i * 1.05 + k * 3, r = 6 + k * 8;
+        px(g, e.tx + Math.cos(a) * r, e.ty + Math.sin(a) * r * 0.7, i % 2 ? '#6ac8ff' : '#ffffff', 2);
+      }
+    }
+  },
+  // --- Hisoka : une carte lancée qui tourne sur elle-même
+  cardThrow(g, q, e) {
+    if (q > 0.8) return burst(g, e.tx, e.ty, (q - 0.8) / 0.2, ['#e2334a', '#ffffff'], 6);
+    const x = lerp(e.x + 8 * e.dir, e.tx, q / 0.8), y = lerp(e.y - 4, e.ty, q / 0.8), flat = Math.round(q * 10) % 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - (flat ? 3 : 2), Math.round(y) - (flat ? 2 : 3), flat ? 7 : 5, flat ? 5 : 7);
+    g.fillStyle = '#f8f4f8';
+    g.fillRect(Math.round(x) - (flat ? 2 : 1), Math.round(y) - (flat ? 1 : 2), flat ? 5 : 3, flat ? 3 : 5);
+    px(g, x, y, '#e2334a');
+  },
+  // Bungee Gum : un fil de nen rose colle à la cible, s'étire, puis claque d'un coup
+  bungee(g, q, e) {
+    const x0 = e.x + 6 * e.dir, y0 = e.y;
+    if (q < 0.55) {
+      const k = Math.min(1, q / 0.35), sag = Math.sin(q * 18) * 3;
+      for (let i = 0; i <= 20 * k; i++) {
+        const t = i / 20;
+        px(g, lerp(x0, e.tx, t), lerp(y0, e.ty, t) + Math.sin(t * Math.PI) * sag, i % 3 ? '#ff7ac8' : '#ffc8e8', 2);
+      }
+      if (k >= 1) heart(g, e.tx, e.ty - 2, '#ff7ac8');
+    } else {
+      const k = (q - 0.55) / 0.45;
+      star(g, e.tx, e.ty, k, ['#ff7ac8', '#ffc8e8'], 12);
+      for (let i = 0; i < 4; i++) heart(g, e.tx + Math.cos(i * 1.6) * (6 + k * 10), e.ty - 4 + Math.sin(i * 1.6) * (4 + k * 6), i % 2 ? '#ff7ac8' : '#e2334a');
+    }
+  },
+  // --- Netero : une main dorée frappe, paume en avant
+  palm(g, q, e) {
+    const x = lerp(e.x + 8 * e.dir, e.tx - 4 * e.dir, Math.min(1, q * 2)), y = e.ty;
+    if (q < 0.6) goldHand(g, x, y, e.dir, 1);
+    if (q > 0.45) star(g, e.tx, e.ty, (q - 0.45) / 0.55, ['#e8b84a', '#fbe08a'], 8);
+  },
+  // Hyakushiki Kannon : une main géante dorée du Bodhisattva s'abat sur la cible
+  kannon(g, q, e) {
+    if (q < 0.5) goldHand(g, e.tx, lerp(-10, e.ty - 6, q / 0.5), 0, 2);
+    else {
+      const k = (q - 0.5) / 0.5;
+      if (k < 0.3) goldHand(g, e.tx, e.ty - 6, 0, 2);
+      ring(g, e.tx, e.ty + 6, k, '#fbe08a', 20);
+      star(g, e.tx, e.ty, k, ['#e8b84a', '#ffffff'], 12);
+    }
+  },
+  // --- Meruem : coup de queue à dard
+  tailWhip(g, q, e) {
+    slash(g, e.tx, e.ty, q, e.dir, ['#3a6a62', '#8ae0c8'], 11);
+    if (q > 0.4) burst(g, e.tx, e.ty, (q - 0.4) / 0.6, ['#b87af0', '#ffffff'], 7);
+  },
+  // Colère du roi : l'aura violette du roi monte autour de lui, puis s'abat sur tous les ennemis
+  kingRage(g, q, e) {
+    if (q < 0.45) {
+      const k = q / 0.45;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2 + k * 2, r = 16 - k * 6;
+        px(g, e.x + Math.cos(a) * r, e.y + Math.sin(a) * r * 0.8 - k * 4, i % 3 ? '#b87af0' : '#ffffff', 2);
+      }
+      ring(g, e.x, e.y, k, '#6a3aa8', 12);
+    } else {
+      const k = (q - 0.45) / 0.55;
+      for (const d of e.d) {
+        star(g, d.tx, d.ty, k, ['#b87af0', '#2a1a3a'], 14);
+        ring(g, d.tx, d.ty, k, '#b87af0', 18);
+      }
+      for (let j = -2; j <= 2; j++) for (let i = 0; i < k * 140; i += 3) px(g, e.x + 10 * e.dir + i * e.dir, e.y + j * 6 + Math.round(Math.sin(i * 0.2 + j) * 1.5), j % 2 ? '#6a3aa8' : '#b87af0', 2);
+    }
+  },
   // Poison, brûlure, saignement : petite gerbe sur celui qui souffre (couleurs imposées)
   tick(g, q, e) {
     burst(g, e.tx, e.ty, q, e.cols, 6);
@@ -1714,6 +1842,11 @@ export const HERO_FX = {
   redriot: { cols: ['#e2334a', '#d8d0d8'], attack: 'hardPunch', skill: 'harden', ranged: false, sound: 'punch', skillSound: 'clank' },
   deku: { cols: ['#5af08a', '#c8ffd8'], attack: 'smashPunch', skill: 'detroit', ranged: false, sound: 'punch', skillSound: 'smash' },
   allmight: { cols: ['#fbe08a', '#8ab4ff'], attack: 'texas', skill: 'usaSmash', ranged: false, sound: 'punch', skillSound: 'smash' },
+  gon: { cols: ['#3a8a3a', '#f8d850'], attack: 'nenPunch', skill: 'jajanken', ranged: false, sound: 'punch', skillSound: 'smash' },
+  kirua: { cols: ['#6ac8ff', '#ffffff'], attack: 'yoyo', skill: 'godspeed', ranged: true, sound: 'swipe', skillSound: 'thunder' },
+  hisoka: { cols: ['#ff7ac8', '#ffc8e8'], attack: 'cardThrow', skill: 'bungee', ranged: true, sound: 'paper', skillSound: 'boing' },
+  netero: { cols: ['#e8b84a', '#fbe08a'], attack: 'palm', skill: 'kannon', ranged: true, sound: 'punch', skillSound: 'gong' },
+  meruem: { cols: ['#b87af0', '#8ae0c8'], attack: 'tailWhip', skill: 'kingRage', ranged: false, sound: 'swipe', skillSound: 'roar' },
 };
 export const ENEMY_FX = {
   slime: { cols: ['#5cc85a', '#d8ffd0'], attack: 'splat', sound: 'hit' },

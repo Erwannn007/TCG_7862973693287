@@ -61,6 +61,11 @@ export const NEW_CLASS = {
   redriot: { main: '#2a2234', dark: '#160f1c', trim: '#e2334a', pants: '#2a2234' },
   deku: { main: '#3a8a5a', dark: '#26603e', trim: '#2a2234', pants: '#3a8a5a' },
   allmight: { main: '#2a5ad8', dark: '#1a3a98', trim: '#e2334a', pants: '#2a5ad8' },
+  gon: { main: '#3a8a3a', dark: '#26602a', trim: '#9ad86a', pants: '#2f6a2a' },
+  kirua: { main: '#f2eef4', dark: '#c8c0d0', trim: '#5a3a9a', pants: '#3a4a8a' },
+  hisoka: { main: '#efe4cc', dark: '#c8b890', trim: '#8a3aa8', pants: '#c0589a' },
+  netero: { main: '#f0e8d8', dark: '#c8bca4', trim: '#3a3a4a', pants: '#3a3a4a' },
+  meruem: { main: '#3a6a62', dark: '#244a44', trim: '#8ae0c8', pants: '#3a6a62' },
 };
 
 const trimOf = (K, rank) => (rank >= 4 ? C.gold : K.trim);
@@ -1649,6 +1654,209 @@ function allmight(rank) {
   return s;
 }
 
+// ---------------------------------------------------------------- clins d'œil : Hunter × Hunter
+// Ces cinq-là ont aussi leur propre dessin au rang 5 (forme culte de l'animé), sous les ailes
+// célestes : voir HAS_R5 et js/sprites.js.
+
+// Mèche en pointe : triangle plein de la pointe (tx, ty) à la base [x0, x1] sur la rangée by.
+function meche(s, tx, ty, x0, x1, by, c) {
+  for (let y = ty; y <= by; y++) {
+    const t = (y - ty) / (by - ty);
+    s.hl(Math.round(tx + (x0 - tx) * t), Math.round(tx + (x1 - tx) * t), y, c);
+  }
+}
+
+// Gon : cheveux noirs dressés en pointes, veste verte, canne à pêche ; Jajanken (poing de nen
+// jaune) dès le rang 3 ; au rang 5, Gon adulte aux cheveux qui tombent jusqu'au sol.
+function gon(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.gon, H = '#1e2622', HH = '#3a6a3a', NEN = '#f8d850', adult = rank >= 5;
+  // Gon adulte : la crinière tombe derrière lui jusqu'au sol
+  if (adult) { s.r(6, 8, 12, 15, H); s.hl(5, 18, 22, H); for (const x of [6, 9, 14, 17]) s.p(x, 20, HH); }
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#2f6a2a', bootsHi: '#5aa84a', sole: '#3a2a22', mouth: false, cape: rank === 4 && K.dark, belt: '#4a3a2a', buckle: rank >= 4 ? C.gold : m.c });
+  // short vert : les genoux nus au-dessus des bottes
+  s.p(9, 21, C.skin); s.p(14, 21, C.skin);
+  // badge de l'examen (n° 405) sur la veste
+  s.r(13, 15, 2, 2, '#f2eef4', true); s.p(14, 16, '#e2334a', true);
+  // cheveux en grandes pointes dressées, reflets verts
+  s.r(8, 4, 8, 4, H);
+  for (const [tx, ty, x0, x1] of [[5, 2, 7, 10], [9, -1, 8, 13], [14, adult ? -1 : 0, 11, 16], [19, 3, 15, 17]]) meche(s, tx, ty, x0, x1, 6, H);
+  s.p(8, 8, H); s.p(15, 8, H); s.v(7, 8, 10, H); s.v(16, 8, 10, H);
+  s.p(9, 2, HH, true); s.p(14, 3, HH, true); s.p(7, 4, HH, true); s.p(17, 5, HH, true);
+  // grand sourire, ou mâchoire serrée quand le nen monte
+  if (rank >= 4) { s.p(9, 9, H); s.p(14, 9, H); }
+  s.hl(11, 12, 12, rank >= 4 ? '#6a2a2a' : C.mouth, true);
+  if (rank >= 3) pauldrons(s, m);
+  if (rank <= 2) {
+    // canne à pêche à droite, le fil et le flotteur pendent
+    s.v(18, 3, 20, C.wood); s.p(18, 4, '#a8865f', true); s.p(18, 21, C.grip);
+    s.sline(18, 2, 21, 0, C.wood); s.v(22, 1, 7, '#e8e0d0', true); s.r(22, 8, 1, 2, '#e2334a', true); s.p(22, 8, '#ffffff', true);
+    if (rank === 2) { s.r(17, 16, 3, 2, m.c); s.p(17, 16, m.hi, true); }
+  } else {
+    // Jajanken « Pierre » : poing droit chargé de nen, aura jaune qui grandit
+    const A = rank >= 4 ? C.goldHi : NEN;
+    s.r(17, 14, 4, 4, C.skin); s.p(17, 14, '#f8d4b4', true); s.v(20, 15, 16, C.skinSh);
+    for (const [x, y] of [[16, 13], [18, 12], [20, 12], [21, 14], [21, 17], [19, 18], [16, 18]]) s.p(x, y, A, true);
+    if (rank >= 4 || adult) for (const [x, y] of [[19, 10], [22, 12], [22, 16], [5, 12], [4, 15]]) s.p(x, y, A, true);
+    for (const [x, y] of adult ? [[3, 3], [21, 2], [22, 9], [1, 12]] : [[22, 11], [15, 12]]) s.spark(x, y, '#ffffff');
+  }
+  return s;
+}
+
+// Kirua : cheveux blancs en bataille, yeux bleus, t-shirt blanc sur manches longues violettes,
+// skate à gauche ; yo-yo (rang 2), main de tueur (rang 3), foudre (rang 4), Godspeed (rang 5).
+function kirua(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.kirua, god = rank >= 5;
+  const H = god ? '#c8e8ff' : '#eef0f4', HS = god ? '#6ab8ff' : '#b8c0d0', EL = '#6ac8ff';
+  // skate debout derrière lui, à gauche : planche, roues
+  if (rank <= 3) {
+    s.r(3, 9, 2, 12, '#3a3a5a'); s.v(3, 10, 19, '#5a4aa8'); s.p(3, 9, '#7a6ac8', true);
+    for (const y of [11, 18]) { s.p(5, y, '#e2c83a'); s.p(2, y, '#e2c83a'); }
+  }
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#5a3a9a', bootsHi: '#8a6ac8', sole: '#2a2234', mouth: false, cape: rank === 4 && '#4a2386', belt: K.trim, buckle: rank >= 4 ? C.gold : m.c });
+  // manches longues violettes sous le t-shirt blanc
+  for (const x of [6, 16]) { s.r(x, 15, 2, 3, K.trim); s.hl(x, x + 1, 14, K.main); }
+  s.p(9, 21, C.skin); s.p(14, 21, C.skin);
+  // yeux bleus, sourire de chat
+  s.v(10, 10, 11, '#2a5ab8', true); s.v(13, 10, 11, '#2a5ab8', true); s.p(10, 10, '#21182a', true); s.p(13, 10, '#21182a', true);
+  s.p(11, 12, C.mouth, true); s.p(12, 13, C.mouth, true); s.p(13, 12, C.mouth, true);
+  // cheveux blancs ébouriffés, pointes dans tous les sens
+  const tips = god
+    ? [[4, 3, 6, 8, 6], [7, 0, 8, 10, 4], [11, -1, 10, 13, 4], [15, 0, 13, 15, 4], [19, 3, 15, 17, 6], [3, 8, 6, 6, 9], [20, 8, 17, 17, 9]]
+    : [[5, 4, 6, 8, 6], [8, 1, 8, 10, 4], [11, 0, 10, 13, 4], [15, 1, 13, 15, 4], [18, 4, 15, 17, 6], [4, 9, 6, 6, 9], [19, 9, 17, 17, 9]];
+  s.r(7, 4, 10, 4, H);
+  for (const [tx, ty, x0, x1, by] of tips) meche(s, tx, ty, x0, x1, by, H);
+  s.v(6, 5, 10, H); s.v(17, 5, 10, H); s.v(7, 8, 10, H); s.v(16, 8, 10, H);
+  for (const x of [8, 10, 12, 14, 15]) s.p(x, 8, H);
+  s.p(9, 5, HS); s.p(13, 6, HS); s.p(15, 5, HS); s.p(11, 4, '#ffffff', true);
+  if (rank >= 3) pauldrons(s, m);
+  if (rank === 2) {
+    // yo-yo de métal au bout de son fil, main droite
+    s.v(18, 18, 20, '#e8e0d0', true); s.r(18, 20, 3, 3, m.c); s.p(18, 20, m.hi, true); s.p(19, 21, shade2(m.c));
+  }
+  if (rank >= 3) {
+    // main de tueur : doigts en griffes
+    for (const x of [16, 17, 18]) s.v(x, 18, 20, '#f8d4b4'); s.p(16, 21, '#ffffff', true); s.p(18, 21, '#ffffff', true); s.p(19, 19, '#ffffff', true);
+  }
+  if (rank >= 4) {
+    // la foudre crépite autour de lui
+    const bolts = god
+      ? [[20, 2], [21, 3], [20, 4], [21, 5], [3, 4], [2, 5], [3, 6], [21, 12], [22, 13], [21, 14], [2, 12], [1, 13], [2, 14], [4, 18], [20, 17]]
+      : [[20, 6], [21, 7], [20, 8], [3, 9], [2, 10], [3, 11], [21, 14], [20, 15]];
+    for (const [x, y] of bolts) s.p(x, y, EL, true);
+    s.spark(21, god ? 1 : 5, '#ffffff'); s.spark(2, god ? 3 : 8, '#ffffff');
+    if (god) s.spark(22, 11, '#ffffff');
+  }
+  return s;
+}
+
+// Hisoka : cheveux rouges plaqués vers l'arrière, étoile et larme maquillées sur les joues,
+// regard en fente, cartes à jouer en éventail ; Bungee Gum rose dès le rang 3 ; au rang 5,
+// les cheveux détachés.
+function hisoka(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.hisoka, H = '#e2405a', HS = '#a82a48', GUM = '#ff7ac8', loose = rank >= 5;
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: '#6a2a8a', bootsHi: '#9a4ac8', sole: '#2a1a34', mouth: false, cape: rank === 4 && '#6a2a8a', belt: K.trim, buckle: rank >= 4 ? C.gold : m.c });
+  // pique et cœur sur le haut, comme des cartes
+  s.p(9, 15, '#2a2234'); s.hl(8, 10, 16, '#2a2234'); s.p(9, 17, '#2a2234');
+  s.p(13, 15, '#e2334a'); s.p(15, 15, '#e2334a'); s.hl(13, 15, 16, '#e2334a'); s.p(14, 17, '#e2334a');
+  // yeux dorés sous la paupière, sourcils relevés, sourire en coin
+  for (const x of [10, 13]) s.p(x, 11, '#e0a93a', true);
+  s.p(9, 9, HS); s.p(14, 9, HS);
+  s.p(11, 12, C.mouth, true); s.p(12, 12, C.mouth, true);
+  // larme (à gauche) et étoile (à droite) maquillées
+  s.p(9, 12, '#4a8ad8', true); s.p(9, 13, '#2a5ab8', true);
+  s.p(14, 12, '#f0c030', true); s.p(15, 12, '#fff0a0', true); s.p(14, 13, '#c89020', true);
+  // cheveux plaqués qui se dressent en flammes vers l'arrière (plus hautes au rang 5)
+  s.r(8, 5, 8, 2, H);
+  for (const [tx, ty, x0, x1] of [[5, loose ? 0 : 1, 7, 10], [9, loose ? -2 : -1, 9, 13], [14, 1, 12, 16]]) meche(s, tx, ty, x0, x1, 5, H);
+  s.v(7, 5, 9, H); s.v(16, 5, 9, H);
+  s.p(8, 3, HS); s.p(11, 3, HS); s.p(14, 4, HS); s.p(7, 2, '#ff8a9a', true); s.p(10, 2, '#ff8a9a', true); s.p(13, 2, '#ff8a9a', true);
+  if (rank >= 3) pauldrons(s, m);
+  // cartes en éventail dans la main droite (plus nombreuses avec le rang)
+  const n = Math.min(4, rank), E = rank >= 4 ? C.gold : '#c8c0d0';
+  for (let i = 0; i < n; i++) {
+    const x = 17 + i, y = 13 - i;
+    s.r(x, y, 2, 4, '#f8f4f8'); s.p(x + 1, y + 3, E); s.p(x, y + 1, i % 2 ? '#e2334a' : '#2a2234', true);
+  }
+  if (rank >= 4) s.p(20, 10, C.gem, true); // le joker
+  if (loose) for (const [x, y] of [[2, 3], [21, 4], [22, 15], [1, 17]]) { s.p(x, y, GUM, true); s.p(x + 1, y + 1, GUM, true); }
+  if (rank >= 3) {
+    // Bungee Gum : fil de nen rose collant qui part de la main gauche
+    s.sline(6, 18, 3, 13, GUM, true); s.sline(3, 13, 5, 9, GUM, true); s.p(4, 8, GUM, true); s.p(5, 18, '#ffc8e8', true);
+    s.spark(2, 11, '#ffc8e8');
+  }
+  return s;
+}
+
+// Netero : crâne chauve et petit chignon, longs sourcils et longue barbe blancs, t-shirt marqué
+// « cœur » ; les mains jointes ; une main dorée du Bodhisattva aux cent mains derrière lui
+// dès le rang 3, toute une auréole de mains au rang 4.
+function netero(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.netero, W = '#ffffff', WS = '#c8c8d8', GO = '#e8b84a', GH = '#fbe08a', GD = '#c08a28';
+  // le Bodhisattva : mains dorées derrière lui
+  // main ouverte, doigts vers le haut : 4 doigts, pouce sur le côté (o = -1 : pouce à gauche)
+  // main ouverte, trois doigts écartés vers le haut, pouce sur le côté (o = -1 : pouce à gauche)
+  const palm = (x, y, o = 1) => {
+    [1, 0, 1].forEach((d, i) => { s.v(x + i * 2, y + d, y + 3, GO); s.p(x + i * 2, y + d, GH, true); });
+    s.r(x, y + 4, 5, 3, GO); s.hl(x + 1, x + 3, y + 7, GO); s.v(o > 0 ? x + 5 : x - 1, y + 4, y + 5, GO);
+    s.p(x + 1, y + 5, GD); s.p(x + 3, y + 5, GD);
+  };
+  if (rank >= 3) palm(19, 2, -1);
+  if (rank >= 4) { palm(1, 2); palm(20, 12, -1); palm(0, 12); }
+  body(s, { tunic: K.main, dark: K.dark, trim: K.dark, pants: K.pants, boots: '#6a5a48', bootsHi: '#8a7a68', sole: '#3a2a22', mouth: false, belt: K.trim, buckle: rank >= 4 ? C.gold : m.c });
+  // crâne chauve, petit chignon blanc
+  s.r(8, 6, 8, 1, C.skin); s.hl(9, 14, 5, C.skin); s.p(10, 5, '#f8d4b4', true); s.p(9, 6, '#f8d4b4', true);
+  s.r(11, 3, 2, 2, W); s.p(11, 3, WS);
+  // longs sourcils qui tombent, yeux plissés
+  for (const x of [10, 13]) s.p(x, 10, C.skin);
+  s.hl(9, 10, 9, W); s.p(8, 10, W); s.hl(13, 14, 9, W); s.p(15, 10, W);
+  // longue moustache et barbe blanches jusqu'à la poitrine
+  s.hl(9, 14, 12, W); s.p(9, 13, W); s.p(14, 13, W);
+  s.r(10, 13, 4, 1, W); s.hl(11, 12, 14, W); s.p(10, 13, WS); s.p(13, 13, WS); s.p(12, 14, WS);
+  // perles du chapelet au cou (métal du rang)
+  if (rank >= 2) { s.p(9, 14, m.c); s.p(14, 14, m.c); s.p(9, 14, m.hi, true); }
+  if (rank >= 3) pauldrons(s, m);
+  // les mains jointes devant la poitrine (gasshō), avant-bras repliés
+  for (const x of [6, 16]) { s.p(x, 18, null); s.p(x + 1, 18, null); s.p(x, 19, null); s.p(x + 1, 19, null); }
+  s.hl(8, 10, 17, K.dark); s.hl(13, 15, 17, K.dark);
+  s.r(11, 15, 2, 3, C.skin); s.p(11, 15, '#f8d4b4', true); s.p(12, 17, C.skinSh);
+  if (rank >= 4) for (const [x, y] of [[21, 3], [2, 3], [22, 10]]) s.spark(x, y, GH);
+  return s;
+}
+
+// Meruem : roi des fourmis-chimères, tête casquée à crête, deux longues antennes, traits sur les
+// joues, carapace, longue queue à dard ; cape (rang 3), couronne (rang 4) ; au rang 5,
+// l'aura du roi qui crépite.
+function meruem(rank) {
+  const s = new Spr(24, 24), m = METALS[rank - 1], K = NEW_CLASS.meruem, SK = '#c8dcd0', SS = '#8aa89a', A = '#2a3a3a', AU = '#b87af0';
+  // la longue queue à dard, derrière lui à gauche
+  const tail = rank >= 3 ? [[7, 19], [6, 19], [5, 18], [4, 17], [3, 16], [3, 15], [3, 14], [3, 13], [4, 12]] : [[7, 19], [6, 19], [5, 18], [4, 17], [4, 16], [4, 15]];
+  for (const [x, y] of tail) { s.p(x, y, K.main); s.p(x + 1, y, K.dark); }
+  const [tx, ty] = tail[tail.length - 1];
+  s.v(tx, ty - 3, ty - 1, rank >= 4 ? C.gold : SK); s.p(tx, ty - 3, '#ffffff', true);
+  body(s, { tunic: K.main, dark: K.dark, trim: K.trim, pants: K.pants, boots: SK, bootsHi: '#e8f4ec', sole: SS, mouth: false, cape: rank >= 3 && '#4a2386', belt: K.dark, buckle: rank >= 4 ? C.gold : m.c });
+  // carapace segmentée sur le torse
+  s.hl(9, 14, 15, K.dark); s.hl(9, 14, 17, K.dark); s.v(11, 15, 17, K.trim); s.v(12, 15, 17, K.trim);
+  // tête casquée : crête au milieu, côtés qui descendent
+  s.r(8, 4, 8, 4, SK); s.hl(9, 14, 3, SK); s.v(7, 6, 11, SK); s.v(16, 6, 11, SK);
+  s.v(11, 2, 7, SS); s.v(12, 2, 7, SS); s.p(11, 1, SK); s.p(12, 1, SK); s.p(9, 4, '#ffffff', true);
+  s.hl(8, 15, 8, SS);
+  // deux longues antennes qui partent vers l'arrière
+  s.sline(10, 3, 7, 0, A); s.sline(13, 3, 16, 0, A); s.p(6, 0, A); s.p(17, 0, A);
+  // regard sévère, traits sombres sur les joues
+  s.p(9, 10, A); s.p(14, 10, A); s.v(10, 10, 11, '#3a8a5a', true); s.v(13, 10, 11, '#3a8a5a', true); s.p(10, 10, C.eye, true); s.p(13, 10, C.eye, true);
+  s.v(9, 12, 13, '#6a5a8a', true); s.v(14, 12, 13, '#6a5a8a', true); s.hl(11, 12, 12, SS, true);
+  if (rank >= 2) { s.hl(6, 7, 16, m.c); s.hl(16, 17, 16, m.c); }
+  if (rank >= 3) pauldrons(s, m);
+  if (rank >= 4) { s.hl(9, 14, 5, C.gold); s.p(9, 4, C.gold); s.p(14, 4, C.gold); s.r(11, 4, 2, 1, C.gem, true); }
+  // griffes aux mains
+  s.p(6, 19, '#ffffff'); s.p(17, 19, '#ffffff');
+  if (rank >= 5) for (const [x, y] of [[20, 4], [21, 6], [3, 4], [20, 12], [21, 13], [19, 18], [2, 8]]) s.p(x, y, AU, true);
+  return s.recolor({ [C.skin]: SK, [C.skinSh]: SS, [BLUSH]: SK });
+}
+
+// Ces héros dessinent eux-mêmes leur rang 5 (avant les ailes célestes).
+export const HAS_R5 = new Set(['gon', 'kirua', 'hisoka', 'netero', 'meruem']);
+
 export const NEW_DRAW = {
   brann, mira, nina, pip, gus, lenny, vex, gideon, aurelia, nova,
   rok, tobo, hugo, kiki, bjorn, sven, astra, nyx, ignis, drakon,
@@ -1656,4 +1864,5 @@ export const NEW_DRAW = {
   grumli, spike, bip, lulu, djmax, pablo, bob, zip, rexy, leo,
   tonnerre, ramses, elixa, mako, pixel, lumi, kero, atlas, pyra, mortis,
   shoto, bakugo, redriot, deku, allmight,
+  gon, kirua, hisoka, netero, meruem,
 };
