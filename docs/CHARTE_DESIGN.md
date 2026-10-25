@@ -188,15 +188,35 @@ Dans le code : `paintWood` (boutons et cadres, repeints dès que leur taille ou 
 change) et `paintSign` (plaques) dans `js/main.js` ; les couleurs d'écriture sont regroupées à la
 fin de `css/style.css` (« une règle pour toutes les pancartes »).
 
-## 5 ter. Tableaux de pancartes (options, rejouer)
+## 5 ter. Règle : un bouton qui ouvre d'autres boutons
 
-Pas de fenêtre posée par-dessus l'écran : **tout ce qui est à l'écran tombe**, puis les
-pancartes tombent du ciel et se **clouent en grille un peu de travers** (décalées et penchées
-différemment, jamais alignées), avec un ruban de titre. Toucher une pancarte la fait éclater ;
-toucher à côté (ou « Fermer ») fait éclater le tableau, et l'écran retombe à sa place.
-Fonctions : `openBoard`, `closeBoard`, `explodeSigns` (`js/main.js`).
+> **Règle.** Quand un bouton ou une pancarte ouvre un choix (paramètres, rejouer une étape,
+> confirmation, et tout futur menu), on n'ouvre **jamais une fenêtre posée par-dessus l'écran** :
+> on fait un **tableau de pancartes**, comme « Paramètres » et « Rejouer ».
 
-De même, des pancartes ouvertes (Équipe) **éclatent** quand on touche à côté.
+Déroulé, toujours le même :
+
+1. **Tout ce qui est à l'écran tombe** (boutons du haut, ruban, pancartes, flèches), en
+   penchant un peu, avec un souffle.
+2. Un **ruban de titre** tombe du haut, puis les **pancartes du choix tombent du ciel** une à
+   une et rebondissent, avec un coup sourd à l'atterrissage.
+3. Elles se **clouent en grille un peu de travers** : chacune décalée et penchée différemment,
+   jamais alignées, mais **jamais l'une sur l'autre** (cases assez grandes pour une pancarte
+   visée et penchée). 2 colonnes pour 4 choix ou moins, 3 au-delà ; 6 choix par page avec des
+   pancartes « Plus anciennes / Plus récentes ».
+4. Chaque pancarte a le comportement des pancartes d'action : glisser, viser (dorée), choisir
+   (elle éclate en copeaux).
+5. Un choix qui ouvre un autre choix (« Effacer » → « Tout effacer ? Oui / Non ») : les
+   pancartes **éclatent** et les nouvelles **tombent** à leur place.
+6. Une option qui se règle (Sons, Vibration) : les pancartes éclatent et retombent avec le
+   nouveau réglage affiché en sous-titre.
+7. **Fermer** (pancarte « Fermer » ou toucher à côté) : le tableau éclate et l'écran **retombe du
+   ciel** à sa place.
+
+Même logique pour des pancartes déjà ouvertes (Équipe) : toucher à côté les fait **éclater**.
+
+Dans le code : `openBoard(titre, choix, colonnes)`, `closeBoard`, `boardItems` (grille de
+travers), `explodeSigns` (`js/main.js`).
 
 ## 6. Plaques d'information
 

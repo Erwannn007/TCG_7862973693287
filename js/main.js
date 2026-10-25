@@ -612,9 +612,10 @@ function explodeSigns(m) {
 
 // Place les pancartes en grille (cols colonnes), chacune décalée et penchée un peu au hasard.
 function boardItems(items, cols) {
-  const rows = Math.ceil(items.length / cols), cw = Math.min(250, (innerWidth - 80) / cols), rh = Math.min(84, (innerHeight - 150) / rows);
-  const x0 = innerWidth / 2 - (cols * cw) / 2 + 12, y0 = (70 + innerHeight) / 2 - ((rows - 1) * rh) / 2;
-  const JX = [10, -14, 6, -6, 16, -10, 4, -16, 12], JY = [-6, 8, 4, -8, 6, -4, 10, -2, -6], JT = [-5, 4, 7, -3, -6, 5, 3, -7, 6];
+  // cases assez grandes pour qu'une pancarte visée (250 px, penchée) ne touche jamais sa voisine
+  const rows = Math.ceil(items.length / cols), cw = Math.min(290, (innerWidth - 40) / cols), rh = Math.min(104, (innerHeight - 120) / rows);
+  const x0 = innerWidth / 2 - (cols * cw) / 2 + (cw - 210) / 2, y0 = (70 + innerHeight) / 2 - ((rows - 1) * rh) / 2;
+  const JX = [8, -10, 4, -6, 10, -8, 2, -10, 8], JY = [-4, 5, 3, -5, 4, -3, 6, -2, -4], JT = [-4, 3, 5, -3, -5, 4, 3, -5, 4];
   return items.map((it, i) => ({ ...it, at: [Math.round(x0 + (i % cols) * cw + JX[i % 9]), Math.round(y0 + Math.floor(i / cols) * rh + JY[i % 9]), JT[i % 9]] }));
 }
 
