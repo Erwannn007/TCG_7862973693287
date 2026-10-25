@@ -28,7 +28,8 @@ const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
 export class Battle {
-  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, height = H, zoom = 1 }) {
+  // look(id, rang) → { key, make } : l'apparence du héros (son skin s'il en porte un)
+  constructor({ canvas, ui, team, stage, owned, onEnd, width = W, height = H, zoom = 1, look = null }) {
     this.g = canvas.getContext('2d');
     this.canvas = canvas;
     this.ui = ui;
@@ -63,8 +64,8 @@ export class Battle {
     const hs = SLOT_ORDER[team.length];
     this.heroes = team.map((id, i) => {
       const rank = owned[id].rank, st = heroStats(id, rank);
-      return this.unit('h', { id, rank, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]],
-        `h-${id}-${rank}`, () => heroSprite(id, rank));
+      const lk = look ? look(id, rank) : { key: `h-${id}-${rank}`, make: () => heroSprite(id, rank) };
+      return this.unit('h', { id, rank, name: HEROES[id].name, skill: HEROES[id].skill, ...st }, HERO_SLOTS[hs[i]], lk.key, lk.make);
     });
     const big = stage.enemies.length === 1 && stage.boss;
     const es = SLOT_ORDER[stage.enemies.length];

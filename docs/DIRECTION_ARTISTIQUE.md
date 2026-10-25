@@ -141,7 +141,17 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 6. Vérifier sur la planche (`node tools/sheet.mjs`) : lisible en petit, sans taches, sans trop de
    pixels vifs, et la silhouette tient seule.
 
-### 2.7 À éviter
+### 2.7 Les tenues (skins)
+
+- Une tenue est un **dessin complet** du héros (24×24), qui remplace celui de son rang : pas de
+  recoloration, on peut tout changer (silhouette, coiffe, arme, accessoire). Sans limite de
+  thème, mais avec les mêmes règles que les héros : gabarit `body`, visage chibi, pas de nez,
+  arme ou accessoire qui dépasse, détails de texture, peu de pixels vifs.
+- On garde un trait reconnaissable du héros quand c'est possible (cheveux de Kael, barbe d'Elio,
+  mèches dorées de Séra), pour qu'on sache qui la porte.
+- Les Légendaires ont droit à quelques étincelles et à une cape.
+
+### 2.8 À éviter
 
 - Agrandir un sprite pour le mettre en avant (les pixels doivent rester de la même taille).
 - Un nez, des yeux d'un seul pixel, des pupilles avec reflet.

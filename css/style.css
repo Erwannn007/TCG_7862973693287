@@ -255,6 +255,7 @@ small { font-size: 12px; }
 .sk-row:active:not(.soon) { translate: 0 2px; }
 .sk-txt { display: flex; flex-direction: column; gap: 2px; }
 .sk-txt small { font-size: 11px; font-weight: 400; color: #e8d4a4; }
+.sk-actions { display: flex; gap: 8px; }
 .d-name { font: 400 24px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 2px 2px 0 var(--line); }
 .d-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .stat { display: grid; grid-template-columns: 34px 1fr 30px; align-items: center; gap: 6px; font-size: 13px; }
@@ -286,6 +287,14 @@ small { font-size: 12px; }
 #s-info .h { margin-bottom: 0; }
 #s-info .muted { color: #e8d4a4; font-size: 12px; }
 #s-veil { position: absolute; inset: 0; z-index: 3; background: #0e080b; opacity: 0; pointer-events: none; }
+/* sous la pierre : on peut la faire glisser pour passer à l'autel des tenues */
+#s-hint { position: absolute; z-index: 2; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; white-space: nowrap; }
+#s-hint .hint { font-size: 12px; }
+#s-hint .dots { display: flex; gap: 6px; }
+#s-hint .dots i { width: 6px; height: 6px; background: var(--line); box-shadow: 0 0 0 1px #6a4a3a; }
+#s-hint .dots i.on { background: var(--gold-hi); }
+.lineup.wrap { flex-wrap: wrap; gap: 2px; }
+.card.back.skin canvas { filter: drop-shadow(0 0 3px #7af06a); }
 .lineup { display: flex; gap: 4px; justify-content: center; margin: 2px 0 4px; }
 .rate { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
@@ -438,7 +447,7 @@ small { font-size: 12px; }
 .card.r-R .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--R); }
 .card.r-L .c-win canvas { box-shadow: 0 0 0 2px var(--line), 0 0 0 4px var(--gold-hi); }
 .card .c-name {
-  margin-top: 4px; padding: 0 6px; color: #fff; text-shadow: 1px 1px 0 var(--line); white-space: nowrap;
+  margin-top: 4px; padding: 0 6px; max-width: 100%; color: #fff; text-shadow: 1px 1px 0 var(--line); text-align: center; line-height: 1.05;
   border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
 }
 .card.face .rank { font-size: .85em; }

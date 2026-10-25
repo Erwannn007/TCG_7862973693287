@@ -1012,9 +1012,23 @@ function summonRoom(g) {
   banner(g, 142, 8, 24, '#62349a', '#4a2386');
 }
 
+// Couleurs des deux autels : violet pour les héros, vert pour les tenues (skins).
+const ALTAR_PAL = {
+  hero: {
+    face: ['#e6d0ff', '#a878e8', '#9a62d8', '#6a3aa8'], line: ['#c8a0f0', '#8a58d0', '#7a48c0', '#4e2888'],
+    ridge: '#c8a0f0', girdle: '#e6d0ff', edge: '#f4e8ff', glow: ['#4a2c5c', '#3a2448'], ray: '#e8d0ff',
+    ring: ['#62349a', '#4a2386'], rune: '#c89af0', halo: '#7a4ab8', haloOn: '#e6d0ff', shard: ['#e6d0ff', '#9a62d8'],
+  },
+  skin: {
+    face: ['#d8ffd0', '#7ad86a', '#4ea84a', '#2e7a34'], line: ['#a8f098', '#5ab84a', '#3e9a40', '#1e5a2a'],
+    ridge: '#a8f098', girdle: '#d8ffd0', edge: '#eaffe4', glow: ['#244a2c', '#1e3a26'], ray: '#d8ffd8',
+    ring: ['#2e8a3e', '#1e5a2a'], rune: '#9af098', halo: '#3e8a46', haloOn: '#d8ffd0', shard: ['#d8ffd0', '#4ea84a'],
+  },
+};
+
 // Grand cristal facetté (losange de 23 × 41 px) : facettes claires à gauche, sombres à droite,
 // arête centrale et ceinture lumineuses, cœur qui pulse.
-function bigCrystal(g, cx, cy, step) {
+function bigCrystal(g, cx, cy, step, P) {
   const TOP = 22, BOT = 18, W = 11;
   const half = (dy) => (dy <= 0 ? Math.round(W * (1 + dy / TOP)) : Math.round(W * (1 - dy / BOT)));
   for (let dy = -TOP - 1; dy <= BOT + 1; dy++) {
@@ -1026,11 +1040,12 @@ function bigCrystal(g, cx, cy, step) {
     const hw = half(dy);
     for (let dx = -hw; dx <= hw; dx++) {
       const up = dy < 0;
-      let c = dx < 0 ? (up ? '#e6d0ff' : '#a878e8') : (up ? '#9a62d8' : '#6a3aa8');
-      if (Math.abs(dx) === Math.round(hw * 0.55) && hw > 2) c = dx < 0 ? (up ? '#c8a0f0' : '#8a58d0') : (up ? '#7a48c0' : '#4e2888');
-      if (dx === 0) c = up ? '#ffffff' : '#c8a0f0';
-      if (dy === 0) c = dx < 0 ? '#ffffff' : '#e6d0ff';
-      if (dx === -hw) c = up ? '#f4e8ff' : '#c8a0f0';
+      const f = dx < 0 ? (up ? 0 : 1) : (up ? 2 : 3);
+      let c = P.face[f];
+      if (Math.abs(dx) === Math.round(hw * 0.55) && hw > 2) c = P.line[f];
+      if (dx === 0) c = up ? '#ffffff' : P.ridge;
+      if (dy === 0) c = dx < 0 ? '#ffffff' : P.girdle;
+      if (dx === -hw) c = up ? P.edge : P.ridge;
       g.fillStyle = c;
       g.fillRect(cx + dx, cy + dy, 1, 1);
     }
@@ -1050,31 +1065,75 @@ function bigCrystal(g, cx, cy, step) {
 }
 
 // Petit éclat de cristal (3 × 5) en orbite.
-function shard(g, x, y, lit) {
+function shard(g, x, y, lit, P) {
   g.fillStyle = OUTLINE;
   g.fillRect(x - 2, y - 2, 5, 5);
   g.fillRect(x - 1, y - 3, 3, 7);
-  g.fillStyle = lit ? '#e6d0ff' : '#9a62d8';
+  g.fillStyle = P.shard[lit ? 0 : 1];
   g.fillRect(x - 1, y - 2, 3, 5);
   g.fillRect(x, y - 3, 1, 7);
   px(g, x - 1, y - 1, '#ffffff');
 }
 
+// Portant à vêtements derrière l'autel des tenues : deux montants, une barre, trois habits
+// sur cintres qui se balancent un peu.
+function wardrobe(g, x, step) {
+  const R = (rx, ry, w, h, c) => { g.fillStyle = c; g.fillRect(x + rx, ry, w, h); };
+  const bx = 26, W = 30; // entre la pierre et les pancartes
+  R(bx - 1, 44, 3, 48, OUTLINE); R(bx + W - 1, 44, 3, 48, OUTLINE);
+  R(bx, 45, 1, 46, '#8a5a32'); R(bx + W, 45, 1, 46, '#6a4228');
+  R(bx - 1, 43, W + 3, 3, OUTLINE); R(bx, 44, W + 1, 1, '#a8703a');
+  R(bx - 3, 90, 7, 2, OUTLINE); R(bx + W - 3, 90, 7, 2, OUTLINE);
+  [['#c8323c', '#8c1f2e', 6], ['#3a64c8', '#26408a', 15], ['#e0a93a', '#a87a20', 24]].forEach(([c, d, ox], i) => {
+    const sw = (step + i * 2) % 8 < 4 ? 0 : 1, cx = x + bx + ox + sw;
+    g.fillStyle = '#b9c6d2';
+    g.fillRect(cx, 45, 1, 2);
+    g.fillRect(cx - 3, 47, 7, 1);
+    g.fillStyle = OUTLINE;
+    g.fillRect(cx - 5, 47, 11, 15);
+    g.fillStyle = c;
+    g.fillRect(cx - 4, 48, 9, 13);
+    g.fillRect(cx - 5, 48, 1, 5); g.fillRect(cx + 5, 48, 1, 5);
+    g.fillStyle = d;
+    g.fillRect(cx + 2, 49, 2, 11);
+    g.fillRect(cx - 4, 60, 9, 1);
+    px(g, cx, 50, '#fbe08a');
+  });
+}
+
+// Vêtements éparpillés au sol autour de l'autel des tenues : tunique pliée, chapeau, bottes,
+// chaussette rayée, écharpe qui traîne.
+function clothesOnFloor(g, x) {
+  const R = (rx, ry, w, h, c) => { g.fillStyle = c; g.fillRect(x + rx, ry, w, h); };
+  // tunique rouge pliée
+  R(-56, 104, 12, 6, OUTLINE); R(-55, 105, 10, 4, '#c8323c'); R(-55, 105, 10, 1, '#f08a7a'); R(-51, 106, 2, 3, '#8c1f2e');
+  // chapeau de paille
+  R(48, 99, 14, 4, OUTLINE); R(49, 100, 12, 2, '#d8b060'); R(52, 96, 8, 4, OUTLINE); R(53, 97, 6, 3, '#e8c878'); R(53, 99, 6, 1, '#c8323c');
+  // paire de bottes
+  for (const ox of [-24, -18]) { R(ox, 110, 5, 7, OUTLINE); R(ox + 1, 111, 3, 5, '#6a4228'); R(ox + 1, 115, 5, 2, OUTLINE); R(ox + 2, 115, 3, 1, '#8a5a32'); }
+  // chaussette rayée
+  R(20, 112, 4, 8, OUTLINE); R(21, 113, 2, 6, '#f2eef4'); R(21, 114, 2, 1, '#3a64c8'); R(21, 116, 2, 1, '#3a64c8'); R(21, 118, 4, 1, '#f2eef4');
+  // écharpe qui traîne
+  for (let i = 0; i < 14; i++) R(-40 + i, 116 + (i % 4 < 2 ? 0 : 1), 1, 2, i % 4 < 2 ? '#4f9e3c' : '#2f6a2a');
+}
+
 // L'autel au complet, centré en x (pixels d'art) : lueur au sol, cercle de runes, bougies,
 // socle de pierre gravé, rai de lumière, grand cristal flottant et ses éclats, poussière de magie.
 // charge : pendant le rituel (plus de lumière, anneaux qui partent du cristal).
+// kind : 'hero' (cristal violet) ou 'skin' (cristal vert, vêtements éparpillés et portant).
 export const ALTAR_Y = 50; // centre du cristal
-export function altar(g, x, step, charge = false) {
+export function altar(g, x, step, charge = false, kind = 'hero') {
   x = Math.round(x);
-  const cy = ALTAR_Y - (step % 8 < 4 ? 0 : 1), fy = 101;
+  const P = ALTAR_PAL[kind], cy = ALTAR_Y - (step % 8 < 4 ? 0 : 1), fy = 101;
+  if (kind === 'skin') wardrobe(g, x, step);
   // lueur violette tramée au sol et sur le mur
   for (let y = 30; y < SH; y++)
     for (let dx = -62; dx <= 62; dx++) {
       const d = Math.hypot(dx / 1.6, y - 82);
-      if (d < 22 ? (dx + y) % 2 === 0 : d < 36 && (dx + y) % 4 === 0) px(g, x + dx, y, d < 14 ? '#4a2c5c' : '#3a2448');
+      if (d < 22 ? (dx + y) % 2 === 0 : d < 36 && (dx + y) % 4 === 0) px(g, x + dx, y, d < 14 ? P.glow[0] : P.glow[1]);
     }
   // rai de lumière qui tombe sur le cristal, élargi par bandes de 4 px
-  g.fillStyle = '#e8d0ff';
+  g.fillStyle = P.ray;
   g.globalAlpha = charge ? 0.16 : 0.08;
   for (let y = 0; y < 92; y += 4) {
     const w = 14 + Math.floor((y / 92) * 9) * 2;
@@ -1085,15 +1144,16 @@ export function altar(g, x, step, charge = false) {
   const RX = 46, RY = 9;
   for (let a = 0; a < 360; a += 2) {
     const r = (a * Math.PI) / 180;
-    px(g, Math.round(x + Math.cos(r) * RX), Math.round(fy + Math.sin(r) * RY), '#62349a');
-    px(g, Math.round(x + Math.cos(r) * (RX - 5)), Math.round(fy + Math.sin(r) * (RY - 2)), '#4a2386');
+    px(g, Math.round(x + Math.cos(r) * RX), Math.round(fy + Math.sin(r) * RY), P.ring[0]);
+    px(g, Math.round(x + Math.cos(r) * (RX - 5)), Math.round(fy + Math.sin(r) * (RY - 2)), P.ring[1]);
   }
   for (let i = 0; i < 6; i++) {
     const a = ((step * 8 + i * 60) * Math.PI) / 180;
     const rx = Math.round(x + Math.cos(a) * (RX - 2)), ry = Math.round(fy + Math.sin(a) * (RY - 1));
-    px(g, rx, ry, '#c89af0');
+    px(g, rx, ry, P.rune);
     px(g, rx + 1, ry, '#ffffff');
   }
+  if (kind === 'skin') clothesOnFloor(g, x);
   // bougies autour du cercle (celles du fond d'abord)
   [[-30, 94], [30, 94], [-44, 100], [44, 100], [-34, 108], [34, 108]].forEach(([dx, y], i) => candle(g, x + dx, y, step + i));
   // socle de pierre : plateau, fût gravé de runes, base évasée
@@ -1101,30 +1161,30 @@ export function altar(g, x, step, charge = false) {
   R(-14, 96, 29, 5, OUTLINE); R(-13, 96, 27, 4, '#5c5258'); R(-13, 96, 27, 1, '#8a8088');
   R(-7, 80, 15, 16, OUTLINE); R(-6, 80, 13, 16, '#6a6068'); R(-6, 80, 3, 16, '#8a8088'); R(4, 80, 3, 16, '#4a4048');
   R(-11, 75, 23, 6, OUTLINE); R(-10, 75, 21, 5, '#7a7078'); R(-10, 75, 21, 1, '#a8a0a8'); R(-10, 79, 21, 1, '#4a4048');
-  for (const [rx, ry] of [[-2, 83], [1, 86], [-2, 89], [1, 92]]) R(rx, ry, 2, 1, (step + ry) % 4 < 2 || charge ? '#c89af0' : '#62349a');
+  for (const [rx, ry] of [[-2, 83], [1, 86], [-2, 89], [1, 92]]) R(rx, ry, 2, 1, (step + ry) % 4 < 2 || charge ? P.rune : P.ring[0]);
   // éclats en orbite : derrière le cristal quand ils passent au fond
   const shards = [0, 1, 2].map((i) => {
     const a = step * 0.18 + (i * Math.PI * 2) / 3;
     return { x: Math.round(x + Math.cos(a) * 20), y: Math.round(cy + 2 + Math.sin(a) * 6), front: Math.sin(a) > 0 };
   });
-  for (const s of shards) if (!s.front) shard(g, s.x, s.y, false);
+  for (const s of shards) if (!s.front) shard(g, s.x, s.y, false, P);
   // halo tramé autour du cristal
   for (let dy = -28; dy <= 24; dy++)
     for (let dx = -18; dx <= 18; dx++) {
       const d = Math.hypot(dx * 1.4, dy * 0.8);
-      if (d > 16 && d < 21 && (dx + dy + step) % 3 === 0) px(g, x + dx, cy + dy, charge ? '#e6d0ff' : '#7a4ab8');
+      if (d > 16 && d < 21 && (dx + dy + step) % 3 === 0) px(g, x + dx, cy + dy, charge ? P.haloOn : P.halo);
     }
-  bigCrystal(g, x, cy, step);
-  for (const s of shards) if (s.front) shard(g, s.x, s.y, true);
+  bigCrystal(g, x, cy, step, P);
+  for (const s of shards) if (s.front) shard(g, s.x, s.y, true, P);
   // poussière de magie qui monte
   for (let i = 0; i < 9; i++) {
     const t = (step + i * 5) % 26, mx = x - 18 + ((i * 13) % 37) + (t % 4 < 2 ? 0 : 1);
-    if (t < 22) px(g, mx, 94 - t * 3, t < 12 ? '#c89af0' : '#7a4ab8');
+    if (t < 22) px(g, mx, 94 - t * 3, t < 12 ? P.rune : P.halo);
   }
   // pendant le rituel : anneaux de lumière qui partent du cristal
   if (charge) {
     for (const r of [6 + ((step * 3) % 24), 6 + ((step * 3 + 12) % 24)]) {
-      g.fillStyle = step % 2 ? '#c89af0' : '#ffffff';
+      g.fillStyle = step % 2 ? P.rune : '#ffffff';
       for (let i = 0; i < 32; i++) {
         const t = (i / 32) * Math.PI * 2;
         g.fillRect(Math.round(x + Math.cos(t) * r), Math.round(cy - 2 + Math.sin(t) * r * 0.8), 1, 1);

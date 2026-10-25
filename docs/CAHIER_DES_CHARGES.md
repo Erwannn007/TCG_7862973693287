@@ -59,6 +59,23 @@ Combattre une étape → gagner de l'or → invoquer (gacha) → débloquer / ob
 - Révélation animée carte par carte, avec un dos de carte qui « trahit » la rareté
   (clignotements par paliers, plus intenses pour une Légendaire).
 
+### Tenues (skins)
+
+- Une tenue **remplace entièrement le dessin** d'un héros, **quel que soit son rang** (rang 1 ou
+  rang 5 : même allure). Aucune limite de thème : chevalier en slip, mineur cubique, samouraï…
+- Elles s'obtiennent à l'**autel des tenues** : sur la page Invocation, on fait glisser la pierre
+  de droite à gauche ; seule la pierre glisse et laisse place à un cristal vert, avec des
+  vêtements éparpillés au sol et un portant ; toutes les pancartes et la plaque tombent, les
+  nouvelles tombent du haut. On revient en glissant dans l'autre sens.
+- Tenue ×1 : **150 or** — ×10 : **1350 or** (au moins une Rare). Mêmes taux que les héros,
+  sans pitié. Doublon → **+50 or**.
+- On les essaie puis on les porte au **vestiaire** (bouton Skin de l'Équipe). La tenue portée
+  s'affiche partout : camp, équipe, combat, file des tours, fin de combat.
+- Première collection (8) : Kael *En slip* (C), *Mineur cubique* (R), *Armure de diamant* (L) ;
+  Lyra *Pirate* (R) ; Elio *Pyjama* (C) ; Séra *Sorcière* (R) ; Volt *Livreur de pizza* (C),
+  *Samouraï* (L). Une nouvelle tenue = une entrée dans `SKINS` et son dessin dans
+  `js/sprites.js`.
+
 ## 6. Combat
 
 - Équipe de 1 à 3 persos contre 1 à 3 ennemis (ou un boss).

@@ -337,6 +337,184 @@ export function heroSprite(id, rank) {
   return DRAW[id](rank);
 }
 
+// ---------------------------------------------------------------- skins
+
+// Tenues complètes : un skin remplace entièrement le dessin du héros, quel que soit son rang.
+// Aucune limite de thème. rarity : C, R ou L (mêmes taux que les héros à l'invocation).
+export const SKINS = [
+  { id: 'kael-slip', hero: 'kael', name: 'En slip', rarity: 'C' },
+  { id: 'kael-cube', hero: 'kael', name: 'Mineur cubique', rarity: 'R' },
+  { id: 'kael-diamant', hero: 'kael', name: 'Armure de diamant', rarity: 'L' },
+  { id: 'lyra-pirate', hero: 'lyra', name: 'Pirate', rarity: 'R' },
+  { id: 'elio-pyjama', hero: 'elio', name: 'Pyjama', rarity: 'C' },
+  { id: 'sera-sorciere', hero: 'sera', name: 'Sorcière', rarity: 'R' },
+  { id: 'volt-pizza', hero: 'volt', name: 'Livreur de pizza', rarity: 'C' },
+  { id: 'volt-samourai', hero: 'volt', name: 'Samouraï', rarity: 'L' },
+];
+
+const SKIN_DRAW = {
+  // Kael en slip rouge, pieds nus, épée en bois.
+  'kael-slip'() {
+    const s = new Spr(24, 24), H = C.hair;
+    body(s, { tunic: C.skin, dark: C.skinSh, trim: C.skin, pants: C.skin, boots: C.skin, bootsHi: '#f8d4b4', sole: C.skinSh, belt: '#c8323c', buckle: '#c8323c' });
+    s.r(8, 18, 8, 2, '#c8323c');
+    s.hl(9, 14, 18, '#e85a5a', true);
+    s.p(11, 19, '#8c1f2e');
+    s.p(11, 16, C.skinSh, true); // nombril
+    s.r(8, 5, 8, 3, H);
+    for (const [x, y] of [[8, 4], [10, 3], [11, 4], [13, 3], [15, 4], [16, 5]]) s.p(x, y, H);
+    s.v(7, 6, 10, H); s.v(16, 6, 10, H);
+    s.p(9, 8, H); s.p(12, 8, H); s.p(14, 8, H); s.p(15, 8, H);
+    s.p(10, 5, '#8a5a34', true); s.p(13, 6, '#8a5a34', true);
+    s.v(18, 10, 17, '#c8945a');
+    s.p(18, 11, '#e0b07a', true);
+    s.hl(17, 19, 18, '#8a5a32');
+    s.v(18, 19, 20, C.grip);
+    return s;
+  },
+  // Kael façon jeu de blocs : tête carrée, t-shirt turquoise, pioche.
+  'kael-cube'() {
+    const s = new Spr(24, 24), B = '#4a3020';
+    body(s, { tunic: '#2fa8b0', dark: '#1e7a84', trim: '#2fa8b0', pants: '#3a48a8', boots: '#6a6a72', bootsHi: '#8a8a92', sole: '#3a3a42', belt: '#3a48a8', buckle: '#3a48a8', mouth: false });
+    s.r(8, 18, 8, 2, '#3a48a8');
+    s.r(8, 5, 8, 4, B);
+    s.hl(8, 15, 8, B);
+    s.p(8, 9, B); s.p(15, 9, B);
+    s.r(8, 9, 8, 5, '#c8906a');
+    s.p(9, 10, '#ffffff', true); s.p(10, 10, '#4a5ac8', true);
+    s.p(13, 10, '#4a5ac8', true); s.p(14, 10, '#ffffff', true);
+    s.hl(10, 13, 12, '#7a4a3a');
+    s.hl(9, 14, 13, '#8a5a3a');
+    s.p(11, 11, '#a86a4a'); s.p(12, 11, '#a86a4a');
+    // pioche
+    s.sline(19, 20, 19, 8, '#8a5a32');
+    s.hl(16, 22, 7, '#9aa4ae');
+    s.p(16, 8, '#9aa4ae'); s.p(22, 8, '#9aa4ae');
+    s.hl(17, 21, 7, '#c8d2dc', true);
+    return s;
+  },
+  // Armure intégrale de diamant, épée de diamant.
+  'kael-diamant'() {
+    const s = new Spr(24, 24), D = { c: '#4fd8e0', hi: '#c8f6ff', dk: '#2a9ab0' };
+    body(s, { tunic: D.c, dark: D.dk, trim: D.hi, pants: D.dk, boots: D.c, bootsHi: D.hi, sole: '#1e6a80', belt: D.dk, buckle: D.hi, cape: '#2a6ab0' });
+    pauldrons(s, { c: D.c, hi: D.hi });
+    s.r(8, 3, 8, 5, D.c);
+    s.hl(9, 14, 2, D.c);
+    s.hl(7, 16, 8, D.c);
+    s.r(9, 3, 2, 2, D.hi, true);
+    s.v(12, 3, 7, D.dk);
+    s.v(7, 9, 12, D.c); s.v(16, 9, 12, D.c);
+    s.p(9, 13, D.c); s.p(14, 13, D.c);
+    s.v(18, 1, 17, D.c); s.v(19, 2, 17, D.c);
+    s.v(18, 3, 14, D.hi, true);
+    s.hl(17, 20, 18, D.dk);
+    s.v(18, 19, 20, C.grip);
+    s.p(18, 21, D.hi);
+    for (const [x, y] of [[21, 3], [4, 9], [20, 13]]) s.spark(x, y, '#ffffff');
+    return s;
+  },
+  // Lyra en pirate : bandana, cache-œil, marinière, sabre.
+  'lyra-pirate'() {
+    const s = new Spr(24, 24), R = '#c8323c';
+    body(s, { tunic: '#f2eef4', dark: '#c8c0d0', trim: R, pants: '#4a3a52', boots: '#2a2228', bootsHi: '#4a4048', sole: '#140d11', belt: '#5a3f2e' });
+    for (const y of [15, 17]) s.hl(8, 15, y, R);
+    s.hl(6, 7, 15, R); s.hl(16, 17, 15, R);
+    s.r(8, 5, 8, 3, R);
+    s.hl(9, 14, 4, R);
+    s.p(7, 7, R); s.p(6, 8, R); s.p(5, 9, '#8c1f2e'); s.p(6, 9, R);
+    s.p(10, 5, '#ffffff', true); s.p(13, 6, '#ffffff', true);
+    s.hl(8, 15, 8, C.hair);
+    s.v(7, 8, 11, C.hair); s.v(16, 8, 11, C.hair);
+    s.r(12, 10, 3, 2, '#1a1320', true);
+    s.sline(9, 9, 16, 9, '#1a1320');
+    s.p(13, 12, BLUSH, true);
+    // sabre courbe à gauche
+    s.v(4, 10, 17, '#b9c6d2');
+    s.p(5, 9, '#b9c6d2'); s.p(5, 10, '#e4ecf3', true);
+    s.hl(3, 6, 18, C.gold);
+    s.v(4, 19, 20, C.grip);
+    return s;
+  },
+  // Elio en pyjama étoilé, bonnet de nuit, pantoufles, bougie.
+  'elio-pyjama'() {
+    const s = new Spr(24, 24), P = '#8ab4f0', PD = '#5a84c8', B = CLASS.elio.beard;
+    body(s, { tunic: P, dark: PD, trim: '#ffffff', pants: P, boots: '#f08ab8', bootsHi: '#ffc0d8', sole: '#c85a8a', belt: PD, buckle: '#fbe08a', mouth: false });
+    for (const [x, y] of [[9, 15], [13, 17], [10, 19], [14, 15], [7, 16], [17, 15]]) s.p(x, y, '#fbe08a', true);
+    s.r(9, 13, 6, 3, B); s.hl(10, 13, 12, B); s.hl(10, 13, 16, B);
+    s.p(10, 14, '#b0aaa0'); s.p(12, 15, '#b0aaa0');
+    s.p(10, 9, B); s.p(13, 9, B);
+    // bonnet de nuit qui retombe, pompon
+    s.r(8, 5, 8, 3, P); s.hl(7, 16, 7, '#ffffff');
+    s.hl(10, 15, 4, P); s.hl(13, 17, 3, P); s.hl(16, 18, 4, P); s.p(18, 5, P);
+    s.r(18, 6, 2, 2, '#ffffff');
+    s.p(11, 5, '#b8d4ff', true);
+    // bougie dans son bougeoir
+    s.hl(17, 20, 18, '#e0a93a');
+    s.v(18, 14, 17, '#f2ead6');
+    s.p(18, 13, '#ffb030', true); s.p(18, 12, '#fbe08a', true);
+    return s;
+  },
+  // Séra en sorcière : grand chapeau noir, robe violette, balai.
+  'sera-sorciere'() {
+    const s = new Spr(24, 24), K = '#2a2234', V = '#6a3aa8';
+    body(s, { tunic: K, dark: '#160f1c', trim: V, pants: K, boots: K, bootsHi: '#4a3e5a', sole: '#0e0a12', robe: true, belt: V, buckle: '#9af098' });
+    s.hl(8, 15, 8, '#e8c070');
+    s.v(7, 8, 13, '#e8c070'); s.v(16, 8, 13, '#e8c070');
+    s.p(10, 8, '#fff0b0', true);
+    // chapeau pointu à large bord, ruban violet, boucle
+    s.hl(5, 18, 7, K);
+    s.hl(8, 15, 6, V);
+    s.p(11, 6, '#9af098', true);
+    s.hl(9, 14, 5, K); s.hl(9, 13, 4, K); s.hl(10, 13, 3, K); s.hl(10, 12, 2, K); s.hl(9, 11, 1, K); s.p(8, 0, K);
+    s.p(10, 3, '#4a3e5a', true);
+    // balai à gauche
+    s.v(4, 6, 19, '#8a5a32');
+    s.p(4, 8, '#a8703a', true);
+    s.r(3, 20, 3, 3, '#d8b060'); s.p(2, 22, '#d8b060'); s.p(6, 22, '#d8b060');
+    s.hl(3, 5, 20, '#8a6a3a');
+    return s;
+  },
+  // Volt livreur de pizza : casquette, polo rouge, boîte à pizza.
+  'volt-pizza'() {
+    const s = new Spr(24, 24), R = '#d83a3a';
+    body(s, { tunic: R, dark: '#a02a2a', trim: '#ffffff', pants: '#3a48a8', boots: '#f2eef4', bootsHi: '#ffffff', sole: '#8a8a92', belt: '#2a2234' });
+    s.r(8, 4, 8, 3, R); s.hl(9, 14, 3, R);
+    s.hl(14, 18, 7, '#a02a2a');
+    s.r(10, 4, 3, 2, '#ffffff', true); s.p(11, 5, R, true);
+    s.v(7, 7, 10, V_HAIR); s.v(16, 7, 9, V_HAIR); s.hl(8, 15, 7, V_HAIR);
+    s.p(12, 12, C.mouth, true);
+    // pile de boîtes à pizza
+    s.r(16, 15, 7, 2, '#c8945a'); s.r(16, 17, 7, 2, '#b07a42');
+    s.hl(16, 22, 15, '#e0b07a', true);
+    s.p(19, 16, '#d83a3a', true); s.p(18, 18, '#fbe08a', true);
+    return s;
+  },
+  // Volt en samouraï : armure rouge et or, casque à croissant d'or, katana.
+  'volt-samourai'() {
+    const s = new Spr(24, 24), R = '#b8283a', RD = '#7a1828', G = C.gold;
+    body(s, { tunic: R, dark: RD, trim: G, pants: '#2a2234', boots: '#2a2234', bootsHi: '#4a3e5a', sole: '#0e0a12', belt: '#2a2234', buckle: G, mouth: false, cape: '#2a2234' });
+    for (const y of [15, 17]) s.hl(9, 14, y, RD);
+    pauldrons(s, { c: R, hi: G });
+    // kabuto et croissant
+    s.r(8, 4, 8, 4, '#2a2234'); s.hl(7, 16, 8, R); s.hl(6, 7, 9, R); s.hl(16, 17, 9, R);
+    s.p(8, 2, G); s.p(9, 3, G); s.p(14, 3, G); s.p(15, 2, G); s.p(7, 1, G); s.p(16, 1, G);
+    s.r(11, 5, 2, 2, G, true);
+    s.r(8, 12, 8, 2, '#3a2a4a');
+    s.p(13, 13, '#e2334a', true);
+    // katana
+    s.v(19, 1, 17, '#d8e0e8'); s.v(19, 2, 10, '#ffffff', true);
+    s.hl(18, 20, 18, G);
+    s.v(19, 19, 21, '#2a2234'); s.p(19, 20, R, true);
+    for (const [x, y] of [[21, 4], [3, 6]]) s.spark(x, y, C.goldHi);
+    return s;
+  },
+};
+const V_HAIR = '#2a2234';
+
+export function skinSprite(id) {
+  return SKIN_DRAW[id]();
+}
+
 // ---------------------------------------------------------------- ennemis
 
 function slime() {

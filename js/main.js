@@ -1,8 +1,8 @@
 // Interface du jeu (écran horizontal).
 // Trois pièces côte à côte qu'on parcourt en balayant : Équipe · Camp · Invocation.
 // Au camp, on touche la porte pour partir au combat.
-import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
-import { heroSprite, coinSprite, starSprite, rankGemSprite } from './sprites.js';
+import { HEROES, HERO_IDS, RARITY, RANK_NAMES, UPGRADE, GACHA, SKIN_GACHA, DAILY_GOLD, heroStats, stage } from './data.js';
+import { heroSprite, skinSprite, SKINS, coinSprite, starSprite, rankGemSprite } from './sprites.js';
 import { spriteCanvas, bitmap, drawFx } from './render.js';
 import { state, save, resetSave } from './state.js';
 import { Battle, W, H } from './battle.js';
@@ -31,6 +31,15 @@ const ROOM_NAMES = { team: 'Équipe', camp: 'Camp', summon: 'Invocation' };
 const heroCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}`, () => heroSprite(id, rank), k);
 const lockedCanvas = (id, rank, k) => spriteCanvas(`h-${id}-${rank}-lock`, () => heroSprite(id, rank).silhouette(LOCKED), k);
 const icon = (name, k = 2) => spriteCanvas('ico-' + name, () => iconSprite(name), k);
+// Apparence d'un héros : sa tenue (skin) s'il en porte une — la même à tous les rangs —, sinon le
+// dessin de son rang. skin : forcer une tenue (null : tenue d'origine).
+const look = (id, rank, skin = state.wear[id]) => (skin
+  ? { key: 'skin-' + skin, make: () => skinSprite(skin) }
+  : { key: `h-${id}-${rank}`, make: () => heroSprite(id, rank) });
+const lookCanvas = (id, k) => {
+  const lk = look(id, state.owned[id].rank);
+  return spriteCanvas(lk.key, lk.make, k);
+};
 
 function starsRow(rar, k = 1) {
   const d = el('div', 'stars');
@@ -44,7 +53,7 @@ function rankGems(rank, k = 2) {
 }
 
 // Portrait : le héros debout dans un coin de la salle d'armes (mur + dalles), avec son ombre.
-function portrait(id, rank, k, w = 28, h = 30, locked = false) {
+function portrait(id, rank, k, w = 28, h = 30, locked = false, lk = null) {
   const c = el('canvas', 'px');
   c.width = w;
   c.height = h;
@@ -54,7 +63,7 @@ function portrait(id, rank, k, w = 28, h = 30, locked = false) {
   g.drawImage(sceneBackground('teamRoom'), 216 - (w >> 1), 92 - h, w, h, 0, 0, w, h);
   const bm = locked
     ? bitmap(`h-${id}-1-lock`, () => heroSprite(id, 1).silhouette(LOCKED))
-    : bitmap(`h-${id}-${rank}`, () => heroSprite(id, rank));
+    : lk ? bitmap(lk.key, lk.make) : bitmap(`h-${id}-${rank}`, () => heroSprite(id, rank));
   g.globalAlpha = 0.45;
   g.fillStyle = OUTLINE;
   g.fillRect((w >> 1) - 6, h - 4, 12, 2);
@@ -265,7 +274,7 @@ setInterval(() => {
 function drawCampLife(g) {
   const spots = [[124, 96], [136, 86], [176, 94]];
   state.team.forEach((id, i) => {
-    const bm = bitmap(`h-${id}-${state.owned[id].rank}`, () => heroSprite(id, state.owned[id].rank));
+    const lk = look(id, state.owned[id].rank), bm = bitmap(lk.key, lk.make);
     const x = spots[i][0] - (bm.w >> 1), y = spots[i][1] - bm.h - ((Math.floor(roomStep / 2) + i) % 2);
     g.drawImage(bm.canvas, x, y);
     drawFx(g, bm, x, y, roomStep);
@@ -274,8 +283,18 @@ function drawCampLife(g) {
 
 // L'autel d'invocation, à la place choisie par layoutSummon (pixels d'art).
 let summonAltarX = 110;
+// Pendant un changement d'autel, seule la pierre glisse : l'ancienne sort, la nouvelle arrive.
 function drawAltar(g) {
-  altar(g, summonAltarX, roomStep, altarCharge);
+  const sw = altarSwap;
+  if (!sw) return altar(g, summonAltarX, roomStep, altarCharge, summonKind);
+  const q = Math.min(1, (performance.now() - sw.t0) / (sw.bump ? 260 : SWAP_MS));
+  if (sw.bump) {
+    const d = Math.round(Math.sin(q * Math.PI) * 6) * -sw.dir;
+    return altar(g, summonAltarX + d, roomStep, false, summonKind);
+  }
+  const p = Math.floor(q * 8) / 8, off = Math.round(p * SWAP_DIST) * sw.dir;
+  altar(g, summonAltarX - off, roomStep, false, sw.from);
+  altar(g, summonAltarX - off + SWAP_DIST * sw.dir, roomStep, false, sw.to);
 }
 
 // ---------------------------------------------------------------- camp
@@ -389,6 +408,19 @@ function card(id, opts = {}) {
   if (opts.badge) c.appendChild(el('div', 'badge ' + (opts.badgeCls || ''), opts.badge));
   return c;
 }
+// Face de carte d'une tenue : le héros qui la porte, le nom de la tenue sur le ruban.
+function skinCard(skinId, opts = {}) {
+  const sk = SKINS.find((x) => x.id === skinId), k = opts.k || 2;
+  const c = el('div', `card face r-${sk.rarity}`);
+  const win = el('div', 'c-win');
+  win.appendChild(portrait(sk.hero, 1, k, 28, 30, false, look(sk.hero, 1, skinId)));
+  c.appendChild(win);
+  c.appendChild(el('div', 'c-name', sk.name));
+  c.appendChild(starsRow(sk.rarity, k > 2 ? 2 : 1));
+  c.appendChild(el('div', 'rank', `Tenue · ${HEROES[sk.hero].name}`));
+  if (opts.badge) c.appendChild(el('div', 'badge', opts.badge));
+  return c;
+}
 const canUpgrade = (id) => {
   const o = state.owned[id];
   return o && o.rank < 5 && o.frags >= UPGRADE[o.rank - 1].frags;
@@ -417,7 +449,7 @@ function renderTeam() {
   HERO_IDS.forEach((id, i) => {
     const own = state.owned[id], pos = state.team.indexOf(id);
     const b = el('div', 'r-sign' + (id === selected ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
-    b.appendChild(own ? heroCanvas(id, own.rank, 2) : lockedCanvas(id, 1, 2));
+    b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
     const nm = el('div', 'r-name', own ? HEROES[id].name : '???');
     nm.appendChild(starsRow(HEROES[id].rarity));
     b.appendChild(nm);
@@ -580,19 +612,13 @@ function layoutTeam() {
 
 // ---- vestiaire (skins)
 
-// Skins de chaque héros : [{ name, recolor: { ancienne couleur: nouvelle } }]. Aucun pour l'instant ;
-// la tenue d'origine est toujours en tête de liste, et des emplacements « Bientôt » suivent.
-const SKINS = {};
-const SKIN_SOON = 3;
-let teamMode = null, skinT0 = 0, skinOut = false, skinPreview = 0;
+// Les tenues (SKINS, js/sprites.js) s'obtiennent à l'autel des tenues ; la tenue d'origine est
+// toujours en tête de liste. skinPreview : la tenue essayée (null : tenue d'origine).
+let teamMode = null, skinT0 = 0, skinOut = false, skinPreview = null;
 let skinBoom = [false, false, false], skinLanded = false;
 const SKIN_IN = 800, SKIN_BACK = 1000; // durées de l'ouverture et du retour
 
-const skinList = (id) => [{ name: 'Tenue d’origine' }, ...(SKINS[id] || [])];
-const skinnedSprite = (id, rank, i) => {
-  const sk = skinList(id)[i];
-  return sk?.recolor ? heroSprite(id, rank).recolor(sk.recolor) : heroSprite(id, rank);
-};
+const skinList = (id) => [{ id: null, name: 'Tenue d’origine' }, ...SKINS.filter((sk) => sk.hero === id)];
 
 // x (pixels d'art) où se place le héros pendant le vestiaire : au milieu entre la colonne des
 // héros et la plaque du vestiaire.
@@ -661,7 +687,7 @@ function enterSkins(id) {
   teamMode = 'skins';
   skinOut = false;
   skinT0 = performance.now();
-  skinPreview = 0;
+  skinPreview = state.wear[id] || null;
   skinBoom = [false, false, false];
   skinLanded = false;
   $('#scr-team').classList.add('skins');
@@ -692,24 +718,27 @@ function dropSkins(id) {
   }, 380);
 }
 
-// La plaque des skins : une liste qu'on fait défiler de haut en bas ; toucher un skin
-// l'essaie sur le héros, au centre de la salle.
+// La plaque des skins : une liste qu'on fait défiler de haut en bas ; toucher une tenue obtenue
+// l'essaie sur le héros, au centre de la salle ; « Porter » la garde (partout, à tous les rangs).
 function renderSkins(id) {
-  const box = $('#t-skins'), own = state.owned[id], list = skinList(id);
+  const box = $('#t-skins'), own = state.owned[id], worn = state.wear[id] || null;
   box.innerHTML = '';
   box.appendChild(el('div', 'd-name', 'Vestiaire'));
-  box.appendChild(el('div', 'd-line', `${HEROES[id].name} · touche un skin pour l’essayer`));
+  box.appendChild(el('div', 'd-line', `${HEROES[id].name} · touche une tenue pour l’essayer`));
   const ul = el('div', 'sk-list');
-  list.forEach((sk, i) => {
-    const row = el('button', 'sk-row' + (i === skinPreview ? ' on' : ''));
-    row.appendChild(spriteCanvas(`h-${id}-${own.rank}-s${i}`, () => skinnedSprite(id, own.rank, i), 2));
-    row.appendChild(el('div', 'sk-txt', `<b>${sk.name}</b><small>${i === 0 ? 'Porté' : i === skinPreview ? 'Essayé' : 'Disponible'}</small>`));
+  skinList(id).forEach((sk) => {
+    const has = !sk.id || state.skins[sk.id], lk = look(id, own.rank, sk.id);
+    const row = el('button', 'sk-row' + (sk.id === skinPreview ? ' on' : '') + (has ? '' : ' soon'));
+    row.appendChild(has ? spriteCanvas(lk.key, lk.make, 2) : spriteCanvas(lk.key + '-lock', () => lk.make().silhouette(LOCKED), 2));
+    const txt = el('div', 'sk-txt', `<b>${has ? sk.name : '???'}</b><small>${sk.id === worn ? 'Portée' : sk.id === skinPreview ? 'Essayée' : has ? 'Disponible' : 'À l’autel des tenues'}</small>`);
+    if (sk.rarity) txt.appendChild(starsRow(sk.rarity));
+    row.appendChild(txt);
     row.onclick = () => {
-      if (i === skinPreview) return;
-      skinPreview = i;
+      if (!has) return sfx('denied');
+      if (sk.id === skinPreview) return;
+      skinPreview = sk.id;
       const c = $('#team-canvas'), k = c.clientWidth / CAMP_W, f = teamSlots.find((sl) => sl.depth > 0.9);
-      const px = c.offsetLeft + skinCenterX() * k, py = f ? f.sy - 40 : innerHeight / 2;
-      sparks(px, py, '#ff8ad8', 20, 1.6);
+      sparks(c.offsetLeft + skinCenterX() * k, f ? f.sy - 40 : innerHeight / 2, '#ff8ad8', 20, 1.6);
       slotFlash[teamSlots.indexOf(f)] = performance.now() + 240;
       teamAnimFor(300);
       sfx('select');
@@ -721,19 +750,33 @@ function renderSkins(id) {
     };
     ul.appendChild(row);
   });
-  for (let i = 0; i < SKIN_SOON; i++) {
-    const row = el('div', 'sk-row soon');
-    row.appendChild(lockedCanvas(id, own.rank, 2));
-    row.appendChild(el('div', 'sk-txt', '<b>???</b><small>Bientôt</small>'));
-    ul.appendChild(row);
-  }
   // le doigt fait défiler la liste sans changer de pièce
   ul.addEventListener('pointerdown', (e) => e.stopPropagation());
   ul.addEventListener('pointerup', (e) => e.stopPropagation());
   box.appendChild(ul);
+  const row = el('div', 'sk-actions');
+  if (skinPreview !== worn) {
+    const wear = el('button', 'btn gold', 'Porter');
+    wear.onclick = () => {
+      if (skinPreview) state.wear[id] = skinPreview;
+      else delete state.wear[id];
+      save();
+      const c = $('#team-canvas'), k = c.clientWidth / CAMP_W, f = teamSlots.find((sl) => sl.depth > 0.9);
+      sparks(c.offsetLeft + skinCenterX() * k, f ? f.sy - 40 : innerHeight / 2, '#fbe08a', 30, 2);
+      sfx('levelUp');
+      haptic(20);
+      const top = $('#t-skins .sk-list').scrollTop;
+      renderTeam();
+      renderSkins(id);
+      paintSign(box);
+      $('#t-skins .sk-list').scrollTop = top;
+    };
+    row.appendChild(wear);
+  }
   const back = el('button', 'btn', 'Retour');
   back.onclick = exitSkins;
-  box.appendChild(back);
+  row.appendChild(back);
+  box.appendChild(row);
 }
 
 // Referme le vestiaire : la plaque tombe, la fiche revient du ciel, les socles retombent à leur
@@ -757,7 +800,7 @@ function exitSkins() {
   setTimeout(() => {
     teamMode = null;
     skinOut = false;
-    skinPreview = 0;
+    skinPreview = null;
     $('#scr-team').classList.remove('skins');
     heroSigns();
   }, SKIN_BACK + 40);
@@ -768,7 +811,7 @@ function resetSkins() {
   if (!teamMode) return;
   teamMode = null;
   skinOut = false;
-  skinPreview = 0;
+  skinPreview = null;
   const box = $('#t-skins');
   box.getAnimations().forEach((a) => a.cancel());
   box.classList.add('hidden');
@@ -810,7 +853,7 @@ function dragSource(elm, id, slot) {
 
 function beginDrag(id, from) {
   const own = state.owned[id], g = el('div', 't-ghost');
-  g.appendChild(heroCanvas(id, own.rank, 3));
+  g.appendChild(lookCanvas(id, 3));
   document.body.appendChild(g);
   teamDrag = { id, from, over: null, ghost: g, last: null };
   $('#t-slots').classList.add('dragging');
@@ -963,14 +1006,12 @@ function drawTeamLife(g) {
       dy = -(Math.floor(now / 90) % 2) * 2;
     }
     const flip = run && !sk.back; // ils regardent là où ils courent
-    const skin = front && sk.on ? skinPreview : 0;
-    const key = `h-${id}-${own.rank}` + (flip ? '-f' : '') + (skin ? '-s' + skin : '');
-    const bm = bitmap(key, () => {
-      const sp = skinnedSprite(id, own.rank, skin);
-      return flip ? sp.flip() : sp;
-    });
+    // au vestiaire, celui de devant porte la tenue qu'on essaie
+    const lk = look(id, own.rank, front && sk.on ? skinPreview : state.wear[id]);
+    const key = lk.key + (flip ? '-f' : '');
+    const bm = bitmap(key, () => (flip ? lk.make().flip() : lk.make()));
     const white = now < slotFlash[i] && roomStep % 2 === 0;
-    const img = white ? bitmap(`h-${id}-${own.rank}-w`, () => heroSprite(id, own.rank).silhouette('#ffffff')) : bm;
+    const img = white ? bitmap(lk.key + '-w', () => lk.make().silhouette('#ffffff')) : bm;
     const bx = x - (bm.w >> 1) + dx, by = fy - bm.h - ((Math.floor(roomStep / 2) + i) % 2) + dy;
     g.globalAlpha = 0.4;
     g.fillStyle = OUTLINE;
@@ -987,7 +1028,7 @@ function drawTeamLife(g) {
     // au fond : dans la pénombre
     if (!front && !over) {
       g.globalAlpha = 0.45;
-      g.drawImage(bitmap(key + '-d', () => (flip ? heroSprite(id, own.rank).flip() : heroSprite(id, own.rank)).silhouette(OUTLINE)).canvas, bx, by);
+      g.drawImage(bitmap(key + '-d', () => (flip ? lk.make().flip() : lk.make()).silhouette(OUTLINE)).canvas, bx, by);
       g.globalAlpha = 1;
     }
   }
@@ -1041,33 +1082,58 @@ async function upgrade(id) {
 
 // Même langage que le combat : deux pancartes en arc autour du cristal (×1, ×10),
 // une plaque de bois avec les taux et la pitié, puis un rituel avant la révélation.
-let summoning = false;
+// Deux autels : les héros (cristal violet) et les tenues (cristal vert, vêtements au sol) ;
+// on passe de l'un à l'autre en faisant glisser la pierre.
+let summoning = false, summonKind = 'hero';
 
-function renderSummon() {
+function renderSummon(layout = true) {
   const info = $('#s-info');
   info.innerHTML = '';
-  info.appendChild(el('div', 'h', 'Autel d’invocation'));
-  const line = el('div', 'lineup');
-  HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 2) : lockedCanvas(id, 1, 2)));
-  info.appendChild(line);
-  for (const [k, r] of Object.entries(RARITY)) {
-    const row = el('div', 'rate');
-    row.appendChild(starsRow(k));
-    row.appendChild(el('b', '', `${r.name} · ${Math.round(r.rate * 100)} %`));
-    info.appendChild(row);
+  if (summonKind === 'skin') {
+    const owned = SKINS.filter((sk) => state.skins[sk.id]).length;
+    info.appendChild(el('div', 'h', 'Autel des tenues'));
+    const line = el('div', 'lineup wrap');
+    SKINS.forEach((sk) => {
+      const lk = look(sk.hero, 1, sk.id);
+      line.appendChild(state.skins[sk.id] ? spriteCanvas(lk.key, lk.make, 1) : spriteCanvas(lk.key + '-lock', () => lk.make().silhouette(LOCKED), 1));
+    });
+    info.appendChild(line);
+    info.appendChild(el('div', '', `Tenues obtenues : <b>${owned}/${SKINS.length}</b>`));
+    for (const [k, r] of Object.entries(RARITY)) {
+      const row = el('div', 'rate');
+      row.appendChild(starsRow(k));
+      row.appendChild(el('b', '', `${r.name} · ${Math.round(r.rate * 100)} %`));
+      info.appendChild(row);
+    }
+    info.appendChild(el('div', 'muted', `Une tenue garde son allure à tous les rangs. Doublon : +${SKIN_GACHA.dupGold} or.`));
+  } else {
+    info.appendChild(el('div', 'h', 'Autel d’invocation'));
+    const line = el('div', 'lineup');
+    HERO_IDS.forEach((id) => line.appendChild(state.owned[id] ? heroCanvas(id, 1, 2) : lockedCanvas(id, 1, 2)));
+    info.appendChild(line);
+    for (const [k, r] of Object.entries(RARITY)) {
+      const row = el('div', 'rate');
+      row.appendChild(starsRow(k));
+      row.appendChild(el('b', '', `${r.name} · ${Math.round(r.rate * 100)} %`));
+      info.appendChild(row);
+    }
+    const left = GACHA.pity - state.pity;
+    info.appendChild(el('div', '', `Légendaire garantie dans <b>${left}</b>`));
+    info.appendChild(segBar(state.pity / GACHA.pity, 'pity', 20));
+    info.appendChild(el('div', 'muted', 'Un doublon donne un éclat pour monter de rang.'));
   }
-  const left = GACHA.pity - state.pity;
-  info.appendChild(el('div', '', `Légendaire garantie dans <b>${left}</b>`));
-  info.appendChild(segBar(state.pity / GACHA.pity, 'pity', 20));
-  info.appendChild(el('div', 'muted', 'Un doublon donne un éclat pour monter de rang.'));
+  const dots = $('#s-hint .dots');
+  dots.innerHTML = '<i></i><i></i>';
+  dots.children[summonKind === 'skin' ? 1 : 0].className = 'on';
   // la mise en page dépend du canvas de la salle : on attend qu'elle soit affichée
-  requestAnimationFrame(layoutSummon);
+  if (layout) requestAnimationFrame(() => layoutSummon());
 }
 
 // Les pancartes se rangent contre la plaque d'informations ; l'autel se centre entre le bord
-// gauche et les pancartes, qui forment un arc autour de lui.
+// gauche et les pancartes, qui forment un arc autour de lui. enter : 'fan' (elles jaillissent du
+// cristal) ou 'drop' (elles tombent du haut, quand on change d'autel).
 const BIG_SIGN_HOT = 268; // largeur d'une grande pancarte visée (voir .signs.big)
-function layoutSummon() {
+function layoutSummon(enter = 'fan') {
   if (screen !== 'summon' && $('#scr-summon').classList.contains('hidden')) return;
   paintSign($('#s-info'));
   const c = $('#summon-canvas');
@@ -1079,21 +1145,95 @@ function layoutSummon() {
   const k = c.clientWidth / CAMP_W, signsLeft = $('#s-info').getBoundingClientRect().left - 24 - BIG_SIGN_HOT;
   const cx = Math.max(100, signsLeft / 2 + 8), R = Math.max(110, signsLeft - cx);
   summonAltarX = (cx - c.offsetLeft) / k;
+  const hint = $('#s-hint');
+  hint.style.left = Math.round(cx) + 'px';
+  hint.style.top = Math.round(c.offsetTop + 118 * k) + 'px';
   drawRooms(false, 'summon');
+  const skin = summonKind === 'skin', G = skin ? SKIN_GACHA : GACHA;
   layoutSigns($('#s-menu'), null, [
-    { ico: 'summon', mg: '#c08aff', label: 'Invoquer ×1', sub: `${GACHA.single} or`, showSub: true, off: state.gold < GACHA.single, go: () => ritual(1) },
-    { ico: 'summon', mg: '#ffd86a', label: 'Invoquer ×10', sub: `${GACHA.multi} or · 1 Rare min.`, showSub: true, off: state.gold < GACHA.multi, go: () => ritual(10) },
-  ], cx, (52 + innerHeight) / 2, R, 2 * Math.asin(Math.min(0.9, 58 / R)), 'big'); // centrées entre la barre du haut et le bas
+    { ico: skin ? 'skin' : 'summon', mg: skin ? '#7af06a' : '#c08aff', label: skin ? 'Tenue ×1' : 'Invoquer ×1', sub: `${G.single} or`, showSub: true, off: state.gold < G.single, go: () => ritual(1) },
+    { ico: skin ? 'skin' : 'summon', mg: '#ffd86a', label: skin ? 'Tenues ×10' : 'Invoquer ×10', sub: `${G.multi} or · 1 Rare min.`, showSub: true, off: state.gold < G.multi, go: () => ritual(10) },
+  ], cx, (52 + innerHeight) / 2, R, 2 * Math.asin(Math.min(0.9, 58 / R)), 'big', enter); // centrées entre la barre du haut et le bas
 }
+
+// ---- changer d'autel en faisant glisser la pierre
+
+// Glissement de la pierre en cours : { t0, dir (1 : la nouvelle arrive par la droite), from, to }.
+let altarSwap = null;
+const SWAP_MS = 520, SWAP_DIST = 230;
+
+function swapAltar(dir) {
+  const to = dir > 0 ? 'skin' : 'hero';
+  if (summoning || altarSwap || to === summonKind) {
+    // rien de l'autre côté : la pierre résiste un peu
+    sfx('denied');
+    altarSwap = { t0: performance.now(), dir, from: summonKind, to: summonKind, bump: true };
+    animSummon(260);
+    setTimeout(() => (altarSwap = null), 260);
+    return;
+  }
+  altarSwap = { t0: performance.now(), dir, from: summonKind, to };
+  sfx('wind');
+  haptic(15);
+  animSummon(SWAP_MS + 60);
+  // toutes les pancartes et la plaque tombent dans une gerbe de copeaux
+  const WOODS = ['#8a5a32', '#b8814a', '#5a3820', '#d49a4e'];
+  const chips = (r) => fx(Array.from({ length: 16 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-2, 2), vy: rr(-3, -0.5), g: 0.25, life: rr(22, 36) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
+  const fall = (elm, i, rot) => {
+    chips(elm.getBoundingClientRect());
+    elm.animate([{ translate: getComputedStyle(elm).translate, rotate: '0deg' }, { translate: '0 120vh', rotate: rot }], { duration: 480, delay: i * 70, easing: 'steps(8, end)', fill: 'forwards' });
+  };
+  [...$$('#s-menu .act')].forEach((a, i) => fall(a, i, i % 2 ? '10deg' : '-10deg'));
+  fall($('#s-info'), 2, '7deg');
+  sfx('wood');
+  // puis les nouvelles tombent du haut à leur place
+  setTimeout(() => {
+    summonKind = to;
+    altarSwap = null;
+    const info = $('#s-info');
+    info.getAnimations().forEach((a) => a.cancel());
+    renderSummon(false);
+    info.animate([{ translate: '0 -130vh' }, { translate: '0 10px', offset: 0.8 }, { translate: '0 0' }], { duration: 460, easing: 'steps(8, end)', fill: 'backwards' });
+    layoutSummon('drop');
+    setTimeout(() => { sfx('wood'); haptic(15); }, 420);
+  }, SWAP_MS);
+}
+
+function animSummon(ms) {
+  const end = performance.now() + ms;
+  const tick = () => {
+    drawRooms(false, 'summon');
+    if (performance.now() < end) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Glisser horizontalement sur la pierre (et pas ailleurs) change d'autel, sans changer de pièce.
+(() => {
+  let start = null;
+  $('#summon-canvas').addEventListener('pointerdown', (e) => {
+    const c = $('#summon-canvas'), [ax, ay] = toScreen(c, CAMP_W, summonAltarX, ALTAR_Y), k = c.clientWidth / CAMP_W;
+    if (Math.abs(e.clientX - ax) > 34 * k || e.clientY < ay - 34 * k || e.clientY > ay + 60 * k) return;
+    e.stopPropagation();
+    start = { x: e.clientX, y: e.clientY };
+  });
+  addEventListener('pointerup', (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    start = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.3) swapAltar(dx < 0 ? 1 : -1);
+  }, true);
+})();
 
 // Rituel : la salle s'assombrit, la magie converge vers le cristal qui charge, la salle tremble,
 // éclair blanc, puis la révélation des cartes.
 let altarCharge = false;
 async function ritual(count) {
-  const cost = count === 1 ? GACHA.single : GACHA.multi;
+  const skin = summonKind === 'skin', G = skin ? SKIN_GACHA : GACHA, cost = count === 1 ? G.single : G.multi;
   if (summoning || state.gold < cost) return;
   summoning = true;
   const sec = $('#scr-summon'), veil = $('#s-veil'), c = $('#summon-canvas');
+  const col = count > 1 ? '#fbe08a' : skin ? '#9af098' : '#c89af0';
   $('#s-menu').classList.add('hidden');
   const [cx, cy] = toScreen(c, CAMP_W, summonAltarX, ALTAR_Y);
   for (const o of [0.2, 0.4, 0.55]) {
@@ -1105,7 +1245,7 @@ async function ritual(count) {
   for (let wave = 0; wave < 4; wave++) {
     fx(Array.from({ length: 14 }, () => {
       const a = rr(0, Math.PI * 2), d = rr(70, 130), life = rr(18, 26) | 0;
-      return { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, vx: (-Math.cos(a) * d) / life, vy: (-Math.sin(a) * d) / life, g: 0, life, c: Math.random() < 0.3 ? '#ffffff' : count > 1 ? '#fbe08a' : '#c89af0', s: Math.random() < 0.4 ? 2 : 1 };
+      return { x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d, vx: (-Math.cos(a) * d) / life, vy: (-Math.sin(a) * d) / life, g: 0, life, c: Math.random() < 0.3 ? '#ffffff' : col, s: Math.random() < 0.4 ? 2 : 1 };
     }));
     haptic(8);
     await wait(150);
@@ -1116,13 +1256,14 @@ async function ritual(count) {
   await wait(300);
   veil.style.background = '#ffffff';
   veil.style.opacity = 0.85;
-  sparks(cx, cy, count > 1 ? '#fbe08a' : '#c89af0', 34, 2.2);
+  sparks(cx, cy, col, 34, 2.2);
   await wait(80);
   veil.style.background = '';
   veil.style.opacity = 0;
   altarCharge = false;
   summoning = false;
-  pull(count);
+  if (skin) pullSkins(count);
+  else pull(count);
 }
 
 function rollRarity(forceRare) {
@@ -1155,13 +1296,36 @@ function pull(count) {
   reveal(results);
 }
 
+// Invocation de tenues : mêmes taux (sans pitié), une Rare au moins sur ×10 ; un doublon rend de l'or.
+function pullSkins(count) {
+  const cost = count === 1 ? SKIN_GACHA.single : SKIN_GACHA.multi;
+  if (state.gold < cost) return;
+  state.gold -= cost;
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    const needRare = count === 10 && i === 9 && results.every((r) => r.rar === 'C');
+    const x = Math.random();
+    let rar = x < RARITY.L.rate ? 'L' : needRare || x < RARITY.L.rate + RARITY.R.rate ? 'R' : 'C';
+    let pool = SKINS.filter((sk) => sk.rarity === rar);
+    if (!pool.length) { pool = SKINS; rar = pool[0].rarity; }
+    const sk = pool[Math.floor(Math.random() * pool.length)];
+    const isNew = !state.skins[sk.id];
+    if (isNew) state.skins[sk.id] = true;
+    else state.gold += SKIN_GACHA.dupGold;
+    results.push({ skin: sk.id, rar: sk.rarity, isNew });
+  }
+  save();
+  $$('.gold-amt').forEach((g) => (g.textContent = state.gold));
+  reveal(results);
+}
+
 // Dos de carte : une petite pancarte de bois (dorée pour une Légendaire) frappée du cristal.
 function paintBack(b) {
   b.style.backgroundImage = signUrl(b.offsetWidth, b.offsetHeight, b.classList.contains('b-L') ? 'hot' : 'normal', b._seed);
   b.style.backgroundSize = '100% 100%';
 }
 
-// Révélation : dos de carte qui clignote par paliers, puis la face.
+// Révélation : dos de carte qui clignote par paliers, puis la face (héros ou tenue).
 async function reveal(results) {
   const ov = $('#reveal'), grid = $('#reveal-grid'), ok = $('#reveal-ok');
   grid.innerHTML = '';
@@ -1172,8 +1336,8 @@ async function reveal(results) {
   ok.onclick = () => { skip = true; };
   const backs = results.map((r) => {
     // Une Légendaire se cache parfois derrière un dos de Rare.
-    const b = el('div', `card back b-${r.rar === 'L' && Math.random() < 0.5 ? 'R' : r.rar}`);
-    b.appendChild(icon('summon', 3));
+    const b = el('div', `card back b-${r.rar === 'L' && Math.random() < 0.5 ? 'R' : r.rar}${r.skin ? ' skin' : ''}`);
+    b.appendChild(icon(r.skin ? 'skin' : 'summon', 3));
     b._seed = results.indexOf(r) + 3;
     grid.appendChild(b);
     paintBack(b);
@@ -1186,14 +1350,17 @@ async function reveal(results) {
       for (let b = 0; b < blinks && !skip; b++) {
         back.classList.toggle('blink');
         if (r.rar === 'L' && b === 3) {
-          back.className = 'card back b-L blink';
+          back.className = 'card back b-L blink' + (r.skin ? ' skin' : '');
           paintBack(back);
         }
         sfx('card');
         await wait(110);
       }
     }
-    const face = card(r.id, { badge: r.isNew ? 'NEW' : '+1', k: results.length > 1 ? 2 : 4 });
+    const k = results.length > 1 ? 2 : 4;
+    const face = r.skin
+      ? skinCard(r.skin, { badge: r.isNew ? 'NEW' : `+${SKIN_GACHA.dupGold}`, k })
+      : card(r.id, { badge: r.isNew ? 'NEW' : '+1', k });
     face._seed = back._seed;
     back.replaceWith(face);
     face.style.backgroundImage = signUrl(face.offsetWidth, face.offsetHeight, r.rar === 'L' ? 'hot' : 'normal', face._seed);
@@ -1250,6 +1417,7 @@ function startBattle(n) {
   $('#b-stage').textContent = `Étape ${n} · ${st.chapter.name}`;
   battle = new Battle({
     // zoom caméra d'un pixel d'écran de plus par pixel d'art : reste net (plafonné pour les petites échelles)
+    look: (id, rank) => look(id, rank),
     canvas: cv, width, height, zoom: Math.min((s + 1) / s, 1.2), team: state.team, stage: st, owned: state.owned,
     ui: { log: (t) => ($('#b-log').textContent = t), beginChoice: showMenu, endChoice: hideMenu },
     onEnd: (res) => endBattle(st, res),
@@ -1335,7 +1503,7 @@ function buildMenu(u, title, items) {
 }
 
 // items : { ico, mg (couleur magique), label, sub, sub always visible si showSub, cd, off, go }
-function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '') {
+function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '', enter = 'fan') {
   m.innerHTML = '';
   m.className = 'signs ' + cls;
   const n = items.length, span = R * Math.sin((step * (n - 1)) / 2);
@@ -1356,13 +1524,21 @@ function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '') {
     m.appendChild(row);
     first ??= [x, y];
     // les pancartes jaillissent du centre une à une et se déploient en éventail, par paliers
-    row.animate(
-      [
-        { translate: `${hx - x}px calc(-50% + ${hy - y}px)`, scale: 0.2, rotate: '0deg', opacity: 0 },
-        { translate: '0 -50%', scale: 1, opacity: 1 },
-      ],
-      { duration: 260, delay: 40 + i * 70, easing: 'steps(5, end)', fill: 'backwards' },
-    );
+    // (ou tombent du haut de l'écran et rebondissent à leur place)
+    if (enter === 'drop') {
+      row.animate(
+        [{ translate: '0 calc(-50% - 120vh)' }, { translate: '0 calc(-50% + 10px)', offset: 0.8 }, { translate: '0 calc(-50% - 3px)', offset: 0.9 }, { translate: '0 -50%' }],
+        { duration: 460, delay: 80 + i * 110, easing: 'steps(8, end)', fill: 'backwards' },
+      );
+    } else {
+      row.animate(
+        [
+          { translate: `${hx - x}px calc(-50% + ${hy - y}px)`, scale: 0.2, rotate: '0deg', opacity: 0 },
+          { translate: '0 -50%', scale: 1, opacity: 1 },
+        ],
+        { duration: 260, delay: 40 + i * 70, easing: 'steps(5, end)', fill: 'backwards' },
+      );
+    }
   });
   if (title) {
     const t = el('div', 'm-title', title);
@@ -1578,7 +1754,7 @@ function endBattle(st, res) {
   pl.className = win ? 'win' : 'lose';
   pl.appendChild(el('div', 'end-title', win ? 'Victoire !' : 'Défaite…'));
   const team = el('div', 'end-team');
-  state.team.forEach((id) => team.appendChild(heroCanvas(id, state.owned[id].rank, 3)));
+  state.team.forEach((id) => team.appendChild(lookCanvas(id, 3)));
   pl.appendChild(team);
   if (win) {
     const g = el('div', 'end-gold');

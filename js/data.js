@@ -48,6 +48,8 @@ export function heroStats(id, rank) {
 }
 
 export const GACHA = { single: 100, multi: 900, pity: 40 };
+// Invocation de tenues (skins) : prix, et or rendu pour un doublon.
+export const SKIN_GACHA = { single: 150, multi: 1350, dupGold: 50 };
 export const DAILY_GOLD = 300;
 
 // ---------------------------------------------------------------- étapes

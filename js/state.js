@@ -6,6 +6,8 @@ function fresh() {
     gold: 1000,
     owned: { kael: { rank: 1, frags: 0 } },
     team: ['kael'],
+    skins: {}, // tenues obtenues : { idDuSkin: true }
+    wear: {}, // tenue portée par héros : { idDuHéros: idDuSkin }
     best: 0, // meilleure étape gagnée
     pulls: 0,
     pity: 0,
