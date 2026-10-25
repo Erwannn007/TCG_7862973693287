@@ -2294,14 +2294,15 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
     if (busy) return;
     busy = true;
     const next = (endPage + dir + pages.length) % pages.length, len = Math.hypot(dx, dy) || 1;
+    sfx('swipe');
     const fx2 = dx + (dx / len) * 70, fy2 = dy + (dy / len) * 70;
     pl.animate([{ translate: pl.style.translate || '-50% -50%', scale: 1 }, { translate: `calc(-50% + ${Math.round(fx2)}px) calc(-50% + ${Math.round(fy2)}px)`, scale: 1.05, filter: 'brightness(1.8)' }], { duration: 140, easing: 'steps(3, end)', fill: 'forwards' });
     setTimeout(() => {
       const r = pl.getBoundingClientRect(), WOODS = ['#a8784a', '#c89660', '#7a5232', '#fbe08a'];
       fx(Array.from({ length: 30 }, () => ({ x: rr(r.left, r.right), y: rr(r.top, r.bottom), vx: rr(-3, 3) + (dx / len) * 2, vy: rr(-4, -0.5) + (dy / len) * 2, g: 0.25, life: rr(22, 38) | 0, c: WOODS[(Math.random() * 4) | 0], s: Math.random() < 0.5 ? 3 : 2 })));
       sparks(r.left + r.width / 2, r.top + r.height / 2, win ? '#fbe08a' : '#ff6a6a', 16, 1.6);
-      sfx('wood');
-      haptic(12);
+      sfx('thud');
+      haptic(25);
       pl.getAnimations().forEach((an) => an.cancel());
       at(0, 0);
       show(next);
@@ -2357,7 +2358,7 @@ function showEnd({ win, title, gold, xp, ups, notes, signs }) {
       fx(Array.from({ length: 16 }, () => ({ x: rr(r.left, r.right), y: r.bottom, vx: rr(-1.2, 1.2), vy: rr(-1.2, -0.2), g: 0.03, life: rr(20, 34) | 0, c: Math.random() < 0.5 ? '#8a7068' : '#b8a080', s: 2 })));
     }
     if (ups.length) setTimeout(() => sfx('levelUp'), 300);
-    sfx('wood');
+    sfx('thud');
     $('#scr-battle').animate(Array.from({ length: 5 }, (_, i) => ({ translate: i === 4 ? '0 0' : `0 ${i % 2 ? -3 : 3}px` })), { duration: 160, easing: 'steps(5, end)' });
     layoutSigns($('#b-end-menu'), null, signs, r.right - 60, r.top + r.height / 2, 80, 0.9); // arc assez large pour deux pancartes l'une sous l'autre
   }, 540);

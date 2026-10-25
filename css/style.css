@@ -93,7 +93,7 @@ small { font-size: 12px; }
 .btn, .tool, .icon-btn, .gold-pill, #b-queue, #modal-box, #b-log {
   border: 0 !important; border-image: none !important; background: no-repeat center; image-rendering: pixelated;
 }
-.btn:active:not(:disabled), .tool:active, .icon-btn:active { transform: translateY(2px); filter: brightness(.85); }
+.btn:active:not(:disabled), .tool:active, .icon-btn:active { transform: translate(3px, 3px); filter: brightness(.85); box-shadow: var(--depth-press); }
 .gold-pill {
   display: flex; align-items: center; gap: 6px; padding: 10px 14px; min-width: 104px;
   color: var(--gold-hi); font-weight: 700; text-shadow: 1px 1px 0 var(--line), -1px 0 0 var(--line);
@@ -430,8 +430,8 @@ small { font-size: 12px; }
 /* victoire : la pile rayonne d'or ; défaite : d'une lueur rouge sourde (par paliers) */
 #b-end[data-res='win'] #b-plaque { filter: drop-shadow(0 0 6px #fbe08a); animation: glow-win 1.2s steps(1) infinite; }
 #b-end[data-res='lose'] #b-plaque { filter: drop-shadow(0 0 6px #c8323c); animation: glow-lose 1.6s steps(1) infinite; }
-#b-end[data-res='win'] .end-back { box-shadow: 0 0 0 2px rgba(251, 224, 138, .35); }
-#b-end[data-res='lose'] .end-back { box-shadow: 0 0 0 2px rgba(200, 50, 60, .35); }
+#b-end[data-res='win'] .end-back { box-shadow: var(--depth-big), 0 0 0 2px rgba(251, 224, 138, .35); }
+#b-end[data-res='lose'] .end-back { box-shadow: var(--depth-big), 0 0 0 2px rgba(200, 50, 60, .35); }
 #b-end[data-res='lose'] #b-veil { background: #2a0a0e; }
 @keyframes glow-win { 50% { filter: drop-shadow(0 0 10px #fbe08a) drop-shadow(0 0 2px #ffffff); } }
 @keyframes glow-lose { 50% { filter: drop-shadow(0 0 9px #e2334a); } }
@@ -548,3 +548,26 @@ small { font-size: 12px; }
   font-size: max(13px, 1em); color: #f2d8a0; text-shadow: var(--txt-out);
 }
 
+/* ================================================================ profondeur
+   La lumière vient d'en haut à gauche : chaque pancarte projette une ombre nette vers le bas à
+   droite. Plus un élément est important ou proche, plus son ombre est grande ; pressé, il
+   s'enfonce et son ombre se réduit. C'est ce qui donne la priorité visuelle. */
+:root {
+  --depth-press: 1px 1px 0 rgba(14, 8, 11, .7);
+  --depth: 4px 4px 0 rgba(8, 4, 6, .85), 7px 7px 0 rgba(8, 4, 6, .35);
+  --depth-big: 7px 7px 0 rgba(8, 4, 6, .8), 12px 12px 0 rgba(8, 4, 6, .35);
+  --depth-up: 9px 9px 0 rgba(8, 4, 6, .7), 15px 15px 0 rgba(8, 4, 6, .3);
+}
+.btn, .tool, .icon-btn, .gold-pill, #b-queue, #b-log, .ribbon, .sk-arrow, .r-sign, .t-slot .num, .badge { box-shadow: var(--depth); }
+.btn.gold, .tool.on { box-shadow: var(--depth-up); }
+#modal-box, #t-info, #s-info, #t-skins, #b-plaque, .end-back { box-shadow: var(--depth-big); }
+.signs .act { box-shadow: var(--depth); }
+.signs .act.hot { box-shadow: var(--depth-up); } /* la pancarte visée se soulève */
+.signs .act.off { box-shadow: var(--depth-press); }
+.r-sign.hot { box-shadow: var(--depth-up); }
+.r-sign.in-team { box-shadow: var(--depth-press); }
+.badge, .t-slot .num { box-shadow: 0 0 0 2px var(--line), 3px 3px 0 rgba(14, 8, 11, .6); }
+/* lignes à l'intérieur des plaques : légèrement creusées */
+.end-row, .end-lvl, #t-skins .sk-row { box-shadow: inset 2px 2px 0 rgba(14, 8, 11, .45), inset -1px -1px 0 rgba(255, 220, 160, .15); }
+.end-row.mvp { box-shadow: inset 0 0 0 2px #e0a93a, 3px 3px 0 rgba(14, 8, 11, .5); }
+#t-skins .sk-row.on { box-shadow: inset 0 0 0 2px #ff8ad8, 0 0 6px #ff8ad8; }

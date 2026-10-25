@@ -128,6 +128,15 @@ const SOUNDS = {
   // charge d'une compétence : souffle qui monte et note qui grimpe
   charge: () => { whoosh(0.42, 300, 2600, 0.9); tone(220, 0.4, 0, 'square', 0.3, 880); },
   // coup sourd de bois quand on choisit une pancarte
+  // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)
+  thud: () => {
+    noise(0.14, 0, 0.9);
+    tone(140, 0.22, 0, 'square', 0.7, 45);
+    tone(70, 0.28, 0, 'triangle', 1, 35);
+    tone(220, 0.05, 0.02, 'square', 0.35, 110);
+  },
+  // une plaque qu'on fait glisser du doigt : souffle rapide
+  swipe: () => { whoosh(0.2, 600, 2600, 1.4); whoosh(0.16, 1400, 500, 0.6, 0.05); },
   wood: () => { noise(0.04, 0, 0.5); tone(170, 0.06, 0, 'square', 0.45, 90); tone(110, 0.08, 0.03, 'triangle', 0.7); },
   // les actions apparaissent une à une
   menu: () => [N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.04, 0.05 + i * 0.07, 'triangle', 0.5)),

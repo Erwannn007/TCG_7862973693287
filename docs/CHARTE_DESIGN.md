@@ -173,9 +173,14 @@ pancartes.
 | **Doré** (`.gold`, `.on`, plaque choisie, pancarte visée) | bois doré, équerres de laiton ; écriture **sombre** à liseré clair (`--txt-gold`) |
 | **Rouge** (`.red` : Fuir, Effacer la partie) | bois laqué rouge, même écriture crème contourée |
 | **Sombre** (héros déjà sur un socle) | bois sombre, écriture crème contourée |
-| **Pressé** | s'enfonce de 2 px et s'assombrit |
+| **Profondeur** | la lumière vient d'en haut à gauche : **ombre portée nette vers le bas à droite** (deux paliers, sans flou). Plus c'est important, plus l'ombre est grande : `--depth` (bouton, pancarte), `--depth-big` (plaque, fenêtre, fiche), `--depth-up` (pancarte visée, bouton doré : soulevés) |
+| **Pressé** | s'enfonce de 3 px vers le bas à droite, s'assombrit, et son ombre se réduit à 1 px (`--depth-press`) |
+| **Indisponible / hors jeu** | ombre minimale : il est « collé » au fond |
 
-Interdits : texte sombre sur le bois brun, bois clair « gravé », dégradés, cadres 9-slice
+Les lignes à l'intérieur d'une plaque (statistiques, XP, liste des tenues) sont légèrement
+**creusées** (ombre intérieure en haut à gauche).
+
+Interdits : élément plat sans ombre, texte sombre sur le bois brun, bois clair « gravé », dégradés, cadres 9-slice
 étirés, fond uni derrière un texte. Seules exceptions : les **avis de recherche** (héros pas
 encore obtenus, parchemin) et le parchemin des cartes, qui ne sont pas des pancartes.
 
@@ -228,6 +233,8 @@ Chaque geste a un son (`js/sfx.js`, ondes carrées 8 bits) et, si possible, une 
 
 | Événement | Son | Vibration |
 |---|---|---|
+| grosse plaque qui tombe ou éclate (fin de combat) | `thud` (coup sourd et gras) | 25 ms |
+| plaque qu'on fait glisser | `swipe` | — |
 | apparition des pancartes | `menu` | — |
 | passer sur une pancarte | `hover` | 5 ms |
 | choisir une pancarte | `select` + `wood` | 15 ms |
