@@ -14,6 +14,13 @@
   puis se porte au **vestiaire** (bouton Skin de l'Équipe). Elle s'affiche partout : camp,
   équipe, combat, file des tours, fin de combat.
 
+- **En combat**, une tenue a automatiquement toutes les **animations** du héros (élan, frappe,
+  incantation, garde, choc : elles sont fabriquées à partir du sprite porté) et garde les
+  **effets** du héros qui la porte (Kael en slip frappe toujours avec sa lame rouge, Volt
+  livreur de pizza garde son néon). Voir la [direction artistique](DIRECTION_ARTISTIQUE.md#29-animations-et-effets-de-combat).
+  Plus tard, une tenue pourra avoir ses propres effets (la pioche du mineur cubique qui fait
+  voler des blocs…) : il suffira de lui donner une fiche d'effets à elle.
+
 ## 2. Pop culture et clins d'œil : oui, à fond
 
 Toutes les références sont bienvenues : jeux vidéo, films, séries, animés, mangas, BD, mèmes,

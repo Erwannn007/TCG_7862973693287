@@ -100,6 +100,10 @@ doivent garder la même taille dans une même scène).
 
 ## 4. Mise en scène et caméra
 
+> Les **poses** (élan, frappe, incantation, garde, choc) et les **effets de combat** propres à
+> chaque personnage sont décrits dans la [direction artistique](DIRECTION_ARTISTIQUE.md#29-animations-et-effets-de-combat) :
+> ils valent pour les 5 rangs, toutes les tenues et tout futur héros.
+
 | Moment | Effet |
 |---|---|
 | Un combattant commence son tour | il passe devant sa ligne (14 px), ses alliés reculent (4 px), le décor s'assombrit par paliers, rai de lumière sur lui, nuage de poussière à ses pieds, son « focus » |
