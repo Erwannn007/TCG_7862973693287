@@ -33,25 +33,125 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
 - Rendu en canvas, `image-rendering: pixelated`, **échelle entière uniquement**,
   positions multiples de la taille d'un pixel. **Aucun lissage.**
 
-## 2. Proportions des personnages
+## 2. Les personnages
 
-- Héros (24×24, fonction `body` de `js/sprites.js`) : grosse tête (**8×7 px**), torse de
-  8×6, bras de 2 px détachés du torse par une ombre, jambes très courtes (**2 px**), bottes
-  de **3 px** à semelle sombre. Les pieds touchent le bas de la grille ; les rangées 0 à 4
-  servent aux casques, chapeaux et armes.
-- Visage : peau claire **`#f0bf98`**, ombre de peau **`#cf8f6a`** sous le menton, yeux =
-  **2 traits verticaux de 2 px `#21182a`**, joues roses **`#f0907a`**, bouche d'**1 pixel**
-  (ou barbe, masque). **Pas de nez.**
-- Détails de texture (voir la recette de la [charte](CHARTE_DESIGN.md)) : mèches claires dans
-  les cheveux, col et poignets brodés de la couleur `trim` de la classe, ceinture à boucle
-  d'or, ourlet brodé, lame avec gouttière et reflet, poignée gainée, veines du bois des
-  bâtons, orbe avec reflet blanc.
-- L'arme ou l'accessoire **dépasse de la silhouette sur le côté** (épée, arc, bâton
-  avec un orbe…) pour qu'on reconnaisse la classe au premier coup d'œil.
+Le style des héros : **une silhouette chibi simple, reconnaissable en un coup d'œil, enrichie de
+petits détails qu'on découvre en regardant de près** (la recette générale est dans la
+[charte](CHARTE_DESIGN.md#2-bis-simple-mais-plein-de-détails--la-recette)). Pour voir tous les
+sprites d'un coup : `node tools/sheet.mjs planche.png`.
+
+### 2.1 Le gabarit 24×24
+
+Tous les héros partagent le même corps (fonction `body` de `js/sprites.js`) ; ce qui change, c'est
+la coiffe, l'arme, les couleurs et quelques accessoires. Voici Kael au rang 1, pixel par pixel :
+
+```
+      012345678901234567890123
+y  0  ........................   ← rangées 0 à 4 : casques, chapeaux, couronnes,
+y  1  ........................     pointes d'armes (vides au rang 1)
+y  2  ........................
+y  3  ..........C..C..........   C cheveux   c mèche claire
+y  4  ........C..c...C........
+y  5  ........CCcCCCCCC.......
+y  6  .......CCCCCCcCCC.......
+y  7  .......CCCCCCCCCC.......
+y  8  .......CPCPPCPCCC.......   P peau      p ombre de peau
+y  9  .......CPPPPPPPPC.......
+y 10  .......CPPYPPYPPC.M.....   Y yeux (2 px de haut)
+y 11  ........PPYPPYPP..M.....   M arme (cuir au rang 1)
+y 12  ........PjPbPPjP..M.....   j joues     b bouche
+y 13  ........PppppppP..M.....
+y 14  ......TTTTBBBBTTTTM.....   T tunique   B broderie (col, poignets, ourlet)
+y 15  ......TTOTTBTTTOTTM.....   O ombre de la tunique (sous les bras, ourlet)
+y 16  ......TTOTTTTTTOTTM.....
+y 17  ......BBOTTTTTTOBBM.....
+y 18  ......PPGGGooGGGPGGG....   G ceinture et garde   o boucle d'or
+y 19  ......p.OBOOBOOBp.G.....
+y 20  .........JJ..JJ...G.....   J jambes
+y 21  .........JJ..JJ...M.....
+y 22  ........MMM..MMM........   bottes (métal du rang)
+y 23  ........SSS..SSS........   S semelle
+```
+
+| Partie | Zone | Règle |
+|---|---|---|
+| tête | x 8–15, y 7–13 (8×7) | la plus grosse partie du corps ; menton ombré (rangée 13) |
+| cheveux, coiffe | y 3–9, débordent de 1 px de chaque côté (x 7 et 16) | une forme simple + 2 ou 3 mèches claires |
+| torse | x 8–15, y 14–19 (8×6) | col brodé, ombre sous les bras (x 8 et 15), ceinture y 18, ourlet brodé y 19 |
+| bras | x 6–7 et 16–17, y 14–17 | 2 px de large, poignets brodés, mains de peau y 18 |
+| jambes | x 9–10 et 13–14, y 20–21 | 2 px ; cachées par la robe pour un mage ou une prêtresse |
+| bottes | x 8–10 et 13–15, y 22–23 | 3 px, métal du rang, semelle sombre, reflet sur la pointe |
+| arme | à droite x 18–19, ou à gauche x 3–5 | dépasse toujours de la silhouette ; monte jusqu'en haut aux rangs élevés |
+
+Les pieds touchent toujours le bas de la grille : le jeu pose les personnages par le bas.
+
+### 2.2 Le visage
+
+- Peau claire **`#f0bf98`**, ombre de peau **`#cf8f6a`** sous le menton.
+- **Yeux : deux traits verticaux de 2 px `#21182a`** (x 10 et 13, y 10–11), sans reflet.
+- **Joues roses `#f0907a`** sous les yeux (x 9 et 14, y 12).
+- **Bouche d'1 pixel** `#a8584a` (x 11, y 12), remplacée par une barbe ou un masque.
+- **Pas de nez, jamais.** Les sourcils sont réservés aux personnages âgés (Elio).
+- Yeux, joues, reflets et gemmes sont dessinés `flat` (l'ombrage automatique ne les touche pas).
+
+### 2.3 Tenue et textures
+
+- **4 teintes par vêtement** : couleur signature (`main`), ombre (`dark`), broderie (`trim`) et la
+  ceinture de cuir. L'ombrage automatique ajoute les reflets en haut à gauche et les ombres en
+  bas à droite.
+- **Détails obligatoires** : col et poignets brodés, ceinture à boucle d'or (avec un pixel de
+  reflet), ourlet brodé d'un point tous les 3 px, bottes à semelle.
+- **Cheveux** : une masse simple, 2 à 3 pointes ou une frange, 2 ou 3 mèches plus claires.
+- **Pas de taches** : pas de pixels sombres isolés au milieu d'un tissu (ils ressemblent à des
+  salissures). Les plis passent par les ombres sous les bras et l'ourlet.
+- **Néon et couleurs vives** : un ou deux pixels seulement (boucle, ligne du masque), sinon ils
+  mangent la silhouette.
+
+### 2.4 Les armes
+
+| Arme | Détails |
+|---|---|
+| épée | lame avec un reflet clair en haut et une gouttière plus sombre (2 px de large dès le rang 3), garde, poignée gainée de cuir, pommeau |
+| arc | bois courbe sur 3 colonnes, corde claire, poignée gainée au milieu, reflet en haut |
+| bâton | bois veiné (un pixel sombre toutes les 3 rangées), orbe avec un reflet blanc et une ombre bleue, griffes de métal dès le rang 3 |
+| bâton à anneau | anneau de métal, gemme au centre aux rangs élevés, bois veiné |
+| lame plasma | métal aux rangs 1–2, puis néon `#4ff0e8` avec un cœur blanc et un bord cyan sombre |
+
+L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
+
+### 2.5 Fiches des héros
+
+| Héros | Silhouette | Signes distinctifs | Arme |
+|---|---|---|---|
+| **Kael**, épéiste | cheveux en pointes | casque à rivets (rang 2), plumet rouge (rang 3), couronne dorée à gemme (rang 4) | épée, à droite |
+| **Lyra**, archère | capuche pointue | frange sous la capuche, carquois aux empennages blanc et rouge, plume rouge (rang 3) | arc, à gauche |
+| **Elio**, mage | grand chapeau pointu dont la pointe retombe | étoile sur le chapeau, longue barbe blanche texturée, sourcils blancs, robe longue | bâton à orbe, à droite |
+| **Séra**, prêtresse | voile blanc | liseré rose du voile, mèches dorées, étole blanche à croix d'or, robe longue | bâton à anneau, à gauche |
+| **Volt**, cyber-ninja | cheveux noirs en pointes | bandeau aux pans qui flottent, masque à ligne néon, cimier doré en V (rang 4) | lame plasma, à droite |
+
+### 2.6 Créer un nouveau héros
+
+1. **Une silhouette à lui** : une coiffe ou un accessoire qu'on reconnaît même en ombre noire
+   (le jeu affiche les héros verrouillés en silhouette).
+2. **Une couleur signature** (`main`), son ombre (`dark`), une broderie (`trim`) et une couleur
+   de jambes (`pants`) dans `CLASS`.
+3. **Une arme qui dépasse** d'un côté, différente de celles des autres.
+4. Partir de `body(s, {…})`, puis dessiner la coiffe, l'arme et 2 ou 3 détails propres au héros.
+5. Prévoir les **4 rangs** (cuir, fer, acier, or) ; le rang 5 Céleste est automatique.
+6. Vérifier sur la planche (`node tools/sheet.mjs`) : lisible en petit, sans taches, sans trop de
+   pixels vifs, et la silhouette tient seule.
+
+### 2.7 À éviter
+
+- Agrandir un sprite pour le mettre en avant (les pixels doivent rester de la même taille).
+- Un nez, des yeux d'un seul pixel, des pupilles avec reflet.
+- Des pixels sombres isolés sur les vêtements, des motifs réguliers sur tout un tissu.
+- Plus de deux pixels de néon ou de couleur fluo sur une tenue.
+- Une arme qui reste à l'intérieur de la silhouette.
 
 ## 3. Palette
 
-- Couleurs chaudes, saturées mais pas fluo, contour violet-noir.
+- Couleurs chaudes, saturées mais pas fluo, contour violet-noir `#1a1320`.
 - Palette commune : or **`#e0a93a` / `#fbe08a`**, gemme rouge **`#e2334a`**, cheveux **`#6b4428`**.
 - Métal selon le rang, chacun avec un pixel de reflet plus clair :
 
@@ -63,15 +163,17 @@ est décrit dans la [charte design](CHARTE_DESIGN.md), qui prend le mode combat 
   | 4 | or | `#e0a93a` | `#fbe08a` |
   | 5 | ivoire | `#f2ead6` | `#ffffff` |
 
-- Une couleur signature par classe :
+- Les couleurs de chaque classe (`CLASS` dans `js/sprites.js`) :
 
-  | Classe | Personnage | Signature |
-  |---|---|---|
-  | Épéiste | Kael | rouge `#c8323c` |
-  | Archère | Lyra | vert `#4f9e3c` |
-  | Mage | Elio | bleu `#3a64c8` |
-  | Prêtresse | Séra | rose `#d9548c` |
-  | Cyber-ninja | Volt | violet `#7a3cc8` (+ néon `#4ff0e8`) |
+  | Classe | Personnage | Signature `main` | Ombre `dark` | Broderie `trim` | Jambes `pants` |
+  |---|---|---|---|---|---|
+  | Épéiste | Kael | rouge `#c8323c` | `#8c1f2e` | `#f08a7a` | `#4a3a52` |
+  | Archère | Lyra | vert `#4f9e3c` | `#2f6a2a` | `#c8e08a` | `#5a4a3a` |
+  | Mage | Elio | bleu `#3a64c8` | `#26408a` | or `#e0a93a` | `#26408a` (barbe `#e8e4dc`) |
+  | Prêtresse | Séra | rose `#d9548c` | `#9a3264` | `#ffd0e0` | `#6a3a5a` |
+  | Cyber-ninja | Volt | violet `#7a3cc8` | `#4a2386` | `#a878e8` | `#2e2440` (néon `#4ff0e8`) |
+
+  Au rang 4, toutes les broderies passent à l'or.
 
 ## 4. Progression des rangs
 
