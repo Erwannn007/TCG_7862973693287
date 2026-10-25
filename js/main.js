@@ -273,7 +273,9 @@ setInterval(() => {
 
 function drawCampLife(g) {
   const spots = [[124, 96], [136, 86], [176, 94]];
-  state.team.forEach((id, i) => {
+  // du fond vers l'avant : celui dont les pieds sont le plus bas passe devant
+  const order = state.team.map((id, i) => [id, i]).sort((a, b) => spots[a[1]][1] - spots[b[1]][1]);
+  order.forEach(([id, i]) => {
     const lk = look(id, state.owned[id].rank), bm = bitmap(lk.key, lk.make);
     const x = spots[i][0] - (bm.w >> 1), y = spots[i][1] - bm.h - ((Math.floor(roomStep / 2) + i) % 2);
     g.drawImage(bm.canvas, x, y);
