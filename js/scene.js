@@ -199,6 +199,15 @@ function circleCells(cells, cx, cy, r, maxY = Infinity) {
 }
 
 // ---------------------------------------------------------------- prairie
+// Trois couches : le ciel (dessiné à part, avec nuages et oiseaux qui bougent), le décor fixe
+// (montagnes → château → collines → forêt → champ), puis les petites animations par-dessus.
+
+const P_SKY = ['#2e4fa8', '#3a5eb6', '#466cc0', '#547bc8', '#6290d2', '#74a2da', '#8ab4e2', '#a2c4e6', '#bcd4e8', '#d6e2e4'];
+const GRASS = ['#3f7a32', '#4e8c3a', '#5e9e44', '#70b04e', '#86c25c'];
+const P_SUN = (w) => [w - 44, 16];
+const backHill = (x) => Math.round(60 - (6 + 4 * Math.sin(x / 23) + 2 * Math.sin(x / 9 + 1)));
+const frontHill = (x) => Math.round(64 - (3 + 2.5 * Math.sin(x / 15 + 3) + 1.5 * Math.sin(x / 6)));
+const castleX = (w) => Math.round(w * 0.3);
 
 function cloud(g, x, y, s) {
   const cells = new Set();
@@ -206,8 +215,44 @@ function cloud(g, x, y, s) {
     circleCells(cells, x + Math.round(dx * s), y + Math.round(dy * s), Math.max(2, Math.round(r * s)), y + 3);
   }
   blob(g, cells, '#eef4fc', '#ffffff', '#c4d4ee');
+  // ventre ombré, tramé
+  for (const k of cells) {
+    const [cx, cy] = k.split(',').map(Number);
+    if (cy >= y + 1 && (cx + cy) % 2 === 0 && cells.has(cx + ',' + (cy + 1))) px(g, cx, cy, '#d6e2f4');
+  }
 }
 
+function prairieSky(g, w) {
+  P_SKY.forEach((c, i) => {
+    g.fillStyle = c;
+    g.fillRect(0, i * 6, w, 6);
+    if (i) dither(g, i * 6, w, c, P_SKY[i - 1]);
+  });
+  const [sx, sy] = P_SUN(w);
+  // halo tramé en deux anneaux autour du soleil
+  for (let y = 0; y < 44; y++)
+    for (let x = sx - 30; x < sx + 30; x++) {
+      const d = Math.hypot(x - sx, y - sy);
+      if (d < 12 && (x + y) % 2 === 0) px(g, x, y, '#cfe0f2');
+      else if (d < 18 && (x + 3 * y) % 5 === 0) px(g, x, y, '#a8c6ea');
+    }
+  // rais de lumière obliques qui descendent vers la gauche
+  g.fillStyle = '#ffffff';
+  g.globalAlpha = 0.16;
+  for (const [a, wd] of [[2.45, 0.05], [2.7, 0.035], [2.95, 0.05], [3.25, 0.03]]) {
+    for (let y = 0; y < 60; y++)
+      for (let x = 0; x < sx; x++) {
+        const d = Math.hypot(x - sx, y - sy), th = Math.atan2(y - sy, x - sx);
+        if (d > 14 && Math.abs(th - a) < wd * (1 + d / 120) && (x + 2 * y) % 3 === 0) g.fillRect(x, y, 1, 1);
+      }
+  }
+  g.globalAlpha = 1;
+  disc(g, sx, sy, 9, '#fff0b0');
+  disc(g, sx, sy, 7, '#fff8dc');
+  disc(g, sx - 1, sy - 1, 4, '#ffffff');
+}
+
+// Montagnes avec arêtes obliques, neige déchiquetée et brume au pied.
 function mountains(g, w, base, peaks, pal) {
   for (let x = 0; x < w; x++) {
     let h = 0, dom = null;
@@ -217,24 +262,47 @@ function mountains(g, w, base, peaks, pal) {
     }
     if (!dom) continue;
     const top = Math.round(base - h), lit = x < dom.x;
+    const snow = base - dom.h + 5 + Math.floor(hash(x, 7) * 3) + (Math.abs(x - dom.x) % 4 === 0 ? 2 : 0);
     for (let y = top; y < base; y++) {
       let c = lit ? pal.lit : pal.dark;
-      if (dom.h > pal.snowAt && y < base - dom.h + 6 + ((x * 7) % 3)) c = lit ? pal.snow : pal.snowDark;
+      if (y > top + 2 && (x + (lit ? y : -y) + 99) % 11 === 0) c = lit ? pal.dark : pal.mid;
+      if (dom.h > pal.snowAt && y < snow) c = lit ? pal.snow : pal.snowDark;
       if (y === top && lit) c = pal.edge;
+      if (y >= base - 2 || (y >= base - 5 && (x + y) % 2 === 0)) c = pal.haze;
       px(g, x, y, c);
     }
   }
 }
 
-function pine(g, x, base, h) {
+// Château lointain sur la colline, bleui par la distance.
+function castle(g, cx, base) {
+  const C = { wall: '#8c92c0', lit: '#a8aed4', dark: '#70789e', roof: '#7a5a8a', win: '#4a4c74' };
+  const rect = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  rect(cx - 9, base - 12, 18, 14, C.wall);
+  rect(cx - 9, base - 12, 6, 14, C.lit);
+  rect(cx + 5, base - 12, 4, 14, C.dark);
+  for (let i = 0; i < 9; i++) if (i % 2 === 0) rect(cx - 9 + i * 2, base - 14, 2, 2, C.wall);
+  // donjon et tours à toit pointu
+  for (const [tx, th, tw] of [[cx - 13, 20, 5], [cx + 9, 18, 5], [cx - 2, 25, 6]]) {
+    rect(tx, base - th, tw, th + 2, C.wall);
+    rect(tx, base - th, 2, th + 2, C.lit);
+    rect(tx + tw - 1, base - th, 1, th + 2, C.dark);
+    for (let j = 0; j <= tw >> 1; j++) rect(tx + j, base - th - 1 - j, tw - j * 2, 1, C.roof);
+    rect(tx + (tw >> 1), base - th + 4, 1, 2, C.win);
+  }
+  rect(cx - 2, base - 4, 4, 6, C.win);
+}
+
+function pine(g, x, base, h, pal = ['#1c3626', '#3e7246', '#2c5a38', '#5a9058']) {
   for (let j = 0; j < h; j++) {
     const half = Math.floor(((j + 2) / h) * 4 * (j % 3 === 2 ? 0.8 : 1));
     const y = base - h + j;
-    px(g, x - half - 1, y, '#1c3626');
-    for (let i = -half; i <= half; i++) px(g, x + i, y, i < 0 ? '#3e7246' : '#2c5a38');
-    px(g, x + half + 1, y, '#1c3626');
+    px(g, x - half - 1, y, pal[0]);
+    for (let i = -half; i <= half; i++) px(g, x + i, y, i < 0 ? pal[1] : pal[2]);
+    if (j % 3 === 0 && half > 0) px(g, x - half, y, pal[3]);
+    px(g, x + half + 1, y, pal[0]);
   }
-  px(g, x, base - h - 1, '#1c3626');
+  px(g, x, base - h - 1, pal[0]);
 }
 
 function roundTree(g, x, base, r) {
@@ -243,100 +311,263 @@ function roundTree(g, x, base, r) {
   circleCells(cells, x - r + 1, base - r + 2, r - 1);
   circleCells(cells, x + r - 1, base - r + 1, r - 1);
   blob(g, cells, '#356a3e', '#4e8a4a', '#24502e');
+  for (const k of cells) {
+    const [cx, cy] = k.split(',').map(Number);
+    if (cx < x && cy < base - r && hash(cx, cy) < 0.3) px(g, cx, cy, '#629c58');
+  }
+}
+
+// Buisson : masse de feuillage avec reflets (premier plan et coins).
+function bush(g, x, y, r, pal) {
+  const cells = new Set();
+  circleCells(cells, x, y, r);
+  circleCells(cells, x - r, y + 2, r - 2);
+  circleCells(cells, x + r, y + 1, r - 1);
+  blob(g, cells, pal[1], pal[2], pal[0]);
+  for (const k of cells) {
+    const [cx, cy] = k.split(',').map(Number);
+    if (hash(cx, cy * 3) < 0.12) px(g, cx, cy, pal[2]);
+    else if (hash(cx * 5, cy) < 0.1) px(g, cx, cy, pal[0]);
+  }
+}
+
+// Bruit lissé (valeurs aléatoires sur une grille, interpolées) et matrice de tramage ordonné 4×4.
+const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]].map((r) => r.map((v) => v / 16));
+function noise2(x, y) {
+  const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+  const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+  const a = hash(x0, y0 + 500), b = hash(x0 + 1, y0 + 500), c = hash(x0, y0 + 501), d = hash(x0 + 1, y0 + 501);
+  return (a + (b - a) * sx) * (1 - sy) + (c + (d - c) * sx) * sy;
 }
 
 function prairie(g, w) {
-  // ciel en bandes, tramées à chaque frontière
-  const SKY = ['#3a5ab8', '#4668c2', '#5278ca', '#5e88d2', '#6c98da', '#7ea8e0', '#94bae6', '#aecbea', '#cadbe8'];
-  SKY.forEach((c, i) => {
-    g.fillStyle = c;
-    g.fillRect(0, i * 6, w, 6);
-    if (i) dither(g, i * 6, w, c, SKY[i - 1]);
-  });
-  // soleil
-  disc(g, w - 44, 14, 8, '#fff0b0');
-  disc(g, w - 44, 14, 6, '#fff8dc');
-  disc(g, w - 45, 13, 3, '#ffffff');
-  // nuages
-  for (const [x, y, s] of [[26, 12, 1], [w * 0.42, 8, 1.3], [w * 0.7, 22, 0.8], [w - 30, 32, 0.6], [w * 0.2, 34, 0.6]]) cloud(g, Math.round(x), y, s);
-  // montagnes lointaines puis proches
+  // le ciel est laissé transparent : il est dessiné dessous, avec ses nuages qui défilent
   const far = [], near = [];
   for (let i = -1; i * 46 < w + 46; i++) far.push({ x: i * 46 + Math.floor(hash(i, 21) * 20), h: 18 + hash(i, 22) * 10, s: 0.7 + hash(i, 23) * 0.3 });
   for (let i = -1; i * 58 < w + 58; i++) near.push({ x: i * 58 + 20 + Math.floor(hash(i, 31) * 24), h: 22 + hash(i, 32) * 12, s: 0.8 + hash(i, 33) * 0.4 });
-  mountains(g, w, 56, far, { lit: '#9aa6d0', dark: '#8a94c2', edge: '#aab6dc', snow: '#eef2fa', snowDark: '#d4dcee', snowAt: 23 });
-  mountains(g, w, 58, near, { lit: '#7a7eb4', dark: '#64689e', edge: '#8a8ec0', snow: '#f4f6fc', snowDark: '#c8d0e8', snowAt: 28 });
-  // collines bleutées
+  mountains(g, w, 56, far, { lit: '#a2acd4', dark: '#9098c6', mid: '#9aa2cc', edge: '#b4bee0', snow: '#eef2fa', snowDark: '#d4dcee', snowAt: 23, haze: '#b8c8e2' });
+  mountains(g, w, 58, near, { lit: '#7e82b8', dark: '#666aa0', mid: '#7276ac', edge: '#9094c4', snow: '#f4f6fc', snowDark: '#c8d0e8', snowAt: 28, haze: '#9ab0d0' });
+  // collines : une rangée lointaine (avec le château), une plus proche
+  const cxs = castleX(w);
   for (let x = 0; x < w; x++) {
-    const top = Math.round(58 - (4 + 3 * Math.sin(x / 17) + 2 * Math.sin(x / 7 + 2)));
-    for (let y = top; y < 64; y++) px(g, x, y, y === top ? '#76aa82' : '#5e9270');
+    const top = backHill(x);
+    for (let y = top; y < 66; y++) px(g, x, y, y === top ? '#a6cca0' : (x + y) % 2 && y > top + 3 ? '#7aa880' : '#88b68c');
   }
-  // lisière de forêt
+  castle(g, cxs, backHill(cxs) + 1);
+  for (let x = 0; x < w; x++) {
+    const top = frontHill(x);
+    for (let y = top; y < 66; y++) px(g, x, y, y === top ? '#86bc76' : y < top + 2 ? '#70a866' : '#62995c');
+  }
+  // forêt : une rangée de sapins bleutés au fond, puis la lisière
+  for (let x = -2, i = 0; x < w + 4; i++) {
+    pine(g, x, 64, 6 + Math.floor(hash(i, 47) * 4), ['#2a4a44', '#4a7464', '#3a6050', '#5a8670']);
+    x += 4 + Math.floor(hash(i, 48) * 3);
+  }
   for (let x = -4, i = 0; x < w + 6; i++) {
-    const b = 66 + Math.floor(hash(i, 41) * 2);
+    const b = 67 + Math.floor(hash(i, 41) * 2);
     if (hash(i, 42) < 0.55) pine(g, x, b, 9 + Math.floor(hash(i, 43) * 6));
     else roundTree(g, x, b, 4 + Math.floor(hash(i, 44) * 2));
     x += 5 + Math.floor(hash(i, 45) * 4);
   }
-  // sol : bandes plus claires au loin, plus saturées devant
-  const GROUND = [[66, '#76ae50'], [74, '#68a248'], [86, '#5a963f'], [100, '#4e8a38']];
-  GROUND.forEach(([y0, c], i) => {
-    const y1 = i + 1 < GROUND.length ? GROUND[i + 1][0] : SH;
-    g.fillStyle = c;
-    g.fillRect(0, y0, w, y1 - y0);
-    if (i) dither(g, y0, w, c, GROUND[i - 1][1]);
-  });
-  g.fillStyle = '#2a4e30';
-  g.fillRect(0, 66, w, 1);
-  // chemin de terre en perspective
-  const pathAt = (y) => ({ cx: Math.round(w / 2 + Math.sin((y - 66) / 14) * 6), hw: Math.round(3 + (y - 66) * 0.5) });
-  for (let y = 67; y < SH; y++) {
-    const { cx, hw } = pathAt(y);
-    g.fillStyle = '#a8845a';
-    g.fillRect(cx - hw, y, hw * 2, 1);
-    px(g, cx - hw - 1, y, '#7a5e3e');
-    px(g, cx + hw, y, '#8a6a48');
-    if (y % 3 === 0) px(g, cx - hw + ((y * 7) % Math.max(1, hw * 2)), y, '#c4a274');
+  // champ : herbe en taches douces (bruit lissé puis tramé), plus claire au loin, ombres de nuages
+  for (let y = 67; y < SH; y++)
+    for (let x = 0; x < w; x++) {
+      let lv = y < 74 ? 3 : y < 104 ? 2 : 1;
+      const n = noise2(x / 14, y / 5) - 0.5 + (BAYER[y % 4][x % 4] - 0.5) * 0.18;
+      if (n < -0.17) lv--;
+      else if (n > 0.2) lv++;
+      const shade = [[w * 0.2, 96, 34, 7], [w * 0.75, 80, 28, 5]].some(([cx, cy, rx, ry]) => {
+        const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+        return d < 0.8 || (d < 1 && (x + y) % 2 === 0);
+      });
+      if (shade) lv--;
+      px(g, x, y, GRASS[Math.max(0, Math.min(4, lv))]);
+    }
+  // ombre de la lisière sur l'herbe
+  for (let x = 0; x < w; x++) {
+    px(g, x, 67, '#2a4e30');
+    if (x % 2) px(g, x, 68, '#3f7a32');
   }
-  for (let i = 0; i < 30; i++) {
+  // chemin de terre en perspective, avec ornières et bords mangés par l'herbe
+  const pathAt = (y) => ({ cx: Math.round(w / 2 + Math.sin((y - 66) / 14) * 6), hw: Math.round(3 + (y - 66) * 0.5) });
+  for (let y = 68; y < SH; y++) {
+    const { cx, hw } = pathAt(y);
+    g.fillStyle = '#b08c5e';
+    g.fillRect(cx - hw, y, hw * 2, 1);
+    if (hw > 6) {
+      px(g, cx - (hw >> 1), y, '#94744c');
+      px(g, cx + (hw >> 1), y, '#94744c');
+    }
+    px(g, cx - hw - 1, y, '#6e5236');
+    px(g, cx + hw, y, '#86664a');
+    if (hash(y, 3) < 0.5) px(g, cx - hw + (y % 2), y, GRASS[2]);
+    if (hash(y, 4) < 0.5) px(g, cx + hw - 1 - (y % 2), y, GRASS[1]);
+    if (y % 3 === 0) px(g, cx - hw + ((y * 7) % Math.max(1, hw * 2)), y, '#cfae7e');
+  }
+  for (let i = 0; i < 34; i++) {
     const y = 72 + Math.floor(hash(i, 51) * 46), { cx, hw } = pathAt(y);
     const x = cx - hw + 1 + Math.floor(hash(i, 52) * Math.max(1, hw * 2 - 2));
-    px(g, x, y, '#d8bc8c');
-    px(g, x + 1, y, '#8a6a48');
+    px(g, x, y, '#dcc094');
+    px(g, x + 1, y, '#86664a');
   }
   const onPath = (x, y) => { const { cx, hw } = pathAt(y); return x >= cx - hw - 2 && x <= cx + hw + 1; };
-  // touffes d'herbe (plus grandes devant), fleurs, cailloux
-  for (let i = 0; i < w * 0.9; i++) {
-    const x = Math.floor(hash(i, 61) * w), y = 69 + Math.floor(hash(i, 62) * 50);
+  // barrière de bois au loin, à gauche du chemin
+  const fy = 74;
+  for (let x = 6; x < w / 2 - 22; x++) {
+    if ((x - 6) % 7 === 0) {
+      g.fillStyle = '#3a2a1c';
+      g.fillRect(x, fy - 6, 2, 7);
+      px(g, x, fy - 6, '#8a6a48');
+    } else {
+      px(g, x, fy - 5, '#7a5a38');
+      px(g, x, fy - 3, '#7a5a38');
+      px(g, x, fy - 2, '#4a3624');
+    }
+  }
+  // panneau au bord du chemin
+  const sx = w / 2 + 14;
+  g.fillStyle = '#3a2a1c';
+  g.fillRect(sx, 66, 1, 7);
+  g.fillRect(sx - 4, 64, 10, 4);
+  g.fillStyle = '#a8784a';
+  g.fillRect(sx - 3, 65, 8, 2);
+  px(g, sx + 5, 65, '#a8784a');
+  // touffes d'herbe (plus grandes devant), fleurs en bouquets, cailloux moussus
+  for (let i = 0; i < w * 1.1; i++) {
+    const x = Math.floor(hash(i, 61) * w), y = 70 + Math.floor(hash(i, 62) * 49);
     if (onPath(x, y)) continue;
     const big = y > 92;
-    px(g, x, y, '#3e7a30');
+    px(g, x, y, '#2f6428');
     px(g, x - 1, y - 1, '#7ec050');
     px(g, x + 1, y - 1, '#6aae46');
-    if (big) { px(g, x, y - 2, '#9ad060'); px(g, x - 1, y, '#3e7a30'); px(g, x + 1, y, '#3e7a30'); }
+    if (big) { px(g, x, y - 2, '#9ad060'); px(g, x - 1, y, '#2f6428'); px(g, x + 1, y, '#2f6428'); px(g, x + 2, y - 2, '#86c25c'); }
   }
-  const FLOWERS = ['#ffffff', '#fbe08a', '#e2334a', '#c89af0', '#ffb030'];
-  for (let i = 0; i < 26; i++) {
-    const x = Math.floor(hash(i, 71) * w), y = 72 + Math.floor(hash(i, 72) * 44);
-    if (onPath(x, y)) continue;
+  const FLOWERS = ['#ffffff', '#fbe08a', '#e2334a', '#c89af0', '#ffb030', '#7ab8ff'];
+  for (let i = 0; i < 16; i++) {
+    const x0 = Math.floor(hash(i, 71) * w), y0 = 74 + Math.floor(hash(i, 72) * 40);
     const c = FLOWERS[Math.floor(hash(i, 73) * FLOWERS.length)];
-    px(g, x, y, c);
-    px(g, x + 2, y + 1, c);
-    px(g, x + 1, y + 2, '#3e7a30');
+    for (let k = 0; k < 4; k++) {
+      const x = x0 + Math.floor(hash(i, 74 + k) * 9) - 4, y = y0 + Math.floor(hash(i, 80 + k) * 5) - 2;
+      if (onPath(x, y)) continue;
+      px(g, x, y + 1, '#2f6428');
+      px(g, x, y, c);
+      if (y > 90) { px(g, x - 1, y, c); px(g, x + 1, y, c); px(g, x, y - 1, c); px(g, x, y, '#fbe08a'); }
+    }
   }
   for (let i = 0; i < 6; i++) {
     const x = Math.floor(hash(i, 81) * w), y = 80 + Math.floor(hash(i, 82) * 34);
     if (onPath(x, y)) continue;
     g.fillStyle = '#2e2a30';
-    g.fillRect(x - 1, y - 1, 6, 4);
+    g.fillRect(x - 1, y - 1, 7, 4);
     g.fillStyle = '#8a8a96';
-    g.fillRect(x, y, 4, 2);
+    g.fillRect(x, y, 5, 2);
     g.fillStyle = '#b4b4c0';
     g.fillRect(x, y, 2, 1);
+    g.fillStyle = '#5e9a44';
+    g.fillRect(x + 2, y - 1, 3, 1);
   }
-  // hautes herbes au premier plan
+  // premier plan : hautes herbes, buissons sombres dans les coins bas, feuillage qui pend en haut
   for (let x = 0; x < w; x++) {
     const h = 1 + Math.floor(hash(x, 91) * 4);
     for (let j = 0; j < h; j++) px(g, x, SH - 1 - j, j === h - 1 ? '#5a9a42' : '#2e5e2a');
+  }
+  const FG = ['#183a1c', '#24502a', '#356a34'];
+  bush(g, 6, SH - 4, 9, FG);
+  bush(g, w - 7, SH - 3, 8, FG);
+  const LEAF = ['#163420', '#21462a', '#2f5e34'];
+  for (const [x0, dir] of [[0, 1], [w - 1, -1]]) {
+    const cells = new Set();
+    for (let i = 0; i < 6; i++) circleCells(cells, x0 + dir * (i * 5), Math.round(2 + Math.sin(i * 1.3) * 2 + i * 0.6), 5 - (i >> 1));
+    blob(g, cells, LEAF[1], LEAF[2], LEAF[0]);
+    for (const k of cells) {
+      const [cx, cy] = k.split(',').map(Number);
+      if (hash(cx, cy) < 0.14) px(g, cx, cy, LEAF[2]);
+    }
+    // feuilles qui pendent au bout
+    for (let i = 0; i < 4; i++) {
+      const x = x0 + dir * (4 + i * 6), y = 8 + Math.floor(hash(i, x0) * 5);
+      px(g, x, y, LEAF[1]);
+      px(g, x, y + 1, LEAF[0]);
+    }
+  }
+}
+
+// Ciel animé : nuages qui dérivent (les petits, plus loin, vont moins vite) et vol d'oiseaux.
+const CLOUDS = [[26, 12, 1, 1], [0.42, 8, 1.3, 1.2], [0.7, 22, 0.8, 0.8], [-30, 32, 0.6, 0.6], [0.2, 36, 0.6, 0.55], [0.86, 6, 0.9, 0.9]];
+function cloudSprite(s) {
+  const key = 'cloud' + s;
+  if (!STATIC[key]) {
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(36 * s) + 8;
+    c.height = Math.ceil(14 * s) + 6;
+    cloud(c.getContext('2d'), Math.ceil(8 * s), Math.ceil(9 * s), s);
+    STATIC[key] = c;
+  }
+  return STATIC[key];
+}
+function prairieBack(g, t, w) {
+  const key = 'prairie-sky' + w;
+  if (!STATIC[key]) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = 66;
+    prairieSky(c.getContext('2d'), w);
+    STATIC[key] = c;
+  }
+  g.drawImage(STATIC[key], 0, 0);
+  for (const [x0, y, s, v] of CLOUDS) {
+    const img = cloudSprite(s), span = w + img.width;
+    const start = x0 < 0 ? w + x0 : x0 < 1 ? x0 * w : x0; // en px, ou en fraction de la largeur
+    const x = Math.floor((start + img.width + (t / 700) * v) % span) - img.width;
+    g.drawImage(img, x, y - Math.ceil(9 * s));
+  }
+  // trois oiseaux traversent le ciel de temps en temps
+  const cyc = (t / 70) % (w * 4), flap = Math.floor(t / 180) % 2;
+  if (cyc < w + 30) {
+    g.fillStyle = '#2a3050';
+    [[0, 0], [-7, 3], [-12, -2]].forEach(([dx, dy], i) => {
+      const x = Math.round(cyc - 10 + dx), y = 24 + dy + Math.round(Math.sin(t / 400 + i) * 2);
+      const f = (flap + i) % 2;
+      for (const [ox, oy] of f ? [[-2, -1], [-1, 0], [0, 0], [1, 0], [2, -1]] : [[-2, 0], [-1, -1], [0, 0], [1, -1], [2, 0]]) g.fillRect(x + ox, y + oy, 1, 1);
+    });
+  }
+}
+
+// Vie du premier plan : herbes qui ondulent, papillons, pollen, drapeau du château.
+function prairieAnim(g, step, w) {
+  // drapeau
+  const cx = castleX(w), top = backHill(cx) + 1 - 25 - 4;
+  g.fillStyle = '#4a4c74';
+  g.fillRect(cx, top - 5, 1, 5);
+  g.fillStyle = '#c84a5a';
+  g.fillRect(cx + 1, top - 5, 3, 2);
+  px(g, cx + 4, top - 5 + (step % 2), '#c84a5a');
+  // brins d'herbe qui se balancent devant
+  for (let i = 0; i < 26; i++) {
+    const x = Math.floor(hash(i, 93) * w), lean = (Math.floor(step / 3) + i) % 4 < 2 ? 0 : 1;
+    const y = SH - 2 - Math.floor(hash(i, 94) * 3);
+    px(g, x, y, '#4e8c3a');
+    px(g, x + lean, y - 1, '#6aae46');
+    px(g, x + lean * 2, y - 2, '#9ad060');
+  }
+  // papillons qui volettent
+  [[0.3, 84, '#ffffff'], [0.68, 92, '#fbe08a']].forEach(([fx, fy, c], i) => {
+    const x = Math.round(w * fx + Math.sin(step / 11 + i * 3) * 26), y = Math.round(fy + Math.sin(step / 5 + i) * 5);
+    px(g, x, y, '#2e2a30');
+    g.fillStyle = c;
+    if ((step + i) % 2) {
+      g.fillRect(x - 2, y - 1, 2, 2);
+      g.fillRect(x + 1, y - 1, 2, 2);
+    } else {
+      g.fillRect(x - 1, y - 2, 1, 2);
+      g.fillRect(x + 1, y - 2, 1, 2);
+    }
+  });
+  // pollen qui flotte dans la lumière
+  for (let i = 0; i < 12; i++) {
+    const x = Math.floor((hash(i, 97) * w + step * (0.3 + hash(i, 98) * 0.4)) % w);
+    const y = 60 + Math.floor(hash(i, 99) * 50) + Math.round(Math.sin(step / 7 + i) * 2);
+    if ((step + i * 5) % 11 < 8) px(g, x, y, (step + i) % 3 ? '#fff8dc' : '#fbe08a');
   }
 }
 
@@ -378,29 +609,180 @@ function banner(g, cx, y0, h, cloth, dark) {
   px(g, cx, y0 + 8, '#fbe08a');
 }
 
+// Assombrit les bords de l'image par tramage ordonné : le regard reste au centre.
+function vignette(g, w, col, strength = 1) {
+  g.fillStyle = col;
+  for (let y = 0; y < SH; y++)
+    for (let x = 0; x < w; x++) {
+      const d = ((x - w / 2) / (w * 0.56)) ** 2 + ((y - 64) / 78) ** 2 - 1;
+      if (d > 0 && d * 3 * strength > BAYER[y % 4][x % 4]) g.fillRect(x, y, 1, 1);
+    }
+}
+
+function chain(g, x, len) {
+  for (let y = 0; y < len; y++) {
+    px(g, x, y, y % 3 === 2 ? '#2a2228' : '#6a6068');
+    if (y % 3 === 1) px(g, x + 1, y, '#4a4048');
+  }
+  // anneau au bout
+  g.fillStyle = '#6a6068';
+  g.fillRect(x - 1, len, 3, 1);
+  g.fillRect(x - 1, len + 2, 3, 1);
+  px(g, x - 1, len + 1, '#6a6068');
+  px(g, x + 1, len + 1, '#6a6068');
+}
+
+// Sarcophage de pierre, vu de face, avec un gisant sculpté sur le couvercle.
+function sarcophagus(g, cx, by) {
+  const r = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(x, y, w, h); };
+  r(cx - 15, by - 12, 30, 13, OUTLINE);
+  r(cx - 14, by - 7, 28, 7, '#4a4048');
+  r(cx - 14, by - 7, 28, 1, '#6a6068');
+  r(cx - 14, by - 1, 28, 1, '#2a2228');
+  for (let i = -10; i <= 10; i += 5) r(cx + i, by - 5, 1, 3, '#2a2228');
+  // couvercle
+  r(cx - 15, by - 11, 30, 4, '#5c5258');
+  r(cx - 15, by - 11, 30, 1, '#8a8088');
+  // gisant
+  r(cx - 9, by - 13, 18, 2, '#7a7078');
+  r(cx - 9, by - 13, 18, 1, '#9a9098');
+  r(cx - 11, by - 14, 3, 3, '#9a9098');
+  // mousse et fissure
+  px(g, cx + 6, by - 6, '#2a2228');
+  px(g, cx + 7, by - 5, '#2a2228');
+  px(g, cx + 7, by - 4, '#2a2228');
+  r(cx - 14, by - 2, 4, 1, '#3a5a3a');
+}
+
+function bones(g, x, y, k) {
+  if (k % 2) {
+    // crâne
+    g.fillStyle = '#1a1114';
+    g.fillRect(x - 1, y - 1, 6, 5);
+    g.fillStyle = '#c8bca8';
+    g.fillRect(x, y, 4, 3);
+    g.fillStyle = '#e4dccc';
+    g.fillRect(x, y, 2, 1);
+    px(g, x + 1, y + 1, '#1a1114');
+    px(g, x + 3, y + 1, '#1a1114');
+  } else {
+    // os en travers
+    for (let i = 0; i < 6; i++) px(g, x + i, y + (i >> 1), '#b8ac98');
+    px(g, x - 1, y - 1, '#d8ccb8');
+    px(g, x + 6, y + 3, '#d8ccb8');
+  }
+}
+
 function crypte(g, w) {
   const c = w / 2, lights = [{ x: c - 30, y: 30, r: [6, 14, 26] }, { x: c + 30, y: 30, r: [6, 14, 26] }, { x: c, y: 86, r: [10, 24, 46] }];
   dungeon(g, { w, lights, pillars: [c - 114, c + 106] });
+  // voûte : nervures en arc qui retombent sur les piliers
+  for (const [x0, x1] of [[c - 114, c - 4], [c + 4, c + 114]]) {
+    const mid = (x0 + x1) / 2, half = (x1 - x0) / 2;
+    for (let x = Math.round(x0); x <= x1; x++) {
+      const y = Math.round(10 - Math.sqrt(Math.max(0, 1 - ((x - mid) / half) ** 2)) * 8);
+      px(g, x, y + 1, '#140d11');
+      px(g, x, y, '#5c4448');
+      for (let yy = 0; yy < y; yy++) if ((x + yy) % 2 === 0) px(g, x, yy, '#140d11');
+    }
+  }
   alcove(g, c - 72, 26);
   alcove(g, c + 72, 26);
   banner(g, c, 6, 22, '#8a1a28', '#6a1420');
-  // toiles d'araignée dans les coins
-  for (let i = 0; i < 9; i++) { px(g, i, 9 - i, '#8a8088'); px(g, w - 1 - i, 9 - i, '#8a8088'); }
-  for (let i = 0; i < 6; i++) { px(g, i, 4, '#6a6068'); px(g, 4, i, '#6a6068'); px(g, w - 1 - i, 4, '#6a6068'); px(g, w - 5, i, '#6a6068'); }
+  chain(g, c - 46, 18);
+  chain(g, c + 50, 12);
+  sarcophagus(g, c - 52, 77);
+  sarcophagus(g, c + 52, 77);
+  // fissures des dalles, flaques sombres, ossements
+  g.fillStyle = '#120c0e';
+  for (let i = 0; i < 8; i++) {
+    let x = Math.floor(hash(i, 111) * w), y = 80 + Math.floor(hash(i, 112) * 36);
+    for (let k = 0; k < 7; k++) {
+      g.fillRect(x, y, 1, 1);
+      x += hash(i, k + 113) < 0.5 ? 1 : -1;
+      y += 1;
+    }
+  }
+  for (let i = 0; i < 7; i++) bones(g, Math.floor(hash(i, 121) * (w - 10)) + 2, 84 + Math.floor(hash(i, 122) * 30), i);
+  // toiles d'araignée dans les coins, plus grandes
+  for (const [x0, dir] of [[0, 1], [w - 1, -1]]) {
+    for (let i = 0; i < 16; i++) {
+      px(g, x0 + dir * i, 15 - i, '#8a8088');
+      if (i < 12) px(g, x0 + dir * i, 6, i % 2 ? '#6a6068' : '#8a8088');
+      if (i < 12) px(g, x0 + dir * 6, i, i % 2 ? '#6a6068' : '#8a8088');
+    }
+    for (let i = 0; i < 9; i++) px(g, x0 + dir * (10 - Math.abs(i - 4)), 3 + i, '#6a6068');
+  }
+  vignette(g, w, '#0a0609');
+}
+
+// Brume qui rampe au sol et feux follets.
+function crypteAnim(g, step, w) {
+  torch(g, w / 2 - 30, 30, step);
+  torch(g, w / 2 + 30, 30, step + 1);
+  brazier(g, w / 2, 86, step);
+  candle(g, w / 2 - 68, 52, step);
+  candle(g, w / 2 + 76, 52, step + 1);
+  g.fillStyle = '#9a90b0';
+  g.globalAlpha = 0.16;
+  for (let y = 100; y < SH; y++)
+    for (let x = 0; x < w; x++) {
+      const n = noise2((x + step * 0.7) / 16, y / 4 + 20) + (y - 100) / 60;
+      if (n > 0.66 && BAYER[y % 4][x % 4] < (n - 0.66) * 2.5) g.fillRect(x, y, 1, 1);
+    }
+  g.globalAlpha = 1;
+  [[w / 2 - 52, 58], [w / 2 + 58, 62]].forEach(([x0, y0], i) => {
+    const x = Math.round(x0 + Math.sin(step / 9 + i * 2) * 6), y = Math.round(y0 + Math.sin(step / 4 + i) * 3);
+    g.globalAlpha = 0.35;
+    g.fillStyle = '#7af0c8';
+    g.fillRect(x - 2, y - 1, 5, 4);
+    g.globalAlpha = 1;
+    g.fillRect(x - 1, y, 3, 2);
+    px(g, x, y - 1 - (step % 2), '#7af0c8');
+    px(g, x, y, '#ffffff');
+  });
 }
 
 // ---------------------------------------------------------------- volcan
 
+// Failles de lave du sol, gardées pour les faire pulser.
+const CRACKS = {};
+function volcanCracks(sw) {
+  if (CRACKS[sw]) return CRACKS[sw];
+  const out = [];
+  for (let i = 0; i < 12; i++) {
+    let x = Math.floor(hash(i, 9) * sw), y = 74 + Math.floor(hash(i, 8) * 42);
+    for (let k = 0; k < 10; k++) {
+      out.push([x, y, i]);
+      x += 1;
+      y += hash(i, k) < 0.5 ? 0 : hash(i, k + 3) < 0.5 ? 1 : -1;
+    }
+  }
+  return (CRACKS[sw] = out);
+}
+
+// Cristal sombre qui rougeoie.
+function crystal(g, x, by, h, dir) {
+  for (let j = 0; j < h; j++) {
+    const half = Math.max(0, Math.floor((j / h) * 3));
+    const y = by - h + j;
+    for (let i = -half; i <= half; i++) px(g, x + i + Math.round((dir * (h - j)) / 4), y, i < 0 ? '#5a1a2a' : i === 0 ? '#c83040' : '#3a1020');
+  }
+  px(g, x + Math.round((dir * h) / 4), by - h, '#ff8a9a');
+}
+
 function volcan(g, sw) {
-  const lights = [{ x: sw / 2, y: 120, r: [20, 40, 70] }, { x: 30, y: 70, r: [6, 14, 26] }, { x: sw - 30, y: 66, r: [6, 14, 26] }];
+  const lights = [{ x: sw / 2, y: 120, r: [20, 40, 70] }, { x: 30, y: 70, r: [6, 14, 26] }, { x: sw - 30, y: 66, r: [6, 14, 26] }, { x: sw * 0.22, y: 40, r: [5, 10, 18] }, { x: sw * 0.78, y: 40, r: [5, 10, 18] }];
   const ROCK = ['#1c1216', '#2c1a1c', '#44221e', '#6a2e1e'];
+  // roche : lumière de la lave par paliers, veines et fissures tirées d'un bruit lissé
   for (let y = 0; y < SH; y++)
     for (let x = 0; x < sw; x++) {
-      const lv = light(lights, x, y);
-      const cell = hash(Math.floor(x / 10 + Math.floor(y / 8) * 0.5), Math.floor(y / 8));
+      let lv = light(lights, x, y);
+      const n = noise2(x / 9, y / 6 + 40);
+      if (n > 0.7 && lv < 3) lv++;
       let c = ROCK[lv];
-      if (y < 70 && (x + Math.floor(cell * 10)) % 10 === 0) c = '#120a0c';
-      if (y >= 70 && (y - 70) % 9 === 0) c = '#120a0c';
+      if (Math.abs(noise2(x / 7 + 30, y / 5) - 0.5) < 0.025) c = '#120a0c';
+      if (y >= 70 && Math.abs(noise2(x / 12 + 70, y / 3) - 0.5) < 0.03) c = '#120a0c';
       px(g, x, y, c);
     }
   // stalactites
@@ -408,42 +790,83 @@ function volcan(g, sw) {
     const x = i * 14 + Math.floor(hash(i, 101) * 8), h = 6 + Math.floor(hash(i, 102) * 14);
     for (let j = 0; j < h; j++) {
       const half = Math.max(0, Math.floor((1 - j / h) * 3));
-      for (let k = -half; k <= half; k++) px(g, x + k, j, k < 0 ? '#2c1a1c' : '#140c0e');
+      for (let k = -half; k <= half; k++) px(g, x + k, j, k < 0 ? '#2c1a1c' : k === -half ? '#44221e' : '#140c0e');
     }
   }
-  // cascades de lave au fond
+  // cascades de lave au fond, avec leur lueur tramée et un bassin qui fume
   for (const lx of [sw * 0.22, sw * 0.78]) {
     const x0 = Math.round(lx);
+    for (let y = 8; y < 64; y++) for (let dx = -6; dx <= 6; dx++) if (Math.abs(dx) > 2 && (dx + y) % 2 === 0 && Math.abs(dx) < 6 - (y % 3)) px(g, x0 + dx, y, '#7a321c');
     g.fillStyle = '#ff6a1f';
     g.fillRect(x0 - 2, 10, 5, 52);
     g.fillStyle = '#ffb030';
     g.fillRect(x0 - 1, 10, 2, 52);
+    g.fillStyle = '#5a2418';
+    g.fillRect(x0 - 3, 8, 7, 2);
   }
-  // fissures de lave
-  g.fillStyle = '#ff6a1f';
-  for (let i = 0; i < 9; i++) {
-    let x = Math.floor(hash(i, 9) * sw), y = 72 + Math.floor(hash(i, 8) * 40);
-    for (let k = 0; k < 8; k++) {
-      g.fillRect(x, y, 1, 1);
-      x += 1;
-      y += hash(i, k) < 0.5 ? 0 : hash(i, k + 3) < 0.5 ? 1 : -1;
-    }
-  }
-  // rivière de lave
+  // rivière de lave et sa lueur sur la roche au-dessus
   for (let x = 0; x < sw; x++) {
     const h = 3 + Math.round(Math.sin(x / 6) * 1.5);
+    for (let y = 64 - h - 6; y < 64 - h; y++) if ((x + y) % 2 === 0 && y > 64 - h - 6 + ((x * 3) % 3)) px(g, x, y, '#8a3a1c');
     g.fillStyle = '#ff6a1f';
     g.fillRect(x, 64 - h, 1, h);
     g.fillStyle = '#ffb030';
     if (x % 7 < 3) g.fillRect(x, 64 - h, 1, 1);
+    g.fillStyle = '#5a2418';
+    g.fillRect(x, 64, 1, 1);
   }
-  // rochers sombres au premier plan
+  // rebord du sol, éclairé par la lave
+  for (let x = 0; x < sw; x++) {
+    px(g, x, 65, '#120a0c');
+    px(g, x, 66, x % 3 ? '#8a3a1c' : '#6a2e1e');
+  }
+  // failles de lave du sol (repeintes en pulsant par l'animation)
+  for (const [x, y] of volcanCracks(sw)) {
+    px(g, x, y, '#ff6a1f');
+    if (hash(x, y) < 0.4) px(g, x, y - 1, '#8a3a1c');
+  }
+  // cristaux de part et d'autre
+  for (const [x, h, d] of [[11, 20, 1], [18, 12, 1], [5, 11, -1], [sw - 12, 21, -1], [sw - 19, 12, -1], [sw - 6, 10, 1]]) crystal(g, x, 74, h, d);
+  // rochers sombres au premier plan, liserés de rouge
   for (const [x0, dir] of [[0, 1], [sw - 1, -1]]) {
-    for (let j = 0; j < 22; j++) {
-      const h = Math.max(0, 14 - Math.floor(j * 0.7) + (j % 3));
-      for (let y = SH - h; y < SH; y++) px(g, x0 + dir * j, y, y === SH - h ? '#3a2228' : '#100a0c');
+    for (let j = 0; j < 24; j++) {
+      const h = Math.max(0, 14 - Math.floor(j * 0.65) + (j % 3));
+      for (let y = SH - h; y < SH; y++) px(g, x0 + dir * j, y, y === SH - h ? '#a83a1c' : y === SH - h + 1 ? '#3a2228' : '#100a0c');
     }
   }
+  vignette(g, sw, '#0e0608', 0.8);
+}
+
+// Lave qui pulse, bulles qui éclatent, braises qui montent, fumée sous la voûte.
+function volcanAnim(g, step, w) {
+  for (const [x, y, i] of volcanCracks(w)) if ((step + i * 2) % 8 < 3) px(g, x, y, (step + i) % 2 ? '#ffb030' : '#fbe08a');
+  for (let i = 0; i < 4; i++) {
+    const t = (step + i * 5) % 12, x = Math.floor(hash(i, 131) * w);
+    if (t < 4) {
+      const y = 62 - (t > 1 ? 1 : 0);
+      g.fillStyle = t === 3 ? '#fbe08a' : '#ffb030';
+      if (t < 3) g.fillRect(x - (t >> 1), y - t, 1 + t, 1 + (t >> 1));
+      else { px(g, x - 2, y - 3, '#fbe08a'); px(g, x + 2, y - 3, '#fbe08a'); px(g, x, y - 4, '#ffb030'); }
+    }
+  }
+  for (let i = 0; i < 9; i++) {
+    const t = (step + i * 4) % 16, x = Math.round((w / 9) * i + 12 + (t % 3) + Math.sin(t / 3) * 2);
+    px(g, x, 70 - t * 4, t < 8 ? '#ffb030' : t < 12 ? '#ff6a1f' : '#8a3a1c');
+  }
+  // reflets qui descendent dans les cascades de lave
+  for (const lx of [w * 0.22, w * 0.78]) for (let k = 0; k < 3; k++) px(g, Math.round(lx), 10 + ((step * 3 + k * 17) % 52), '#fbe08a');
+  // fumée sombre qui glisse sous la voûte
+  g.fillStyle = '#3a2a30';
+  g.globalAlpha = 0.5;
+  for (let y = 0; y < 22; y++)
+    for (let x = 0; x < w; x++) {
+      const n = noise2((x - step * 0.5) / 14, y / 5 + 60) - y / 40;
+      if (n > 0.5 && BAYER[y % 4][x % 4] < (n - 0.5) * 3) g.fillRect(x, y, 1, 1);
+    }
+  g.globalAlpha = 1;
+  // cristaux qui scintillent
+  if (step % 6 === 0) px(g, 15, 56, '#ffffff');
+  if (step % 6 === 3) px(g, w - 17, 55, '#ffffff');
 }
 
 // ---------------------------------------------------------------- pièces du camp
@@ -572,28 +995,9 @@ const SCENES = {
     },
   },
   // Les décors de combat s'adaptent à la largeur de l'écran (centre en x = w / 2).
-  prairie: { draw: prairie, anim() {} },
-  crypte: {
-    draw: crypte,
-    anim(g, step, w) {
-      torch(g, w / 2 - 30, 30, step);
-      torch(g, w / 2 + 30, 30, step + 1);
-      brazier(g, w / 2, 86, step);
-      candle(g, w / 2 - 68, 52, step);
-      candle(g, w / 2 + 76, 52, step + 1);
-    },
-  },
-  volcan: {
-    draw: volcan,
-    anim(g, step, w) {
-      for (let i = 0; i < 7; i++) {
-        const t = (step + i * 4) % 14, x = Math.round((w / 7) * i + 16 + (t % 3));
-        px(g, x, 66 - t * 4, t < 8 ? '#ffb030' : '#ff6a1f');
-      }
-      // reflets qui descendent dans les cascades de lave
-      for (const lx of [w * 0.22, w * 0.78]) for (let k = 0; k < 3; k++) px(g, Math.round(lx), 10 + ((step * 3 + k * 17) % 52), '#fbe08a');
-    },
-  },
+  prairie: { draw: prairie, back: prairieBack, anim: prairieAnim },
+  crypte: { draw: crypte, anim: crypteAnim },
+  volcan: { draw: volcan, anim: volcanAnim },
 };
 
 // Décor fixe (mis en cache), à redessiner à chaque image avant les éléments animés.
@@ -607,6 +1011,11 @@ export function sceneBackground(name, w = SW) {
     STATIC[key] = c;
   }
   return STATIC[key];
+}
+
+// Couche du fond, redessinée à chaque image sous le décor fixe (ciel animé). Absente pour la plupart des décors.
+export function sceneBack(name, g, t, w = SW) {
+  SCENES[name].back?.(g, t, w);
 }
 
 export function sceneAnim(name, g, step, w = SW) {

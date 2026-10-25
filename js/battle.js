@@ -2,7 +2,7 @@
 import { HEROES, heroStats } from './data.js';
 import { heroSprite, enemySprite } from './sprites.js';
 import { bitmap, drawFx, drawText, textWidth } from './render.js';
-import { sceneBackground, sceneAnim, SW, SH } from './scene.js';
+import { sceneBackground, sceneBack, sceneAnim, SW, SH } from './scene.js';
 import { OUTLINE } from './spr.js';
 import { sfx, haptic } from './sfx.js';
 
@@ -94,6 +94,7 @@ export class Battle {
   draw(t) {
     if (this.stopped) return;
     const g = this.g, step = Math.floor(t / 250), fstep = Math.floor(t / 140);
+    sceneBack(this.scene, g, t, this.W);
     g.drawImage(sceneBackground(this.scene, this.W), 0, 0);
     sceneAnim(this.scene, g, fstep, this.W);
     const all = [...this.heroes, ...this.enemies];
