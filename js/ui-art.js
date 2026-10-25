@@ -175,6 +175,46 @@ const ICONS = {
     s.p(5, 4, '#ffffff', true);
     s.p(12, 2, '#fbe08a', true); s.p(13, 4, '#fbe08a', true); s.p(1, 2, '#fbe08a', true);
   },
+  axe(s) { // hache
+    s.sline(3, 12, 9, 3, '#8a5a32'); s.r(8, 2, 4, 5, '#b9c6d2'); s.p(12, 3, '#b9c6d2'); s.p(12, 5, '#b9c6d2'); s.v(11, 2, 6, '#e4ecf3', true);
+  },
+  stew(s) { // marmite fumante
+    s.r(2, 7, 10, 5, '#4a4a5a'); s.hl(1, 12, 6, '#8e99a4'); s.hl(3, 10, 7, '#c8603a', true); s.p(2, 8, '#8e99a4', true);
+    for (const x of [4, 7, 10]) s.v(x, 2 + (x % 2), 4, '#efe6cf', true);
+  },
+  glove(s) { // gant de boxe
+    s.r(3, 2, 8, 7, '#d8323c'); s.r(2, 4, 1, 4, '#d8323c'); s.r(4, 9, 6, 3, '#f2eef4'); s.p(4, 3, '#ff8a8a', true); s.p(5, 3, '#ff8a8a', true);
+    s.v(7, 3, 6, '#a8203a', true);
+  },
+  gun(s) { // revolver
+    s.hl(2, 11, 4, '#8e99a4'); s.hl(2, 11, 5, '#8e99a4'); s.r(6, 6, 3, 2, '#6a7480'); s.r(8, 6, 3, 6, '#8a5a32'); s.p(3, 4, '#e4ecf3', true);
+    s.p(12, 3, '#fbe08a', true); s.spark(13, 5, '#ffffff');
+  },
+  whirl(s) { // haches qui tournent
+    s.sline(2, 2, 11, 11, '#c8d8e8'); s.sline(11, 2, 2, 11, '#c8d8e8'); s.r(1, 1, 3, 3, '#e4ecf3'); s.r(10, 10, 3, 3, '#e4ecf3');
+    s.r(10, 1, 3, 3, '#e4ecf3'); s.r(1, 10, 3, 3, '#e4ecf3'); s.p(6, 6, '#ffffff', true); s.p(7, 7, '#ffffff', true);
+  },
+  hook(s) { // hameçon
+    s.v(8, 1, 9, '#b9c6d2'); s.hl(4, 7, 11, '#b9c6d2'); s.p(8, 10, '#b9c6d2'); s.v(3, 8, 10, '#b9c6d2'); s.p(4, 8, '#e4ecf3', true);
+    s.p(8, 1, '#e4ecf3', true); s.hl(6, 10, 0, '#efe6cf');
+  },
+  comet(s) { // comète
+    s.sline(1, 1, 7, 7, '#e2552a', true); s.sline(2, 1, 8, 7, '#fbe08a', true); s.r(7, 7, 5, 5, '#c8f0ff', true); s.p(8, 8, '#ffffff', true);
+    s.spark(12, 2, '#ffffff');
+  },
+  skull(s) { // crâne et flamme verte
+    s.r(3, 3, 8, 6, '#e8e0cc'); s.r(4, 9, 6, 2, '#e8e0cc'); s.r(4, 5, 2, 2, OUTLINE, true); s.r(8, 5, 2, 2, OUTLINE, true);
+    s.p(6, 10, OUTLINE, true); s.p(8, 10, OUTLINE, true); s.v(7, 0, 2, '#7af06a', true); s.p(6, 1, '#3ab84a', true);
+  },
+  flame(s) { // flamme
+    for (const [y, a, b] of [[1, 6, 6], [2, 5, 7], [3, 5, 8], [4, 4, 8], [5, 3, 9], [6, 3, 10], [7, 2, 10], [8, 2, 10], [9, 2, 10], [10, 3, 9], [11, 4, 8]]) s.hl(a, b, y, '#ff6a1f', true);
+    for (const [y, a, b] of [[6, 6, 7], [7, 5, 8], [8, 5, 8], [9, 5, 8], [10, 6, 7]]) s.hl(a, b, y, '#fbe08a', true);
+    s.p(6, 9, '#ffffff', true);
+  },
+  dragon(s) { // tête de dragon qui crache du feu
+    s.r(1, 3, 6, 5, '#2f7a4a'); s.r(5, 5, 4, 3, '#2f7a4a'); s.p(3, 4, '#fbe08a', true); s.sline(1, 3, 0, 0, '#efe6cf'); s.p(8, 7, '#ffffff', true);
+    s.hl(9, 12, 6, '#ff6a1f', true); s.hl(10, 13, 7, '#fbe08a', true); s.hl(9, 11, 8, '#ff6a1f', true);
+  },
   auto(s) { // engrenage
     s.r(4, 3, 6, 8, '#8e99a4'); s.r(3, 4, 8, 6, '#8e99a4'); s.r(6, 1, 2, 2, '#8e99a4'); s.r(6, 11, 2, 2, '#8e99a4');
     s.r(1, 6, 2, 2, '#8e99a4'); s.r(11, 6, 2, 2, '#8e99a4'); s.r(6, 6, 2, 2, OUTLINE, true); s.p(4, 4, '#e4ecf3', true);

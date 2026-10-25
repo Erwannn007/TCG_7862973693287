@@ -728,6 +728,204 @@ Object.assign(FX, {
       dizzy(g, e.tx, e.ty, q, '#fbe08a', 4);
     }
   },
+  // --- Rok : la hache tombe de haut, copeaux de bois
+  axeChop(g, q, e) {
+    if (q < 0.45) slash(g, e.tx, e.ty, q * 2.2, e.dir, e.cols, 10, -170, -10);
+    else {
+      const k = (q - 0.45) / 0.55;
+      burst(g, e.tx, e.ty, k, e.cols, 7 + e.rank);
+      cubes(g, e.tx, e.ty - 2, k, ['#c8945a', '#e8c890'], 5);
+    }
+  },
+  // Abattage : une entaille verticale géante, « timber ! », l'arbre tombe… sur l'ennemi
+  timber(g, q, e) {
+    const L = Math.round(Math.min(1, q * 2.5) * 26);
+    if (q < 0.7) for (let i = 0; i < L; i++) {
+      const y = e.ty - 13 + i;
+      px(g, e.tx + Math.round(i * 0.15) * e.dir, y, i > L - 3 ? '#ffffff' : e.cols[0], 2);
+    }
+    if (q > 0.35) {
+      const k = (q - 0.35) / 0.65;
+      cubes(g, e.tx, e.ty, k, ['#8a5a32', '#c8945a', '#e8c890'], 9);
+      star(g, e.tx, e.ty, k, e.cols, 10);
+    }
+  },
+  // --- Tobo : la poêle, un nuage de vapeur
+  pan(g, q, e) {
+    if (q < 0.4) slash(g, e.tx, e.ty, q * 2.5, e.dir, ['#4a4a5a', '#b8c2cc'], 8);
+    else {
+      const k = (q - 0.4) / 0.6;
+      star(g, e.tx, e.ty - 2, k, ['#fbe08a', '#ffffff'], 7);
+      for (let i = 0; i < 3; i++) px(g, e.tx - 4 + i * 4, e.ty - 10 - k * 8 - (i % 2) * 2, '#efe6cf', 2);
+      dizzy(g, e.tx, e.ty, q, '#fbe08a');
+    }
+  },
+  // Ragoût maison : une marmite fume au-dessus de chaque allié, des cœurs montent
+  stew(g, q, e) {
+    for (const d of e.d) {
+      const y = d.ty - 18, on = q < 0.85 || Math.round(q * 16) % 2;
+      if (on) {
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(d.tx) - 6, y - 1, 13, 7);
+        g.fillStyle = '#4a4a5a';
+        g.fillRect(Math.round(d.tx) - 5, y, 11, 5);
+        g.fillStyle = '#c8603a';
+        g.fillRect(Math.round(d.tx) - 4, y, 9, 1);
+        px(g, d.tx - 4, y + 1, '#8e99a4');
+        for (let i = 0; i < 3; i++) px(g, d.tx - 3 + i * 3, y - 2 - Math.round(((q * 3 + i * 0.3) % 1) * 6), '#efe6cf');
+      }
+      if (q > 0.35) heart(g, d.tx + 7, d.ty + 4 - Math.round((q - 0.35) * 22), '#e2334a');
+    }
+  },
+  // --- Hugo : petit direct, puis gros crochet
+  jab(g, q, e) {
+    star(g, e.tx, e.ty - 2, q, e.cols, 5);
+    if (q < 0.4) for (let k = 0; k < 4; k++) px(g, e.tx - (6 + k * 2) * e.dir, e.ty - 2, e.cols[1]);
+  },
+  uppercut(g, q, e) {
+    FX.punch(g, q, e);
+    if (q > 0.3) for (let i = 0; i < 4; i++) px(g, e.tx - 6 + i * 4, e.ty - 6 - Math.round((q - 0.3) * 20) - (i % 2) * 3, i % 2 ? '#ffffff' : e.cols[1]);
+  },
+  // --- Kiki : balle traçante, éclair au canon
+  bullet(g, q, e) {
+    const x0 = e.x + 10 * e.dir, y0 = e.y - 1;
+    if (q < 0.25) { px(g, x0, y0 - 1, '#fbe08a', 3); px(g, x0 + e.dir, y0, '#ffffff'); }
+    const x = lerp(x0, e.tx, Math.min(1, q * 1.3)), y = lerp(y0, e.ty, Math.min(1, q * 1.3));
+    if (q < 0.77) for (let i = 0; i < 6; i++) px(g, x - i * e.dir, y, i < 1 ? '#ffffff' : i < 3 ? e.cols[1] : e.cols[0]);
+    else burst(g, e.tx, e.ty, (q - 0.77) / 0.23, e.cols, 5);
+  },
+  quickdraw(g, q, e) {
+    FX.bullet(g, q, e);
+    if (q < 0.3) ring(g, e.x + 10 * e.dir, e.y - 1, q / 0.3, '#fbe08a', 5);
+    if (q > 0.75) star(g, e.tx, e.ty, (q - 0.75) / 0.25, e.cols, 6);
+  },
+  // --- Bjorn : tourbillon, des haches tournent autour de chaque ennemi
+  whirl(g, q, e) {
+    for (const d of e.d) {
+      for (let i = 0; i < 3; i++) {
+        const a = q * 14 + (i / 3) * Math.PI * 2, r = 4 + Math.min(1, q * 2) * 9;
+        const x = d.tx + Math.cos(a) * r, y = d.ty + Math.sin(a) * r * 0.6;
+        g.fillStyle = OUTLINE;
+        g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+        px(g, x - 1, y - 1, e.cols[0], 3);
+        px(g, x - 1, y - 1, '#ffffff');
+      }
+      if (q > 0.6) burst(g, d.tx, d.ty, (q - 0.6) / 0.4, e.cols, 10);
+    }
+  },
+  // --- Sven : le fil part en cloche, l'hameçon accroche
+  hook(g, q, e) {
+    const k = Math.min(1, q * 1.4), tx = lerp(e.x + 10 * e.dir, e.tx, k), ty = lerp(e.y - 14, e.ty, k) - Math.sin(k * Math.PI) * 10;
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      px(g, lerp(e.x + 10 * e.dir, tx, t), lerp(e.y - 14, ty, t) + Math.sin(t * Math.PI) * 3, '#efe6cf');
+    }
+    px(g, tx, ty, '#b9c6d2', 2); px(g, tx + e.dir, ty + 2, '#b9c6d2');
+    if (q > 0.75) burst(g, e.tx, e.ty, (q - 0.75) / 0.25, e.cols, 5);
+  },
+  // Hameçon : un gros poisson gifle la cible, qui voit des étoiles
+  reel(g, q, e) {
+    FX.hook(g, Math.min(1, q * 1.6), e);
+    if (q > 0.5) {
+      const k = (q - 0.5) / 0.5, x = e.tx + (1 - k) * 10 * e.dir, y = e.ty - 4 - Math.sin(k * Math.PI) * 6;
+      g.fillStyle = OUTLINE;
+      g.fillRect(Math.round(x) - 5, Math.round(y) - 3, 12, 6);
+      g.fillStyle = '#4a9ae0';
+      g.fillRect(Math.round(x) - 4, Math.round(y) - 2, 7, 4);
+      g.fillRect(Math.round(x) + 3, Math.round(y) - 2, 2, 1);
+      g.fillRect(Math.round(x) + 3, Math.round(y) + 1, 2, 1);
+      px(g, x - 3, y - 1, '#ffffff');
+      dizzy(g, e.tx, e.ty, q, '#fbe08a', 4);
+    }
+  },
+  // --- Astra : rayon laser
+  laser(g, q, e) {
+    if (q > 0.7) return burst(g, e.tx, e.ty, (q - 0.7) / 0.3, e.cols, 6);
+    const x0 = e.x + 12 * e.dir, y0 = e.y, L = Math.min(1, q * 3);
+    for (let i = 0; i <= 30; i++) {
+      const t = (i / 30) * L;
+      px(g, lerp(x0, e.tx, t), lerp(y0, e.ty, t), i % 4 ? e.cols[0] : '#ffffff');
+      if (i % 2) px(g, lerp(x0, e.tx, t), lerp(y0, e.ty, t) + 1, e.cols[1]);
+    }
+  },
+  // Pluie de comètes : des étoiles filantes tombent sur chaque ennemi
+  comets(g, q, e) {
+    for (const [i, d] of e.d.entries()) for (let j = 0; j < 2; j++) {
+      const k = Math.max(0, Math.min(1, q * 1.7 - i * 0.15 - j * 0.3));
+      if (k <= 0) continue;
+      const ox = j ? 6 : -4;
+      if (k < 0.6) {
+        const f = k / 0.6, x = lerp(d.tx + ox + 26, d.tx + ox, f), y = lerp(-6, d.ty, f);
+        for (let t = 1; t < 6; t++) px(g, x + t * 2.5, y - t * 3, t < 2 ? '#ffffff' : t < 4 ? e.cols[1] : e.cols[0]);
+        px(g, x - 1, y - 1, '#ffffff', 3);
+      } else star(g, d.tx + ox, d.ty, (k - 0.6) / 0.4, e.cols, 7);
+    }
+  },
+  // --- Nyx : orbe vert à tête de mort
+  skullOrb(g, q, e) {
+    const x = lerp(e.x + 8 * e.dir, e.tx, q), y = lerp(e.y - 8, e.ty, q) + Math.sin(q * 10) * 2;
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    g.fillStyle = '#e8e0cc';
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 4);
+    g.fillRect(Math.round(x) - 1, Math.round(y) + 2, 3, 1);
+    px(g, x - 1, y - 1, OUTLINE); px(g, x + 1, y - 1, OUTLINE);
+    for (let i = 1; i < 5; i++) px(g, lerp(e.x + 8 * e.dir, e.tx, q - i * 0.06), lerp(e.y - 8, e.ty, q - i * 0.06), i % 2 ? e.cols[0] : e.cols[1]);
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 6);
+  },
+  // Rappel des morts : flammes vertes qui montent du sol, crânes qui tournent
+  raise(g, q, e) {
+    const d = e.d[0];
+    if (!d) return;
+    for (let i = 0; i < 6; i++) {
+      const t = (q * 1.5 + i * 0.17) % 1, x = d.tx - 10 + i * 4, y = d.ty + 10 - t * 26;
+      px(g, x, y, i % 2 ? e.cols[0] : e.cols[1], t < 0.5 ? 2 : 1);
+    }
+    for (let i = 0; i < 3; i++) {
+      const a = q * 8 + (i / 3) * Math.PI * 2;
+      px(g, d.tx + Math.cos(a) * 12, d.ty + Math.sin(a) * 5, '#e8e0cc', 2);
+    }
+    ring(g, d.tx, d.ty + 10, q, e.cols[0], 14);
+  },
+  // --- Ignis : boule de feu
+  fireball(g, q, e) {
+    const x = lerp(e.x + 9 * e.dir, e.tx, q), y = lerp(e.y - 4, e.ty, q);
+    for (let i = 1; i < 6; i++) px(g, x - i * 2 * e.dir, y + ((i * 5) % 3) - 1, i < 3 ? '#fbe08a' : i < 5 ? '#ff6a1f' : '#8a3a1c', i < 3 ? 2 : 1);
+    g.fillStyle = OUTLINE;
+    g.fillRect(Math.round(x) - 3, Math.round(y) - 3, 7, 7);
+    g.fillStyle = e.cols[0];
+    g.fillRect(Math.round(x) - 2, Math.round(y) - 2, 5, 5);
+    px(g, x - 1, y - 1, e.cols[1], 2);
+    px(g, x, y, '#ffffff');
+    if (q > 0.85) burst(g, e.tx, e.ty, (q - 0.85) / 0.15, e.cols, 7);
+  },
+  // Brasier : une colonne de feu jaillit sous la cible
+  inferno(g, q, e) {
+    const h = q < 0.6 ? Math.round(q / 0.6 * 30) : Math.round((1 - q) / 0.4 * 30);
+    for (let i = 0; i < h; i++) {
+      const w = 4 + Math.round(Math.sin(i * 0.9 + q * 20) * 2) - Math.round(i / 10);
+      const y = e.ty + 10 - i, c = i > h - 4 ? '#fbe08a' : i % 3 ? '#ff6a1f' : '#e2334a';
+      g.fillStyle = c;
+      g.fillRect(Math.round(e.tx - w), y, w * 2 + 1, 1);
+    }
+    if (q > 0.3) burst(g, e.tx, e.ty - 6, (q - 0.3) / 0.7, ['#ff6a1f', '#fbe08a'], 12);
+  },
+  // --- Drakon : coup de lance, une flammèche au bout
+  dragonLance(g, q, e) {
+    FX.spear(g, q, e);
+    if (q > 0.3 && q < 0.8) px(g, e.tx + 2 * e.dir, e.ty - 3, '#fbe08a', 2);
+  },
+  // Souffle du dragon : un flot de flammes balaie tous les ennemis
+  dragonBreath(g, q, e) {
+    for (const d of e.d)
+      for (let i = 0; i < 18; i++) {
+        const k = Math.min(1, q * 1.4) - i * 0.04;
+        if (k <= 0 || k > 1) continue;
+        const x = lerp(e.x + 10 * e.dir, d.tx, k), y = lerp(e.y - 6, d.ty, k) + Math.sin(i * 2.3 + q * 9) * 3;
+        px(g, x, y, i % 3 === 0 ? '#fbe08a' : i % 3 === 1 ? e.cols[0] : '#c83020', i % 2 ? 2 : 3);
+      }
+    if (q > 0.7) for (const d of e.d) burst(g, d.tx, d.ty, (q - 0.7) / 0.3, ['#ff6a1f', '#fbe08a'], 10);
+  },
   // Poison, brûlure, saignement : petite gerbe sur celui qui souffre (couleurs imposées)
   tick(g, q, e) {
     burst(g, e.tx, e.ty, q, e.cols, 6);
@@ -771,6 +969,16 @@ export const HERO_FX = {
   gideon: { cols: ['#fbe08a', '#8af0ff'], attack: 'smash', skill: 'aegis', ranged: false, sound: 'thud', skillSound: 'shield' },
   aurelia: { cols: ['#8ab4ff', '#fff4c0'], attack: 'spear', skill: 'valhalla', ranged: false, sound: 'slash', skillSound: 'holy' },
   nova: { cols: ['#d8323c', '#fbe08a'], attack: 'punch', skill: 'meteorPunch', ranged: false, sound: 'punch', skillSound: 'punch' },
+  rok: { cols: ['#c8945a', '#fff0d0'], attack: 'axeChop', skill: 'timber', ranged: false, sound: 'chop', skillSound: 'chop' },
+  tobo: { cols: ['#c8603a', '#fff0d0'], attack: 'pan', skill: 'stew', ranged: false, sound: 'bonk', skillSound: 'heal' },
+  hugo: { cols: ['#d8323c', '#ffffff'], attack: 'jab', skill: 'uppercut', ranged: false, sound: 'punch', skillSound: 'punch' },
+  kiki: { cols: ['#c8a870', '#fbe08a'], attack: 'bullet', skill: 'quickdraw', ranged: true, sound: 'bang', skillSound: 'bang' },
+  bjorn: { cols: ['#c8d8e8', '#ffffff'], attack: 'axeChop', skill: 'whirl', ranged: false, sound: 'chop', skillSound: 'shout' },
+  sven: { cols: ['#4a9ae0', '#fff0a0'], attack: 'hook', skill: 'reel', ranged: true, sound: 'reel', skillSound: 'reel' },
+  astra: { cols: ['#e2552a', '#c8f0ff'], attack: 'laser', skill: 'comets', ranged: true, sound: 'laser', skillSound: 'boom' },
+  nyx: { cols: ['#7af06a', '#c08aff'], attack: 'skullOrb', skill: 'raise', ranged: true, sound: 'ghost', skillSound: 'ghost' },
+  ignis: { cols: ['#ff6a1f', '#fbe08a'], attack: 'fireball', skill: 'inferno', ranged: true, sound: 'burn', skillSound: 'boom' },
+  drakon: { cols: ['#ff6a1f', '#fbe08a'], attack: 'dragonLance', skill: 'dragonBreath', ranged: false, sound: 'slash', skillSound: 'roar' },
 };
 export const ENEMY_FX = {
   slime: { cols: ['#5cc85a', '#d8ffd0'], attack: 'splat', sound: 'hit' },

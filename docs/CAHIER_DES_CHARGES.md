@@ -49,6 +49,16 @@ mode infini rapporte de l'or et de l'XP.
 | Gideon | Paladin | Rare | bouclier | **Égide** : bouclier sur l'équipe (150 % ATQ), 3 tours |
 | Aurélia | Valkyrie | Légendaire | réanimation | **Chant du Valhalla** : relève un allié (50 % PV), sinon soigne |
 | Nova | Super-héroïne | Légendaire | burst | **Poing météore** : 280 % + étourdit 1 tour |
+| Rok | Bûcheron | Commune | exécution | **Abattage** : 160 %, double sous 40 % de PV |
+| Tobo | Chef cuisinier | Commune | soin | **Ragoût maison** : soigne l'équipe (90 % ATQ) |
+| Hugo | Boxeur | Commune | rafale | **Une-deux** : 2 coups de 110 % au hasard |
+| Kiki | Cow-girl | Commune | rafale à distance | **Tir en rafale** : 3 tirs de 70 % au hasard |
+| Bjorn | Viking | Commune | zone | **Tourbillon** : 100 % sur tous les ennemis |
+| Sven | Pêcheur | Commune | contrôle | **Hameçon** : 150 % + étourdit 1 tour |
+| Astra | Astronaute | Rare | zone | **Pluie de comètes** : 120 % sur tous les ennemis |
+| Nyx | Nécromancienne | Rare | réanimation | **Rappel des morts** : relève un allié (35 % PV), sinon soigne |
+| Ignis | Pyromancien | Rare | dégâts sur la durée | **Brasier** : 200 % + brûlure 3 tours |
+| Drakon | Chevalier dragon | Légendaire | zone | **Souffle du dragon** : 130 % sur tous + brûlure 2 tours |
 
 Objectif : **55 héros** (5 + 50 nouveaux, 25 Communes, 17 Rares, 8 Légendaires), ajoutés par vagues de 10.
 

@@ -148,6 +148,11 @@ const SOUNDS = {
   drain: () => { tone(N.E5, 0.25, 0, 'triangle', 0.6, 196); tone(N.A4, 0.25, 0.05, 'square', 0.3, 147); },
   punch: () => { noise(0.07, 0, 0.9); tone(165, 0.1, 0, 'square', 0.8, 70); tone(N.E5, 0.04, 0.02, 'square', 0.4); },
   burn: () => { noise(0.18, 0, 0.5); tone(220, 0.12, 0, 'square', 0.3, 330); },
+  bang: () => { noise(0.1, 0, 1); tone(330, 0.05, 0, 'square', 0.6, 110); },
+  reel: () => { tone(N.C6, 0.25, 0, 'square', 0.3, N.C5); noise(0.05, 0.22, 0.4); },
+  laser: () => tone(N.E6, 0.16, 0, 'square', 0.5, N.A4),
+  ghost: () => { tone(N.A4, 0.3, 0, 'triangle', 0.7, N.E5); tone(N.E4, 0.3, 0.05, 'triangle', 0.4, N.A4); },
+  roar: () => { noise(0.4, 0, 0.9); tone(98, 0.4, 0, 'square', 0.7, 65); tone(147, 0.3, 0.05, 'square', 0.4, 98); },
   drip: () => { tone(N.A5, 0.04, 0, 'triangle', 0.6, N.E5); tone(N.E5, 0.05, 0.06, 'triangle', 0.4, N.C5); },
   shield: () => { tone(N.G4, 0.06, 0, 'square', 0.5); tone(N.D5, 0.14, 0.05, 'triangle', 0.8, N.G5); },
   // grosse plaque qui tombe ou éclate : coup sourd et gras (basse qui plonge + bruit + craquement)

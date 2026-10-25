@@ -75,6 +75,46 @@ export const HEROES = {
     name: 'Nova', cls: 'Super-héroïne', rarity: 'L', hp: 115, atk: 31, def: 9, spd: 16,
     skill: { name: 'Poing météore', desc: '280 % sur une cible et l’étourdit 1 tour.', cd: 3, kind: 'single', mult: 2.8, stun: 1, ico: 'fist' },
   },
+  rok: {
+    name: 'Rok', cls: 'Bûcheron', rarity: 'C', hp: 120, atk: 23, def: 9, spd: 9,
+    skill: { name: 'Abattage', desc: '160 % sur une cible, double sous 40 % de PV.', cd: 3, kind: 'single', mult: 1.6, exec: 0.4, ico: 'axe' },
+  },
+  tobo: {
+    name: 'Tobo', cls: 'Chef cuisinier', rarity: 'C', hp: 115, atk: 17, def: 8, spd: 10,
+    skill: { name: 'Ragoût maison', desc: 'Soigne toute l’équipe (90 % ATQ).', cd: 3, kind: 'heal', mult: 0.9, ico: 'stew' },
+  },
+  hugo: {
+    name: 'Hugo', cls: 'Boxeur', rarity: 'C', hp: 115, atk: 22, def: 8, spd: 14,
+    skill: { name: 'Une-deux', desc: '2 coups de 110 % sur des ennemis au hasard.', cd: 2, kind: 'multi', mult: 1.1, hits: 2, ico: 'glove' },
+  },
+  kiki: {
+    name: 'Kiki', cls: 'Cow-girl', rarity: 'C', hp: 90, atk: 24, def: 6, spd: 15,
+    skill: { name: 'Tir en rafale', desc: '3 tirs de 70 % sur des ennemis au hasard.', cd: 2, kind: 'multi', mult: 0.7, hits: 3, ico: 'gun' },
+  },
+  bjorn: {
+    name: 'Bjorn', cls: 'Viking', rarity: 'C', hp: 125, atk: 21, def: 9, spd: 10,
+    skill: { name: 'Tourbillon', desc: '100 % sur tous les ennemis.', cd: 3, kind: 'all', mult: 1, ico: 'whirl' },
+  },
+  sven: {
+    name: 'Sven', cls: 'Pêcheur', rarity: 'C', hp: 100, atk: 20, def: 8, spd: 11,
+    skill: { name: 'Hameçon', desc: '150 % sur une cible et l’étourdit 1 tour.', cd: 3, kind: 'single', mult: 1.5, stun: 1, ico: 'hook' },
+  },
+  astra: {
+    name: 'Astra', cls: 'Astronaute', rarity: 'R', hp: 95, atk: 28, def: 7, spd: 12,
+    skill: { name: 'Pluie de comètes', desc: '120 % sur tous les ennemis.', cd: 3, kind: 'all', mult: 1.2, ico: 'comet' },
+  },
+  nyx: {
+    name: 'Nyx', cls: 'Nécromancienne', rarity: 'R', hp: 95, atk: 27, def: 6, spd: 12,
+    skill: { name: 'Rappel des morts', desc: 'Relève un allié tombé (35 % PV), sinon soigne le plus blessé (150 % ATQ).', cd: 4, kind: 'revive', pct: 0.35, mult: 1.5, ico: 'skull' },
+  },
+  ignis: {
+    name: 'Ignis', cls: 'Pyromancien', rarity: 'R', hp: 90, atk: 29, def: 6, spd: 13,
+    skill: { name: 'Brasier', desc: '200 % sur une cible, brûlure 3 tours.', cd: 3, kind: 'single', mult: 2, dot: { type: 'burn', mult: 0.5, turns: 3 }, ico: 'flame' },
+  },
+  drakon: {
+    name: 'Drakon', cls: 'Chevalier dragon', rarity: 'L', hp: 130, atk: 30, def: 12, spd: 12,
+    skill: { name: 'Souffle du dragon', desc: '130 % sur tous les ennemis, brûlure 2 tours.', cd: 4, kind: 'all', mult: 1.3, dot: { type: 'burn', mult: 0.3, turns: 2 }, ico: 'dragon' },
+  },
 };
 export const HERO_IDS = Object.keys(HEROES);
 

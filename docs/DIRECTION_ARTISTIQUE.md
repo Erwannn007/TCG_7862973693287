@@ -138,6 +138,16 @@ L'arme grandit avec le rang : sa pointe monte vers le haut de la grille.
 | **Gideon**, paladin | grande crête de crin bleue | soleil d'or sur la poitrine, couvre-joues | marteau de guerre à droite |
 | **Aurélia**, valkyrie | casque ailé | tresses blondes, cape bleue, étincelles | lance à droite |
 | **Nova**, super-héroïne | poing levé, cheveux au vent | éclair d'or, cape rouge qui claque à gauche, gant blanc | son poing (bras droit levé) |
+| **Rok**, bûcheron | bonnet de laine à pompon | grosse barbe rousse, flanelle, bretelles | hache à droite (double dès le rang 3) |
+| **Tobo**, chef cuisinier | grande toque | moustache en guidon, foulard rouge, veste croisée | poêle à droite (avec un œuf) |
+| **Hugo**, boxeur | cheveux en épis, bandeau | débardeur bleu, short rouge, bras nus | gros gants : garde haute à gauche, direct à droite |
+| **Kiki**, cow-girl | chapeau de cow-boy à bord large | longs cheveux roux, gilet, foulard, étoile de shérif (rang 2) | revolver à droite, lasso à la hanche gauche |
+| **Bjorn**, viking | casque rond à cornes | grande barbe blonde tressée, col de fourrure | hache à deux mains à gauche |
+| **Sven**, pêcheur | chapeau de pluie à long bord | ciré jaune, barbe grise, pipe | canne à pêche avec un poisson au bout, à droite |
+| **Astra**, astronaute | casque-bulle à antenne | combinaison blanche à bandes orange, sac de survie | pistolet laser à droite |
+| **Nyx**, nécromancienne | capuche pointue vers l'arrière | cheveux blancs, peau pâle, robe violette | bâton à crâne et flamme verte, à gauche |
+| **Ignis**, pyromancien | cheveux en flammes | robe orange à ourlet de feu | boule de feu au-dessus de la main droite |
+| **Drakon**, chevalier dragon | casque en tête de dragon (museau, cornes) | armure verte à écailles, cape rouge | lance à fanion rouge, à droite |
 
 Les dessins des nouveaux héros sont dans `js/heroes.js` (gabarit commun dans `js/chibi.js`).
 
@@ -209,6 +219,16 @@ arrivant) et ses sons.
 | Gideon | la masse s'abat (or) | **Égide** : dôme d'or sur chaque allié | or et cyan |
 | Aurélia | longue pointe de lumière | **Chant du Valhalla** : rai de lumière, plumes qui tombent | bleu et or |
 | Nova | étoile d'impact, traits de vitesse | **Poing météore** : ruée, impact énorme, onde, étoiles | rouge et or |
+| Rok | la hache tombe, copeaux | **Abattage** : entaille verticale géante, éclats de bois | bois |
+| Tobo | coup de poêle, vapeur, étoiles | **Ragoût maison** : une marmite fume sur chaque allié, cœurs | cuivre |
+| Hugo | petit direct | **Une-deux** : gros crochets, étoiles d'impact | rouge |
+| Kiki | balle traçante, éclair au canon | **Tir en rafale** : tirs dégainés, anneau au canon | or |
+| Bjorn | la hache tombe | **Tourbillon** : des haches tournent autour de chaque ennemi | acier clair |
+| Sven | le fil part en cloche, l'hameçon accroche | **Hameçon** : un poisson gifle la cible, étoiles | bleu |
+| Astra | rayon laser | **Pluie de comètes** : étoiles filantes sur chaque ennemi | orange et cyan |
+| Nyx | orbe à tête de mort | **Rappel des morts** : flammes vertes, crânes qui tournent | vert et violet |
+| Ignis | boule de feu | **Brasier** : colonne de feu sous la cible | feu |
+| Drakon | coup de lance, flammèche | **Souffle du dragon** : flot de flammes sur chaque ennemi | feu |
 | (statuts) | poison, brûlure, saignement : petite gerbe et gouttes au début du tour | | vert, orange, rouge |
 | (garde, tous) | bouclier de lumière devant le héros, de sa couleur | | |
 
