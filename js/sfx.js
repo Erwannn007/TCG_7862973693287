@@ -106,6 +106,11 @@ const SOUNDS = {
   wind: () => { whoosh(0.55, 300, 1400, 1.6); whoosh(0.45, 700, 2400, 0.7, 0.08); },
   zoom: () => { whoosh(0.5, 200, 3000, 1.4); tone(110, 0.5, 0, 'square', 0.35, 440); noise(0.15, 0.45, 0.6); },
   hover: () => tone(N.G5, 0.025, 0, 'square', 0.45),
+  // un pas en avant sous le projecteur : souffle court + deux notes qui montent (ou descendent pour l'ennemi)
+  focus: () => { whoosh(0.22, 500, 2200, 0.9); tone(N.G4, 0.05, 0.03, 'square', 0.35); tone(N.C5, 0.08, 0.08, 'square', 0.35); },
+  focusFoe: () => { whoosh(0.22, 1600, 300, 0.9); tone(N.E4, 0.05, 0.03, 'square', 0.35); tone(196, 0.1, 0.08, 'square', 0.35); },
+  // les actions apparaissent une à une
+  menu: () => [N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.04, 0.05 + i * 0.07, 'triangle', 0.5)),
 };
 
 export function sfx(name) {

@@ -704,7 +704,7 @@ function buildMenu(u, title, items) {
   const m = $('#b-menu'), cv = $('#b-canvas');
   m.innerHTML = '';
   m.appendChild(el('div', 'm-title', title));
-  items.forEach((it) => {
+  items.forEach((it, i) => {
     const row = el('div', 'act' + (it.cd ? ' off' : ''), '<span class="motes"><i></i><i></i><i></i><i></i></span>');
     if (it.mg) row.style.setProperty('--mg', it.mg);
     row.appendChild(icon(it.ico));
@@ -712,11 +712,17 @@ function buildMenu(u, title, items) {
     if (it.cd) row.appendChild(el('span', 'cd', String(it.cd)));
     row._it = it;
     m.appendChild(row);
+    // les actions sortent du héros une à une, par paliers
+    row.animate(
+      [{ translate: '-36px 0', opacity: 0, filter: 'brightness(3)' }, { translate: '0 0', opacity: 1, filter: 'brightness(1)' }],
+      { duration: 240, delay: 60 + i * 70, easing: 'steps(4, end)', fill: 'backwards' },
+    );
   });
   m.classList.remove('hidden');
-  // à droite du héros, centré sur lui, sans sortir de l'écran
+  sfx('menu');
+  // à droite du héros (là où il s'arrête une fois avancé), centré sur lui, sans sortir de l'écran
   const k = cv.clientWidth / battle.W;
-  const [hx, hy] = toScreen(cv, battle.W, u.cx + u.bm.w / 2, u.by - u.bm.h / 2);
+  const [hx, hy] = toScreen(cv, battle.W, u.cx0 + u.fxT + u.bm.w / 2, u.by - u.bm.h / 2);
   const h = m.offsetHeight + 24;
   const top = Math.max(64, Math.min(innerHeight - h - 8, hy - h / 2));
   m.style.left = Math.round(hx + 6 * k + 12) + 'px';

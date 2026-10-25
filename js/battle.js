@@ -14,6 +14,9 @@ const ENEMY_SLOTS = [[186, 80], [204, 96], [186, 112]];
 const BOSS_SLOT = [182, 110];
 const SLOT_ORDER = { 1: [1], 2: [0, 2], 3: [0, 1, 2] };
 const WHITE = '#ffffff';
+// Mise en scène du tour : de combien celui qui agit s'avance, et les autres de son camp reculent.
+const STEP_IN = 14, STEP_BACK = 4, DARK_MAX = 4;
+const SPOT = { h: '#fff2c0', e: '#ffb0a0' };
 
 const rand = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -28,6 +31,11 @@ export class Battle {
     this.speed = 1;
     this.over = false;
     this.floats = [];
+    this.puffs = [];
+    this.focus = null;
+    this.dark = 0;
+    this.darkT = 0;
+    this.fTick = 0;
     this.active = null;
     this.targeting = null; // ennemis ciblables pendant le choix d'une cible
     this.onTargetTap = null;
@@ -55,9 +63,13 @@ export class Battle {
   unit(side, data, [cx0, by], key, make) {
     const bm = bitmap(key, make), cx = cx0 + this.ox;
     const flash = bitmap(key + '-w', () => make().silhouette(WHITE));
+    const shade = bitmap(key + '-d', () => make().silhouette(OUTLINE));
+    const sx = cx - (bm.w >> 1);
     return {
       side, key, ...data, max: data.hp, cd: 0, stun: 0, guard: false, alive: true,
-      bm, flash, cx, by, sx: cx - (bm.w >> 1), sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
+      bm, flash, shade, cx, by, sx, sy: by - bm.h, dx: 0, flashUntil: 0, diedAt: 0,
+      // cx0/sx0 : place dans la formation ; fx : décalage de mise en scène (fxT = où il va)
+      cx0: cx, sx0: sx, fx: 0, fxT: 0,
     };
   }
 
@@ -75,6 +87,8 @@ export class Battle {
     g.drawImage(sceneBackground(this.scene, this.W), 0, 0);
     sceneAnim(this.scene, g, fstep, this.W);
     const all = [...this.heroes, ...this.enemies];
+    this.spotlight(t, all);
+    const f = this.focus;
 
     // ombres au sol
     g.globalAlpha = 0.35;
@@ -99,6 +113,12 @@ export class Battle {
       g.drawImage(white ? u.flash.canvas : u.bm.canvas, x, y);
       if (u.alive) drawFx(g, u.bm, x, y, step);
       if (!u.alive) return;
+      // ceux qui n'agissent pas restent dans la pénombre (sauf les cibles qu'on peut toucher)
+      if (f && u !== f && this.dark && !this.targeting?.includes(u)) {
+        g.globalAlpha = this.dark * 0.09;
+        g.drawImage(u.shade.canvas, x, y);
+        g.globalAlpha = 1;
+      }
       this.bar(u);
       if (u.stun && step % 2) {
         g.fillStyle = '#fbe08a';
@@ -112,12 +132,79 @@ export class Battle {
     if (a && a.alive && !this.over) this.chevron(a, step, a.side === 'h' ? '#fbe08a' : '#e2334a');
     if (this.targeting) for (const u of this.targeting) if (u.alive) this.reticle(u, step);
 
-    this.floats = this.floats.filter((f) => t - f.t0 < 760);
-    for (const f of this.floats) {
-      const rise = Math.max(0, Math.min(7, Math.floor((t - f.t0) / 80)));
-      drawText(g, f.txt, f.x - (textWidth(f.txt) >> 1), f.y - rise, f.color);
+    this.drawPuffs(t);
+    this.floats = this.floats.filter((fl) => t - fl.t0 < 760);
+    for (const fl of this.floats) {
+      const rise = Math.max(0, Math.min(7, Math.floor((t - fl.t0) / 80)));
+      drawText(g, fl.txt, fl.x - (textWidth(fl.txt) >> 1), fl.y - rise, fl.color);
     }
     this.raf = requestAnimationFrame((tt) => this.draw(tt));
+  }
+
+  // Fait avancer la mise en scène par paliers de 2 px, puis assombrit le décor
+  // et pose un rai de lumière sur celui qui agit.
+  spotlight(t, all) {
+    const g = this.g;
+    if (t - this.fTick >= 40 / this.speed) {
+      this.fTick = t;
+      for (const u of all) {
+        if (u.fx !== u.fxT) u.fx += Math.sign(u.fxT - u.fx) * Math.min(2, Math.abs(u.fxT - u.fx));
+        u.cx = u.cx0 + u.fx;
+        u.sx = u.sx0 + u.fx;
+      }
+      if (this.dark !== this.darkT) this.dark += Math.sign(this.darkT - this.dark);
+    }
+    if (!this.dark) return;
+    g.globalAlpha = this.dark * 0.07;
+    g.fillStyle = OUTLINE;
+    g.fillRect(0, 0, this.W, H);
+    const f = this.focus;
+    if (!f || !f.alive) {
+      g.globalAlpha = 1;
+      return;
+    }
+    // rai de lumière qui tombe du ciel, élargi par bandes de 4 px
+    g.fillStyle = SPOT[f.side];
+    g.globalAlpha = this.dark * 0.035;
+    const w0 = Math.max(10, f.bm.w - 8);
+    for (let y = 0; y < f.by; y += 4) {
+      const w = w0 + Math.floor((y / f.by) * 10) * 2;
+      g.fillRect(f.cx - (w >> 1), y, w, 4);
+    }
+    // flaque de lumière au sol
+    g.globalAlpha = this.dark * 0.08;
+    const pw = f.bm.w + 10;
+    [[-2, pw - 12], [-1, pw - 4], [0, pw], [1, pw - 4], [2, pw - 12]].forEach(([dy, w]) => g.fillRect(f.cx - (w >> 1), f.by + dy, w, 1));
+    g.globalAlpha = 1;
+  }
+
+  // Met un combattant en avant : il passe devant toute sa ligne, ses alliés reculent d'un pas.
+  setFocus(u) {
+    this.focus = u;
+    this.darkT = u ? DARK_MAX : 0;
+    const dir = u?.side === 'h' ? 1 : -1;
+    const front = u && Math.max(...this.alive(u.side).map((v) => v.cx0 * dir)) * dir;
+    for (const v of [...this.heroes, ...this.enemies]) {
+      v.fxT = !u ? 0 : v === u ? front + STEP_IN * dir - v.cx0 : v.side === u.side ? -STEP_BACK * dir : 0;
+    }
+    if (u) this.puffs.push({ x: u.cx, y: u.by, dir: u.side === 'h' ? 1 : -1, t0: performance.now() });
+  }
+
+  // Petits nuages de poussière laissés derrière celui qui s'élance.
+  drawPuffs(t) {
+    const g = this.g;
+    this.puffs = this.puffs.filter((p) => t - p.t0 < 400);
+    g.fillStyle = '#efe4c8';
+    for (const p of this.puffs) {
+      const k = Math.floor((t - p.t0) / 80);
+      g.globalAlpha = 0.8 - k * 0.15;
+      for (const s of [-1, 1]) {
+        const x = p.x - p.dir * (4 + k * 2), y = p.y - 1 - k + (s > 0 ? k : 0);
+        g.fillRect(x + s * k, y, 2, 1);
+        g.fillRect(x - p.dir * 3 + s * (k >> 1), y - 1, 1, 1);
+      }
+    }
+    g.globalAlpha = 1;
   }
 
   // Barre de PV en segments : on compte les morceaux d'un coup d'œil.
@@ -234,6 +321,10 @@ export class Battle {
         if (!u.alive) continue;
         this.active = u;
         this.queue.unshift(u);
+        this.setFocus(u);
+        sfx(u.side === 'h' ? 'focus' : 'focusFoe');
+        await this.wait(260);
+        if (this.over) return;
         if (u.stun) {
           u.stun--;
           this.log(`${u.name} est étourdi !`);
@@ -257,6 +348,7 @@ export class Battle {
     if (!res) return false;
     this.over = true;
     this.active = null;
+    this.setFocus(null);
     setTimeout(() => !this.stopped && this.onEnd(res), 800 / this.speed);
     return true;
   }

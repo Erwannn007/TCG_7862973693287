@@ -252,6 +252,16 @@ small { font-size: 12px; }
 /* menu d'actions : des boutons rectangulaires bien séparés, à côté du héros.
    On glisse le doigt dessus : celui qui est visé grossit ; on relâche pour le choisir. */
 #b-menu { position: absolute; z-index: 4; display: flex; flex-direction: column; gap: 8px; touch-action: none; }
+/* flèche en pixels qui pointe vers le héros à qui appartient le menu */
+#b-menu::before {
+  content: ''; position: absolute; left: -20px; top: calc(var(--tip) - 1px); width: 3px; height: 3px; background: var(--gold-hi);
+  box-shadow: 3px -3px var(--gold-hi), 3px 0px var(--gold-hi), 3px 3px var(--gold-hi), 6px -6px var(--gold-hi), 6px -3px var(--gold-hi), 6px 0px var(--gold-hi), 6px 3px var(--gold-hi), 6px 6px var(--gold-hi), 9px -9px var(--gold-hi), 9px -6px var(--gold-hi), 9px -3px var(--gold-hi), 9px 0px var(--gold-hi), 9px 3px var(--gold-hi), 9px 6px var(--gold-hi), 9px 9px var(--gold-hi);
+  filter: drop-shadow(1px 0 0 var(--line)) drop-shadow(-1px 0 0 var(--line)) drop-shadow(0 1px 0 var(--line)) drop-shadow(0 -1px 0 var(--line));
+  animation: nudge .6s steps(1) infinite;
+}
+@keyframes nudge { 50% { translate: -2px 0; } }
+#b-menu .m-title { animation: pop .2s steps(3) backwards; }
+@keyframes pop { 0% { scale: .4; opacity: 0; } 50% { scale: 1.15; } }
 #b-menu .m-title {
   align-self: flex-start; padding: 0 8px; font-size: 14px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
   border: 6px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 6px stretch;
