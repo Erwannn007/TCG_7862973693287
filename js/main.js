@@ -805,34 +805,49 @@ const CAR_CY = 92, CAR_RY = 10, CAR_STEP = 8; // centre et profondeur du carrous
 
 function renderTeam() {
   if (!selected || !HEROES[selected]) selected = state.team[0];
-  // la colonne défile (glisser vers le haut ou le bas) : les héros obtenus d'abord, puis les avis de recherche
+  // la colonne défile (glisser vers le haut ou le bas). Elle est rangée par rareté (Légendaires,
+  // Rares, Communes), du plus haut rang au plus bas dans chaque groupe, puis les avis de recherche.
   const old = $('#t-roster .r-list'), top = old ? old.scrollTop : 0;
   const roster = el('div', 'r-list');
   $('#t-roster').replaceChildren(roster);
-  [...HERO_IDS.filter((id) => state.owned[id]), ...HERO_IDS.filter((id) => !state.owned[id])].forEach((id, i) => {
-    const own = state.owned[id], pos = state.team.indexOf(id);
-    const b = el('div', 'r-sign' + (id === selected && pos < 0 ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
-    b.dataset.id = id;
-    b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
-    // héros pas encore obtenu : avis de recherche ; déjà dans l'équipe : on le voit, mais il se
-    // touche et se déplace sur son socle, pas ici
-    const nm = el('div', 'r-name', own ? HEROES[id].name : '<span class="wanted">Recherché</span>???');
-    if (pos >= 0) nm.appendChild(el('small', 'on-slot', `sur le socle ${pos + 1}`));
-    else nm.appendChild(starsRow(HEROES[id].rarity));
-    b.appendChild(nm);
-    if (pos >= 0) b.appendChild(el('div', 'badge team', String(pos + 1)));
-    if (canUpgrade(id)) b.appendChild(el('div', 'badge up', 'UP'));
-    b._seed = i + 11;
-    if (pos >= 0) b.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      pointToSlot(b, id, pos);
-    });
-    else dragSource(b, id, -1);
-    roster.appendChild(b);
+  const RAR = ['L', 'R', 'C'], own = (id) => state.owned[id];
+  const byStrength = (a, b) => own(b).rank - own(a).rank || own(b).lvl - own(a).lvl || HEROES[a].name.localeCompare(HEROES[b].name);
+  const groups = RAR.map((r) => {
+    const all = HERO_IDS.filter((id) => HEROES[id].rarity === r);
+    return { title: RARITY[r].name + 's', count: `${all.filter(own).length}/${all.length}`, ids: all.filter(own).sort(byStrength) };
   });
+  const missing = HERO_IDS.filter((id) => !own(id)).sort((a, b) => RAR.indexOf(HEROES[a].rarity) - RAR.indexOf(HEROES[b].rarity) || HEROES[a].name.localeCompare(HEROES[b].name));
+  if (missing.length) groups.push({ title: 'À trouver', count: String(missing.length), ids: missing });
+  let i = 0;
+  for (const g of groups.filter((g) => g.ids.length)) {
+    const h = el('div', 'r-head', `${g.title} <small>${g.count}</small>`);
+    roster.appendChild(h);
+    g.ids.forEach((id) => addRosterSign(roster, id, i++));
+  }
   roster.scrollTop = top;
   renderDetail(selected);
   requestAnimationFrame(layoutTeam);
+}
+
+// Une plaque de la colonne : le héros, son nom, ses étoiles (ou son socle s'il est dans l'équipe).
+function addRosterSign(roster, id, i) {
+  const own = state.owned[id], pos = state.team.indexOf(id);
+  const b = el('div', 'r-sign' + (id === selected && pos < 0 ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
+  b.dataset.id = id;
+  b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
+  // héros pas encore obtenu : avis de recherche ; déjà dans l'équipe : on le voit, mais il se
+  // touche et se déplace sur son socle, pas ici
+  const nm = el('div', 'r-name', own ? HEROES[id].name : '<span class="wanted">Recherché</span>???');
+  if (pos >= 0) nm.appendChild(el('small', 'on-slot', `sur le socle ${pos + 1}`));
+  else nm.appendChild(starsRow(HEROES[id].rarity));
+  b.appendChild(nm);
+  if (pos >= 0) b.appendChild(el('div', 'badge team', String(pos + 1)));
+  if (canUpgrade(id)) b.appendChild(el('div', 'badge up', 'UP'));
+  b._seed = i + 11;
+  // déjà dans l'équipe : on ne le sort pas d'ici, mais la colonne défile quand même à travers lui
+  if (pos >= 0) dragSource(b, id, -1, { noDrag: true, tap: () => pointToSlot(b, id, pos) });
+  else dragSource(b, id, -1);
+  roster.appendChild(b);
 }
 
 const rosterSign = (id) => $(`#t-roster .r-sign[data-id="${id}"]`);
@@ -1237,7 +1252,8 @@ function resetSkins() {
 // ---- glisser-déposer
 
 // Un élément qu'on peut glisser (plaque de la colonne ou héros sur un socle) ; un simple toucher le sélectionne.
-function dragSource(elm, id, slot) {
+// opts.noDrag : on ne peut que faire défiler la colonne ou toucher ; opts.tap remplace le simple toucher.
+function dragSource(elm, id, slot, opts = {}) {
   elm.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); // ne pas changer de pièce en glissant
     unlock();
@@ -1254,7 +1270,7 @@ function dragSource(elm, id, slot) {
           $('#t-menu').classList.add('hidden');
           return;
         }
-        if (!state.owned[id]) return;
+        if (!state.owned[id] || opts.noDrag) return;
         st.moved = true;
         beginDrag(id, slot);
       }
@@ -1266,7 +1282,7 @@ function dragSource(elm, id, slot) {
       elm.removeEventListener('pointerup', up);
       elm.removeEventListener('pointercancel', up);
       if (st.moved) dragEnd(ev, ev.type === 'pointercancel');
-      else if (!st.scroll) selectHero(id, elm);
+      else if (!st.scroll) (opts.tap || (() => selectHero(id, elm)))();
     };
     elm.addEventListener('pointermove', move);
     elm.addEventListener('pointerup', up);

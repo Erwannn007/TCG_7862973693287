@@ -214,7 +214,13 @@ small { font-size: 12px; }
 .r-sign.locked canvas { opacity: .85; }
 .r-sign .wanted { display: block; font: 700 11px/1.1 'Pixelify', monospace; color: #8a1a28; letter-spacing: 1px; text-transform: uppercase; }
 .r-sign.locked { gap: 4px; padding-right: 6px; }
-.r-sign.in-team { cursor: not-allowed; color: #a8a090; }
+.r-sign.in-team { cursor: pointer; color: #a8a090; }
+/* titres des groupes de la colonne (rareté, puis avis de recherche) : un petit ruban */
+#t-roster .r-head {
+  flex-shrink: 0; align-self: flex-start; margin-top: 4px; padding: 0 6px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 1px 1px 0 var(--line);
+  border: 5px solid transparent; border-image: var(--f-ribbon) var(--sl) fill / 5px stretch;
+}
+#t-roster .r-head small { font-size: 11px; color: #fbe08a; }
 .r-sign.in-team canvas { filter: brightness(.6) saturate(.6); }
 .r-sign .on-slot { font-size: 12px; font-weight: 700; color: #fbe08a; text-shadow: var(--txt-out); }
 /* pendant qu'on glisse un héros de l'équipe : la colonne devient la zone pour le retirer */
