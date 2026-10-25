@@ -448,16 +448,22 @@ function renderTeam() {
   roster.innerHTML = '';
   HERO_IDS.forEach((id, i) => {
     const own = state.owned[id], pos = state.team.indexOf(id);
-    const b = el('div', 'r-sign' + (id === selected ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
+    const b = el('div', 'r-sign' + (id === selected && pos < 0 ? ' hot' : '') + (own ? '' : ' locked') + (pos >= 0 ? ' in-team' : ''));
     b.appendChild(own ? lookCanvas(id, 2) : lockedCanvas(id, 1, 2));
-    // héros pas encore obtenu : avis de recherche
+    // héros pas encore obtenu : avis de recherche ; déjà dans l'équipe : on le voit, mais il se
+    // touche et se déplace sur son socle, pas ici
     const nm = el('div', 'r-name', own ? HEROES[id].name : '<span class="wanted">Recherché</span>???');
-    nm.appendChild(starsRow(HEROES[id].rarity));
+    if (pos >= 0) nm.appendChild(el('small', 'on-slot', `sur le socle ${pos + 1}`));
+    else nm.appendChild(starsRow(HEROES[id].rarity));
     b.appendChild(nm);
     if (pos >= 0) b.appendChild(el('div', 'badge team', String(pos + 1)));
     if (canUpgrade(id)) b.appendChild(el('div', 'badge up', 'UP'));
     b._seed = i + 11;
-    dragSource(b, id, -1);
+    if (pos >= 0) b.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      pointToSlot(b, id, pos);
+    });
+    else dragSource(b, id, -1);
     roster.appendChild(b);
   });
   renderDetail(selected);
@@ -466,6 +472,25 @@ function renderTeam() {
 
 // Toucher un héros : il devient le héros choisi ; s'il est dans l'équipe, le carrousel tourne
 // pour l'amener devant.
+// Toucher dans la colonne un héros déjà dans l'équipe : la plaque refuse, et son socle s'allume
+// pour montrer où le prendre.
+function pointToSlot(b, id, pos) {
+  if (teamDrag || teamMode) return;
+  sfx('denied');
+  haptic(10);
+  b.animate(Array.from({ length: 5 }, (_, k) => ({ translate: k === 4 ? '0 0' : `${k % 2 ? 3 : -3}px 0` })), { duration: 200, easing: 'steps(5, end)' });
+  const sl = teamSlots[pos];
+  if (sl) {
+    slotFlash[pos] = performance.now() + 500;
+    sparks(sl.sx, sl.sy - 30, '#ffd86a', 14, 1.2);
+    teamAnimFor(520);
+  }
+  const hint = $('#t-hint');
+  hint.textContent = `${HEROES[id].name} est sur le socle ${pos + 1} : glisse-le depuis là`;
+  clearTimeout(hint._t);
+  hint._t = setTimeout(() => (hint.textContent = 'Glisse un héros sur un socle'), 1800);
+}
+
 function selectHero(id, from) {
   const same = id === selected;
   selected = id;
@@ -575,6 +600,11 @@ function renderDetail(id) {
 function layoutTeam() {
   if ($('#scr-team').classList.contains('hidden')) return;
   $$('#t-roster .r-sign').forEach((b) => {
+    if (b.classList.contains('in-team')) {
+      b.style.backgroundImage = signUrl(b.offsetWidth, b.offsetHeight, 'dark', b._seed);
+      b.style.backgroundSize = `${Math.round(b.offsetWidth / U) * U}px ${Math.round(b.offsetHeight / U) * U}px`;
+      return;
+    }
     if (!b.classList.contains('locked')) return paintSign(b);
     b.style.backgroundImage = posterUrl(b.offsetWidth, b.offsetHeight, b._seed);
     b.style.backgroundSize = `${Math.round(b.offsetWidth / U) * U}px ${Math.round(b.offsetHeight / U) * U}px`;
@@ -1611,6 +1641,37 @@ function layoutSigns(m, title, items, hx, hy, R, step = ARC_STEP, cls = '', ente
   m.querySelectorAll('.act').forEach(paintSign);
   sfx('menu');
 }
+
+// Tous les boutons et cadres de l'interface sont peints comme les pancartes : bois texturé à leur
+// taille exacte (doré quand c'est actif ou principal, rouge pour ce qui est dangereux), et le
+// message de combat est une note de parchemin clouée. Repeints dès qu'ils changent de taille ou de classe.
+const WOOD_SEL = '.btn, .tool, .icon-btn, .gold-pill, #b-queue, #modal-box, #b-log';
+let woodSeed = 30;
+function paintWood(e) {
+  const w = e.offsetWidth, h = e.offsetHeight;
+  if (!w || !h) return;
+  e._seed ??= woodSeed++ % 40;
+  const kind = e.id === 'b-log' ? 'poster' : e.classList.contains('red') ? 'red' : e.classList.contains('gold') || e.classList.contains('on') ? 'hot' : 'normal';
+  const key = `${w}x${h}-${kind}`;
+  if (e._woodKey === key) return;
+  e._woodKey = key;
+  e.style.backgroundImage = kind === 'poster' ? posterUrl(w, h, e._seed) : signUrl(w, h, kind, e._seed);
+  e.style.backgroundSize = `${Math.round(w / U) * U}px ${Math.round(h / U) * U}px`;
+}
+(() => {
+  const ro = new ResizeObserver((entries) => entries.forEach((en) => paintWood(en.target)));
+  const watch = (n) => {
+    if (n.nodeType !== 1) return;
+    if (n.matches(WOOD_SEL)) ro.observe(n);
+    n.querySelectorAll?.(WOOD_SEL).forEach((e) => ro.observe(e));
+  };
+  watch(document.body);
+  new MutationObserver((muts) => muts.forEach((m) => {
+    if (m.type === 'attributes') {
+      if (m.target.matches(WOOD_SEL)) paintWood(m.target);
+    } else m.addedNodes.forEach(watch);
+  })).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+})();
 
 // Pancarte en bois dessinée à la taille exacte de l'élément (dorée quand elle est visée).
 function paintSign(row) {

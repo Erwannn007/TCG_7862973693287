@@ -158,6 +158,23 @@ grandes) pour les écrans avec peu d'actions.
 discret toutes les 5 s, deux étincelles par pancarte. **Pas de barre lumineuse** sous les
 pancartes.
 
+## 5 bis. Boutons et cadres de l'interface
+
+Tous les autres boutons et cadres (barre du haut, or, outils du combat, file des tours,
+fenêtres d'options et de confirmation) sont peints **dans le même bois que les pancartes**, à
+leur taille exacte (`paintWood` dans `js/main.js`, repeint automatiquement quand la taille ou la
+classe change). Pas de cadre 9-slice étiré.
+
+| Classe | Bois |
+|---|---|
+| (aucune) | bois brun |
+| `.gold`, `.on` | bois doré (action principale, option active) |
+| `.red` | bois laqué rouge (Fuir, Effacer la partie) |
+| héros déjà sur un socle | bois sombre, non touchable dans la colonne |
+
+Le message de combat (`#b-log`) est une note de parchemin clouée. Pressé, un bouton s'enfonce
+de 2 px et s'assombrit.
+
 ## 6. Plaques d'information
 
 Les informations (taux, compteurs, descriptions) vont sur une **plaque de bois** dessinée comme

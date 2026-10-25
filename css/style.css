@@ -83,16 +83,17 @@ small { font-size: 12px; }
   font: 400 27px/1 'Jacquarda', serif; color: var(--gold-hi);
   text-shadow: 2px 0 0 var(--line), -2px 0 0 var(--line), 0 2px 0 var(--line), 0 -2px 0 var(--line), 3px 3px 0 var(--line);
 }
+/* Boutons et cadres de l'interface : peints en bois comme les pancartes (paintWood dans js/main.js),
+   à leur taille exacte ; pressés, ils s'enfoncent de 2 px et s'assombrissent. */
+.btn, .tool, .icon-btn, .gold-pill, #b-queue, #modal-box, #b-log {
+  border: 0 !important; border-image: none !important; background: no-repeat center; image-rendering: pixelated;
+}
+.btn:active:not(:disabled), .tool:active, .icon-btn:active { transform: translateY(2px); filter: brightness(.85); }
 .gold-pill {
-  display: flex; align-items: center; gap: 6px; padding: 2px 4px; min-width: 96px;
-  border: 8px solid transparent; border-image: var(--f-wood) var(--sl) fill / 8px stretch;
-  color: var(--gold-hi); font-weight: 700;
+  display: flex; align-items: center; gap: 6px; padding: 10px 14px; min-width: 104px;
+  color: var(--gold-hi); font-weight: 700; text-shadow: 1px 1px 0 var(--line), -1px 0 0 var(--line);
 }
-.icon-btn {
-  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
-}
-.icon-btn:active { transform: translateY(2px); border-image-source: var(--f-btnDown); }
+.icon-btn { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
 
 /* ================================================================ cadres 9-slice */
 .panel { border: 12px solid transparent; border-image: var(--f-wood) var(--sl) fill / 12px stretch; }
@@ -102,15 +103,10 @@ small { font-size: 12px; }
 
 .btn {
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 2px 10px; color: var(--cream); font-weight: 700;
-  border: 10px solid transparent; border-image: var(--f-btn) var(--sl) fill / 10px stretch;
-  text-shadow: 1px 1px 0 var(--line);
+  min-height: 48px; padding: 12px 20px; color: var(--cream); font-weight: 700;
+  text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
 }
-.btn:active:not(:disabled) { border-image-source: var(--f-btnDown); transform: translateY(2px); }
-.btn.gold { border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
-.btn.gold:active:not(:disabled) { border-image-source: var(--f-goldDown); }
-.btn.red { border-image-source: var(--f-red); }
-.btn.red:active:not(:disabled) { border-image-source: var(--f-redDown); }
+.btn.gold { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
 .btn:disabled { filter: grayscale(.8) brightness(.7); }
 .btn small { display: block; font-weight: 400; }
 .btn .ico { display: flex; }
@@ -197,7 +193,9 @@ small { font-size: 12px; }
 .r-sign.locked canvas { opacity: .85; }
 .r-sign .wanted { display: block; font: 400 11px/1.1 'Jacquarda', serif; color: #8a1a28; }
 .r-sign.locked { gap: 4px; padding-right: 6px; }
-.r-sign.in-team:not(.hot) { opacity: .78; }
+.r-sign.in-team { cursor: not-allowed; color: #a8a090; }
+.r-sign.in-team canvas { filter: brightness(.6) saturate(.6); }
+.r-sign .on-slot { font-size: 11px; font-weight: 400; color: #e8c070; }
 /* pendant qu'on glisse un héros de l'équipe : la colonne devient la zone pour le retirer */
 #t-roster.drop-out { filter: drop-shadow(0 0 4px #ff6a6a); }
 #t-roster.drop-out.hot { filter: drop-shadow(0 0 8px #ff6a6a) brightness(1.1); }
@@ -313,21 +311,20 @@ small { font-size: 12px; }
   display: flex; align-items: flex-start; gap: 10px;
   padding: var(--safe-t) var(--safe-r) 0 var(--safe-l);
 }
-#b-queue { display: flex; align-items: flex-end; gap: 4px; padding: 0 4px; margin: 0 auto; }
+#b-queue { display: flex; align-items: flex-end; gap: 4px; padding: 8px 12px; margin: 0 auto; }
 #b-queue .q { display: flex; padding: 1px; box-shadow: inset 0 0 0 2px #24160e; }
 #b-queue .q.now { box-shadow: inset 0 0 0 2px var(--gold-hi); background: #6a4228; }
 #b-queue .q.foe { background: #4a1a24; }
 .b-tools { display: flex; gap: 6px; }
 .tool {
-  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 6px;
-  font-size: 14px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line);
-  border: 8px solid transparent; border-image: var(--f-btn) var(--sl) fill / 8px stretch;
+  display: flex; align-items: center; gap: 6px; min-height: 48px; padding: 8px 14px;
+  font-size: 14px; font-weight: 700; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
 }
-.tool:active { transform: translateY(2px); border-image-source: var(--f-btnDown); }
-.tool.on { border-image-source: var(--f-gold); color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
+.tool.on { color: var(--ink); text-shadow: 1px 1px 0 var(--gold-hi); }
 #b-log {
   position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--safe-t) + 58px); z-index: 3;
-  min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 0 6px;
+  min-width: 260px; max-width: 60%; text-align: center; font-size: 14px; font-weight: 700; padding: 8px 16px 6px;
+  color: var(--ink);
 }
 
 /* pancartes d'action : en bois, disposées en arc autour du héros ou du cristal (positions posées en JS).
@@ -431,7 +428,14 @@ small { font-size: 12px; }
   padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
   background: rgba(14, 8, 11, .86);
 }
-#modal-box { width: min(460px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+/* fenêtres (options, coffre du jour, confirmation, rejouer) : une plaque de bois */
+#modal-box {
+  width: min(460px, 100%); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  padding: 22px 26px; color: var(--cream); text-shadow: 1px 1px 0 var(--line), -1px 0 0 #3a2414;
+}
+#modal-box p { text-align: center; }
+#modal-box .muted { color: #e8d4a4; }
+#modal-box .big-title { font: 400 34px/1 'Jacquarda', serif; color: var(--gold-hi); text-shadow: 3px 3px 0 var(--line), -1px 0 0 var(--line); }
 #modal-box .row { display: flex; gap: 8px; }
 #modal-box .row .btn { flex: 1; }
 .big-title { font: 700 32px/1.1 'Pixelify', monospace; text-align: center; color: #8a1a28; text-shadow: 2px 2px 0 #e8b0a0; }

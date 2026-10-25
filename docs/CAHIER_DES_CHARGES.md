@@ -129,7 +129,9 @@ des traits de vent et un **son de vent**. Des points en bas indiquent la pièce.
    le carrousel pour l'amener devant.
    À gauche, une petite plaque de bois par héros (dorée pour celui qu'on regarde, badge 1-2-3
    pour l'équipe, « UP » s'il peut monter de rang) ; un héros pas encore obtenu est un **avis de
-   recherche** en parchemin cloué de travers (« Recherché », silhouette, ???). On organise l'équipe **en glissant** :
+   recherche** en parchemin cloué de travers (« Recherché », silhouette, ???). Un héros déjà dans
+   l'équipe est en bois sombre avec « sur le socle N » : on ne peut plus le prendre dans la
+   colonne (la plaque refuse et son socle s'allume) ; on le touche et on le déplace sur son socle. On organise l'équipe **en glissant** :
    - d'une plaque vers un socle : le héros rejoint l'équipe (ou remplace celui qui y est) ;
    - d'un socle à un autre : les deux héros échangent leurs places ;
    - d'un socle vers la colonne : le héros quitte l'équipe (il en faut toujours un).

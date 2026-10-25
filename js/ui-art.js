@@ -192,6 +192,16 @@ const WOOD = {
     planks: ['#d49a4e', '#dca458', '#c88e44'], grain: '#a8743a', grain2: '#ecc078', gap: '#5a3818',
     hi: '#f8d690', lo: '#9a6630', frame: ['#7a4a12', '#a87a20'], frameHi: '#e0a93a', metal: ['#5a3408', '#e0a93a', '#fff4c0'],
   },
+  // bois laqué rouge : actions dangereuses (fuir, effacer la partie)
+  red: {
+    planks: ['#a8323c', '#b43a44', '#9a2a36'], grain: '#7a1e2a', grain2: '#c85a5a', gap: '#3a0e14',
+    hi: '#d86a6a', lo: '#6a1420', frame: ['#4a0e16', '#6a1420'], frameHi: '#a8323c', metal: ['#2a262e', '#7a7480', '#c4c0c8'],
+  },
+  // bois sombre : ce qu'on ne peut pas toucher pour l'instant (héros déjà sur un socle)
+  dark: {
+    planks: ['#4a3426', '#523a2a', '#443022'], grain: '#3a281c', grain2: '#5e4434', gap: '#1e140e',
+    hi: '#6a4c38', lo: '#2e2016', frame: ['#2a1c12', '#3a281a'], frameHi: '#4a3426', metal: ['#1e1a22', '#4e4a54', '#7a7480'],
+  },
 };
 const rnd = (a, b) => {
   let h = (a * 374761393 + b * 668265263) | 0;
@@ -244,8 +254,8 @@ function drawSign(g, W, H, P, seed) {
     }
   }
   // équerres de fer aux quatre coins, avec un rivet
+  const L = Math.max(3, Math.min(7, Math.floor(Math.min(W, H) / 4))); // équerres plus petites sur les petits boutons
   for (const [cx, cy, sx, sy] of [[1, 1, 1, 1], [W - 2, 1, -1, 1], [1, H - 2, 1, -1], [W - 2, H - 2, -1, -1]]) {
-    const L = 7;
     for (let t = 0; t < L; t++) {
       for (const [px, py] of [[cx + sx * t, cy], [cx + sx * t, cy + sy], [cx, cy + sy * t], [cx + sx, cy + sy * t]]) R(px, py, 1, 1, P.metal[1]);
     }
@@ -253,8 +263,8 @@ function drawSign(g, W, H, P, seed) {
       R(cx + sx * t, cy + sy * 2, 1, 1, P.metal[0]);
       R(cx + sx * 2, cy + sy * t, 1, 1, P.metal[0]);
     }
-    R(cx + sx * 4, cy, 1, 1, P.metal[2]);
-    R(cx, cy + sy * 4, 1, 1, P.metal[2]);
+    R(cx + sx * Math.min(4, L - 1), cy, 1, 1, P.metal[2]);
+    R(cx, cy + sy * Math.min(4, L - 1), 1, 1, P.metal[2]);
     R(cx + sx, cy + sy, 1, 1, P.metal[2]);
   }
   // usure : éclats sur le bord, quelques rayures claires
